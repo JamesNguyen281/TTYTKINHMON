@@ -65,6 +65,16 @@
         e.preventDefault();
         $("#nav.menu_list, .nav-header .menu_list").toggleClass("open");
     });
+    // Mobile (≤1199px): tap parent li có .sub_menu → toggle .sub-open thay vì navigate.
+    // Chỉ hoạt động khi menu đang ở chế độ mobile (.menu_list.open).
+    $(document).on("click.subnav", ".nav-header .menu_list.open > li.col-li-2 > a", function(e){
+        var $li = $(this).parent("li");
+        if ($li.find("> .sub_menu").length === 0) return; // không có sub thì để link đi bình thường
+        if (window.matchMedia("(max-width: 1199px)").matches) {
+            e.preventDefault();
+            $li.toggleClass("sub-open").siblings(".sub-open").removeClass("sub-open");
+        }
+    });
     // .slide-st5 / .slide-list — Init thông minh: tránh Owl loop:true duplicate item.
     // Quy tắc: tối đa 4 card hiển thị 1 lần; nếu có >4 bác sĩ → carousel cuộn; nếu ≤4 → hiện tĩnh, ko duplicate.
     $(".slide-st5,.slide-list").each(function () {

@@ -951,13 +951,28 @@ h1, h2, h3 {
         z-index: 49;
         background: #fff;
     }
-    /* Sub-menu: trên mobile dropdown phải hiện inline, không position absolute */
+    /* Sub-menu mặc định ẨN trên mobile — chỉ hiện khi parent li có .sub-open */
     .nav-header .menu_list.open .sub_menu {
-        display: block !important;
+        display: none !important;
         position: static !important;
         background: #f8fafc;
         box-shadow: none;
         padding-left: 16px;
+    }
+    .nav-header .menu_list.open > li.sub-open > .sub_menu {
+        display: block !important;
+    }
+    /* Chevron indicator cho parent có submenu */
+    .nav-header .menu_list.open > li.col-li-2 > a:after {
+        content: "\f107"; /* fa-angle-down */
+        font-family: FontAwesome;
+        float: right;
+        font-size: 18px;
+        color: #0b98ef;
+        transition: transform 0.2s;
+    }
+    .nav-header .menu_list.open > li.col-li-2.sub-open > a:after {
+        transform: rotate(180deg);
     }
 }
 

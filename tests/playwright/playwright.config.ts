@@ -20,7 +20,7 @@ export default defineConfig({
   ],
 
   use: {
-    baseURL: 'http://localhost:5050',
+    baseURL: process.env.BASE_URL || 'http://localhost:5050',
     locale: 'vi-VN',
     timezoneId: 'Asia/Ho_Chi_Minh',
     trace: 'retain-on-failure',
