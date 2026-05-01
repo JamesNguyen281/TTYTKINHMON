@@ -8,8 +8,6 @@ appsettings.Production.json
 .env.*
 !.env.example
 
-WebsiteCore/tests/
-tests/
 scripts/
 full_test.sh
 

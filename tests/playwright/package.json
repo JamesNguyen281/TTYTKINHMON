@@ -1,0 +1,36 @@
+{
+  "name": "ttytkm-playwright",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Playwright E2E test suite cho TTYT Kinh Môn (ASP.NET Core 8 — port 5050) — bao phủ UC07/21/24/31/42/Q&A/Security",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui-mode": "playwright test --ui",
+
+    "test:smoke":       "playwright test specs/smoke.spec.ts",
+    "test:auth":        "playwright test specs/auth.spec.ts",
+    "test:register":    "playwright test specs/register.spec.ts",
+    "test:appointment": "playwright test specs/appointment.spec.ts",
+    "test:myaccount":   "playwright test specs/myaccount.spec.ts",
+    "test:letan":       "playwright test specs/letan.spec.ts specs/letan-flow.spec.ts",
+    "test:bacsi":       "playwright test specs/bacsi.spec.ts",
+    "test:qna":         "playwright test specs/qna.spec.ts",
+    "test:admincp":     "playwright test specs/admincp.spec.ts",
+    "test:ui":          "playwright test specs/ui.spec.ts",
+    "test:security":    "playwright test specs/security.spec.ts",
+
+    "test:functional":  "playwright test specs/auth.spec.ts specs/register.spec.ts specs/appointment.spec.ts specs/myaccount.spec.ts specs/letan.spec.ts specs/letan-flow.spec.ts specs/bacsi.spec.ts specs/qna.spec.ts specs/admincp.spec.ts",
+    "test:regression":  "playwright test specs/security.spec.ts",
+    "test:ui-only":     "playwright test specs/smoke.spec.ts specs/ui.spec.ts",
+
+    "report":  "playwright show-report",
+    "codegen": "playwright codegen http://localhost:5050",
+    "install-browsers": "playwright install"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.4.0"
+  }
+}
