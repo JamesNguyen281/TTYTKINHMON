@@ -956,23 +956,64 @@ h1, h2, h3 {
         display: none !important;
         position: static !important;
         background: #f8fafc;
-        box-shadow: none;
-        padding-left: 16px;
+        box-shadow: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: 0 !important;
+        list-style: none;
     }
     .nav-header .menu_list.open > li.sub-open > .sub_menu {
         display: block !important;
     }
+    /* Submenu item: 1 cột full-width, no float, padding indent */
+    .nav-header .menu_list.open .sub_menu > li {
+        display: block !important;
+        width: 100% !important;
+        float: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: 0 !important;
+        border-bottom: 1px solid #eef2f7 !important;
+        list-style: none;
+    }
+    .nav-header .menu_list.open .sub_menu > li:last-child { border-bottom: 0 !important; }
+    .nav-header .menu_list.open .sub_menu > li > a {
+        display: block !important;
+        padding: 12px 16px 12px 32px !important;
+        font-size: 14px !important;
+        color: #34495e !important;
+        text-decoration: none !important;
+        background: transparent !important;
+        line-height: 1.4 !important;
+    }
+    .nav-header .menu_list.open .sub_menu > li > a:hover,
+    .nav-header .menu_list.open .sub_menu > li > a:active {
+        background: #e9eef3 !important;
+        color: #0b98ef !important;
+    }
+    /* Parent có submenu đang mở — highlight nhẹ + bỏ border dưới (chống "vạch thừa") */
+    .nav-header .menu_list.open > li.sub-open {
+        background: #f3f7fb;
+        border-bottom: 0 !important;
+    }
     /* Chevron indicator cho parent có submenu */
+    .nav-header .menu_list.open > li.col-li-2 > a {
+        position: relative;
+        padding-right: 40px !important;
+    }
     .nav-header .menu_list.open > li.col-li-2 > a:after {
         content: "\f107"; /* fa-angle-down */
         font-family: FontAwesome;
-        float: right;
+        position: absolute;
+        right: 16px;
+        top: 50%;
+        transform: translateY(-50%);
         font-size: 18px;
         color: #0b98ef;
         transition: transform 0.2s;
     }
     .nav-header .menu_list.open > li.col-li-2.sub-open > a:after {
-        transform: rotate(180deg);
+        transform: translateY(-50%) rotate(180deg);
     }
 }
 
