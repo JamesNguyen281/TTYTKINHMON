@@ -36,6 +36,14 @@ builder.Services.AddSession(opt =>
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton<VisitorCounter>();
 
+// WebOptimizer — auto minify CSS/JS khi serve. Files đã có .min trong tên
+// (bootstrap.min.js, jquery.min.js, ...) sẽ được skip để khỏi minify lần 2.
+builder.Services.AddWebOptimizer(pipeline =>
+{
+    pipeline.MinifyCssFiles();
+    pipeline.MinifyJsFiles();
+});
+
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
@@ -67,6 +75,9 @@ app.Use(async (ctx, next) =>
     }
     await next();
 });
+
+// WebOptimizer phải đứng TRƯỚC UseStaticFiles để intercept CSS/JS request và minify.
+app.UseWebOptimizer();
 
 // Static files (wwwroot/) phải được serve cho CSS/JS/ảnh
 app.UseStaticFiles();
