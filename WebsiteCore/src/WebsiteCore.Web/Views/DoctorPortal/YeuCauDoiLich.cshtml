@@ -1,0 +1,229 @@
+@using WebsiteCore.Business.ViewModels
+@using WebsiteCore.Business
+@using WebsiteCore.Data.Entities
+@{
+    ViewData["Title"] = "Yêu cầu đổi lịch trực";
+    var schedules = ViewBag.Schedules as List<DoctorSchedule> ?? new();
+    var myReqs   = ViewBag.MyRequests as List<ScheduleChangeRequest> ?? new();
+    bool hasDocLink = ViewBag.LinkedDoctorId != null;
+    var u = ViewBag.CurrentUser as LoggedInUser;
+
+    string WdLabel(byte wd) => wd switch {
+        1 => "Chủ Nhật", 2 => "Thứ Hai", 3 => "Thứ Ba", 4 => "Thứ Tư",
+        5 => "Thứ Năm", 6 => "Thứ Sáu", 7 => "Thứ Bảy", _ => $"WD{wd}"
+    };
+    string SessLabel(string s) => s == "morning" ? "Sáng" : s == "afternoon" ? "Chiều" : s;
+    string ReqTypeLabel(string t) => t switch {
+        "change" => "Đổi ca",
+        "add"    => "Thêm ca",
+        "remove" => "Xoá ca",
+        "swap"   => "Đổi với BS khác",
+        _ => t
+    };
+    string StatusLabel(string s) => s switch {
+        "pending"  => "⏳ Chờ duyệt",
+        "approved" => "✅ Đã duyệt",
+        "rejected" => "❌ Từ chối",
+        _ => s
+    };
+    string StatusClass(string s) => s switch {
+        "pending"  => "warn",
+        "approved" => "success",
+        "rejected" => "danger",
+        _ => ""
+    };
+}
+
+<style>
+    .yc-wrap { max-width:1100px; margin:0 auto; padding:18px 0 40px; }
+    .yc-hero { background:linear-gradient(135deg,#0a3d62 0%,#1d5688 100%); color:white; padding:18px 24px; border-radius:8px; margin-bottom:18px; }
+    .yc-hero h1 { margin:0; font-size:20px; font-weight:600; }
+    .yc-hero .meta { font-size:13px; opacity:.92; margin-top:4px; }
+
+    .yc-card { background:white; border:1px solid #e5e9ee; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,.04); margin-bottom:18px; overflow:hidden; }
+    .yc-card .head { padding:12px 16px; background:#f7f9fc; border-bottom:1px solid #e5e9ee; font-weight:600; color:#0a3d62; }
+    .yc-card .body { padding:18px; }
+
+    .yc-form .row-flex { display:flex; gap:14px; flex-wrap:wrap; }
+    .yc-form .col { flex:1 1 220px; }
+    .yc-form label { display:block; font-weight:600; font-size:13px; color:#0a3d62; margin-bottom:5px; }
+    .yc-form label .req { color:#e74c3c; }
+    .yc-form .form-control, .yc-form select.form-control, .yc-form textarea {
+        width:100%; padding:8px 10px; border:1px solid #d0d7de; border-radius:5px; font-size:14px;
+    }
+    .yc-form textarea { min-height:120px; resize:vertical; line-height:1.6; }
+    .yc-form .hint { font-size:12px; color:#6c757d; margin-top:4px; }
+    .yc-form .btn-submit {
+        background:linear-gradient(135deg,#43aa8b 0%,#2f7a5e 100%); color:white;
+        border:none; padding:10px 22px; border-radius:6px; font-weight:600; cursor:pointer;
+        margin-top:8px; font-size:14px;
+    }
+    .yc-form .btn-submit:hover { transform:translateY(-1px); box-shadow:0 4px 10px rgba(67,170,139,.30); }
+    .yc-form .btn-cancel { background:#e5e9ee; color:#0a3d62; padding:10px 22px; border-radius:6px; font-weight:500; text-decoration:none; }
+
+    .req-table { width:100%; border-collapse:collapse; }
+    .req-table th, .req-table td { padding:10px 12px; border-bottom:1px solid #f0f3f7; text-align:left; font-size:13px; }
+    .req-table th { background:#f7f9fc; color:#0a3d62; font-weight:600; }
+    .status-tag { padding:3px 10px; border-radius:12px; font-size:11px; font-weight:600; display:inline-block; }
+    .status-tag.warn { background:#fff5e0; color:#b87908; }
+    .status-tag.success { background:#e8f5e9; color:#2f7a5e; }
+    .status-tag.danger { background:#fde7e9; color:#a02329; }
+    .req-table .reason-cell { max-width:280px; word-wrap:break-word; }
+    .req-table .resp-cell { font-size:12px; color:#6c757d; max-width:240px; word-wrap:break-word; }
+
+    .alert-warn { background:#fff5e0; color:#b87908; padding:12px 16px; border-radius:6px; border-left:4px solid #f39c12; margin-bottom:14px; }
+</style>
+
+<div class="yc-wrap">
+    <div class="yc-hero">
+        <h1><i class="fa fa-paper-plane"></i> Yêu cầu đổi lịch trực</h1>
+        <div class="meta">
+            <i class="fa fa-info-circle"></i>
+            Trình bày lý do và chọn ngày bạn muốn thay đổi — yêu cầu sẽ gửi tới Quản trị viên duyệt.
+        </div>
+    </div>
+
+    <a href="/bac-si-portal/lich-truc" class="btn btn-default" style="margin-bottom:12px;">
+        <i class="fa fa-arrow-left"></i> Quay lại Lịch trực
+    </a>
+
+    @if (!hasDocLink)
+    {
+        <div class="alert-warn">
+            <i class="fa fa-warning"></i> Tài khoản chưa được liên kết với Doctor — không thể gửi yêu cầu.
+            Liên hệ Quản trị viên gán <code>doctor_id</code> trong AdminCP / Users.
+        </div>
+    }
+    else
+    {
+        <div class="yc-card yc-form">
+            <div class="head"><i class="fa fa-edit"></i> Tạo yêu cầu mới</div>
+            <div class="body">
+                <form method="post" action="/bac-si-portal/yeu-cau-doi-lich">
+                    @Html.AntiForgeryToken()
+                    <div class="row-flex">
+                        <div class="col">
+                            <label>Loại yêu cầu <span class="req">*</span></label>
+                            <select name="requestType" class="form-control" required>
+                                <option value="change">Đổi ca trực</option>
+                                <option value="add">Thêm ca trực mới</option>
+                                <option value="remove">Xoá / nghỉ ca</option>
+                                <option value="swap">Đổi ca với BS khác</option>
+                            </select>
+                        </div>
+                        <div class="col">
+                            <label>Ngày bạn muốn đổi <span class="req">*</span></label>
+                            <input type="date" name="requestedDate" class="form-control" required
+                                   min="@DateTime.Today.ToString("yyyy-MM-dd")"
+                                   max="@DateTime.Today.AddMonths(3).ToString("yyyy-MM-dd")" />
+                            <div class="hint">Chọn ngày trong vòng 3 tháng tới.</div>
+                        </div>
+                        <div class="col">
+                            <label>Buổi (tuỳ chọn)</label>
+                            <select name="requestedSession" class="form-control">
+                                <option value="">— Cả 2 buổi —</option>
+                                <option value="morning">Sáng</option>
+                                <option value="afternoon">Chiều</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    @if (schedules.Count > 0)
+                    {
+                        <div style="margin-top:14px;">
+                            <label>Ca trực liên quan (tuỳ chọn)</label>
+                            <select name="scheduleId" class="form-control">
+                                <option value="">— Không gắn với ca cụ thể —</option>
+                                @foreach (var s in schedules.OrderBy(x => x.Weekday).ThenBy(x => x.Session))
+                                {
+                                    <option value="@s.Id">
+                                        @WdLabel(s.Weekday) — @SessLabel(s.Session) — Phòng @(s.Room ?? "-")
+                                        @(s.ValidTo.HasValue ? $" (đến {s.ValidTo.Value:dd/MM/yyyy})" : "")
+                                    </option>
+                                }
+                            </select>
+                            <div class="hint">Nếu yêu cầu liên quan đến 1 ca cố định trong tuần, chọn ca đó để admin dễ xử lý.</div>
+                        </div>
+                    }
+
+                    <div style="margin-top:14px;">
+                        <label>Lý do <span class="req">*</span></label>
+                        <textarea name="reason" class="form-control"
+                                  required minlength="10" maxlength="2000"
+                                  placeholder="Vd: Tôi có lịch học chuyên đề ngày 15/05, xin nghỉ ca sáng và đề xuất đổi sang ngày 17/05..."></textarea>
+                        <div class="hint">Tối thiểu 10 ký tự, tối đa 2000.</div>
+                    </div>
+
+                    <div style="margin-top:18px;">
+                        <button type="submit" class="btn-submit"><i class="fa fa-paper-plane"></i> Gửi yêu cầu</button>
+                        <a href="/bac-si-portal/lich-truc" class="btn-cancel" style="margin-left:8px;">Huỷ</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    }
+
+    @* Lịch sử yêu cầu của bs *@
+    <div class="yc-card">
+        <div class="head">
+            <i class="fa fa-history"></i> Lịch sử yêu cầu của tôi
+            @if (myReqs.Any(r => r.Status == "pending"))
+            {
+                <span class="status-tag warn" style="margin-left:8px;">@myReqs.Count(r => r.Status == "pending") đang chờ</span>
+            }
+        </div>
+        <div class="body" style="padding:0;">
+            @if (myReqs.Count == 0)
+            {
+                <div style="padding:32px; text-align:center; color:#6c757d;">
+                    <i class="fa fa-inbox" style="font-size:36px; color:#cfd5dc;"></i>
+                    <p style="margin-top:10px;">Bạn chưa gửi yêu cầu đổi lịch nào.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="req-table">
+                        <thead>
+                            <tr>
+                                <th>Ngày gửi</th>
+                                <th>Loại</th>
+                                <th>Ngày muốn đổi</th>
+                                <th>Buổi</th>
+                                <th>Lý do</th>
+                                <th>Trạng thái</th>
+                                <th>Phản hồi của Admin</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var r in myReqs)
+                            {
+                                <tr>
+                                    <td>@r.CreatedDate.ToString("HH:mm dd/MM/yyyy")</td>
+                                    <td>@ReqTypeLabel(r.RequestType)</td>
+                                    <td>@(r.RequestedDate?.ToString("dd/MM/yyyy") ?? "—")</td>
+                                    <td>@(string.IsNullOrEmpty(r.RequestedSession) ? "—" : SessLabel(r.RequestedSession))</td>
+                                    <td class="reason-cell">@r.Reason</td>
+                                    <td><span class="status-tag @StatusClass(r.Status)">@StatusLabel(r.Status)</span></td>
+                                    <td class="resp-cell">
+                                        @if (string.IsNullOrEmpty(r.AdminResponse))
+                                        {
+                                            <em style="color:#cfd5dc;">— chưa có —</em>
+                                        }
+                                        else
+                                        {
+                                            @r.AdminResponse
+                                            <div style="font-size:11px; color:#8898aa; margin-top:3px;">
+                                                <i class="fa fa-clock-o"></i> @(r.ProcessedDate?.ToString("HH:mm dd/MM/yyyy"))
+                                            </div>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>

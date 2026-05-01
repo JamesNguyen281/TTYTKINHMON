@@ -1,0 +1,96 @@
+@model List<WebsiteCore.Data.Entities.Question>
+@using WebsiteCore.Data.Entities
+@{
+    ViewData["Title"] = "Hỏi đáp y tế";
+    var answers = ViewBag.Answers as Dictionary<Guid, Answer?> ?? new();
+}
+
+<div class="container" style="padding-top:24px;">
+    <h1 style="color:#0a3d62; border-bottom:3px solid #0a3d62; padding-bottom:8px;">
+        <i class="fa fa-comments"></i> Hỏi đáp y tế
+    </h1>
+    <p class="lead text-muted">
+        Câu hỏi từ bệnh nhân đã được bác sĩ Trung tâm Y tế phường Kinh Môn duyệt và trả lời công khai.
+    </p>
+
+    <div style="margin:16px 0;">
+        <a href="/dat-cau-hoi" class="btn btn-primary">
+            <i class="fa fa-pencil-square-o"></i> Đặt câu hỏi mới
+        </a>
+        <a href="/cau-hoi-cua-toi" class="btn btn-default">
+            <i class="fa fa-list"></i> Câu hỏi của tôi
+        </a>
+    </div>
+
+    @if (Model.Any())
+    {
+        <div class="panel-group" id="qnaAccordion">
+            @foreach (var (q, idx) in Model.Select((q, i) => (q, i + 1)))
+            {
+                var ans = answers.ContainsKey(q.Id) ? answers[q.Id] : null;
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h4 class="panel-title">
+                            <a data-toggle="collapse" data-parent="#qnaAccordion" href="#qa-@idx" style="color:#0a3d62; text-decoration:none;">
+                                <i class="fa fa-question-circle"></i> <strong>@q.Title</strong>
+                            </a>
+                            <small class="text-muted pull-right">
+                                @q.CreatedDate.ToString("dd/MM/yyyy")
+                                @if (!string.IsNullOrEmpty(q.Topic)) { <span class="label label-default">@q.Topic</span> }
+                            </small>
+                        </h4>
+                    </div>
+                    <div id="qa-@idx" class="panel-collapse collapse @(idx == 1 ? "in" : "")">
+                        <div class="panel-body">
+                            <p><strong>Câu hỏi:</strong></p>
+                            <blockquote>@q.Body</blockquote>
+                            @if (ans != null)
+                            {
+                                <p style="color:#27ae60;"><strong><i class="fa fa-stethoscope"></i> Bác sĩ trả lời:</strong></p>
+                                <div style="background:#eaf7f0; padding:12px; border-radius:4px; border-left:4px solid #27ae60;">
+                                    @Html.Raw(ans.Body?.Replace("\n", "<br />"))
+                                </div>
+                                <small class="text-muted">Trả lời lúc: @ans.CreatedDate.ToString("HH:mm dd/MM/yyyy")</small>
+                            }
+                            else
+                            {
+                                <p class="text-muted"><em>Chưa có câu trả lời.</em></p>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="row" style="margin-top:24px;">
+            <div class="col-md-8">
+                <div class="panel panel-info">
+                    <div class="panel-heading"><strong><i class="fa fa-info-circle"></i> Hướng dẫn đặt câu hỏi</strong></div>
+                    <div class="panel-body">
+                        <ol>
+                            <li>Đăng nhập / đăng ký tài khoản bệnh nhân.</li>
+                            <li>Bấm "Đặt câu hỏi mới" và mô tả triệu chứng / vấn đề sức khoẻ.</li>
+                            <li>Bác sĩ Trung tâm sẽ duyệt và trả lời trong 1–2 ngày làm việc.</li>
+                            <li>Câu hỏi và câu trả lời (nếu được công khai) sẽ hiển thị tại trang này để hỗ trợ cộng đồng.</li>
+                        </ol>
+                        <p class="text-muted">
+                            <i class="fa fa-lock"></i> Câu hỏi cá nhân (chọn "không công khai") chỉ bạn và bác sĩ thấy.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="panel panel-default">
+                    <div class="panel-heading"><strong>Liên hệ trực tiếp</strong></div>
+                    <div class="panel-body">
+                        <p><i class="fa fa-phone"></i> Hotline: <a href="tel:0964801616">0964.801.616</a></p>
+                        <p><i class="fa fa-ambulance"></i> Cấp cứu: <a href="tel:02203822205">02203.822.205</a></p>
+                        <p><i class="fa fa-envelope"></i> Email: <a href="mailto:ttytkinhmon@gmail.com">ttytkinhmon@gmail.com</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>

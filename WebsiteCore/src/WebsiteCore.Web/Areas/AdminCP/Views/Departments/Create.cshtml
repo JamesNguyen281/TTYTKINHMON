@@ -1,0 +1,56 @@
+@model WebsiteCore.Data.Entities.Department
+@{ ViewData["Title"] = "Tạo chuyên khoa mới"; }
+
+<h2 style="color:#0a3d62;"><i class="fa fa-plus"></i> @ViewData["Title"]</h2>
+
+<form asp-action="Create" method="post">
+    @Html.AntiForgeryToken()
+    <div asp-validation-summary="All" class="alert alert-danger" role="alert"
+         style="@(ViewData.ModelState.IsValid ? "display:none;" : "")"></div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="form-group">
+                <label>Tên (Tiếng Việt) <span class="text-danger">*</span></label>
+                <input asp-for="NameL" class="form-control" required maxlength="200" />
+            </div>
+            <div class="form-group">
+                <label>Tên (Tiếng Anh)</label>
+                <input asp-for="NameE" class="form-control" maxlength="200" />
+            </div>
+            <div class="form-group">
+                <label>Mô tả ngắn</label>
+                <textarea asp-for="DescriptionL" class="form-control" rows="3"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Chi tiết (HTML)</label>
+                <textarea asp-for="DetailL" class="form-control" rows="8"></textarea>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="form-group">
+                <label>Đường dẫn ảnh / FA icon</label>
+                <input asp-for="ImagePath" class="form-control" placeholder="vd: fa:fa fa-stethoscope" />
+                <small class="text-muted">
+                    URL ảnh: <code>/assets/admin/images/dept/foo.png</code><br />
+                    Hoặc Font Awesome: <code>fa:fa fa-stethoscope</code>, <code>fa:fa fa-eye</code>, <code>fa:fa fa-heartbeat</code>...
+                </small>
+            </div>
+            <div class="form-group">
+                <label>Thứ tự (ord)</label>
+                <input asp-for="Ord" type="number" class="form-control" value="0" />
+            </div>
+            <div class="form-group">
+                <div class="checkbox">
+                    <label>
+                        <input name="ActiveFlag" type="checkbox" value="1" checked />
+                        Active (hiển thị trên website công khai)
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> Lưu</button>
+    <a href="/AdminCP/Departments" class="btn btn-default">Huỷ</a>
+</form>

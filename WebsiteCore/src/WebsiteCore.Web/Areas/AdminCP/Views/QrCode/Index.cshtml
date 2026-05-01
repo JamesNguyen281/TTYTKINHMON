@@ -1,0 +1,95 @@
+﻿@{ ViewData["Title"] = "Tạo mã QR"; }
+
+<h2 class="admin-page-title"><i class="fa fa-qrcode"></i> Công cụ tạo mã QR</h2>
+
+<div class="admin-card">
+    <div class="admin-card-body">
+        <p class="text-muted">Nhập nội dung (URL, văn bản, số ĐT, vCard...) — QR sẽ tự sinh ngay phía dưới.</p>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label>Nội dung</label>
+                    <textarea id="qr-content" class="form-control" rows="4" placeholder="https://ttytkinhmon.vn"></textarea>
+                </div>
+                <div class="row">
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label>Kích thước (px)</label>
+                            <select id="qr-size" class="form-control">
+                                <option value="200">200 × 200</option>
+                                <option value="300" selected>300 × 300</option>
+                                <option value="500">500 × 500</option>
+                                <option value="800">800 × 800</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label>Mức sửa lỗi</label>
+                            <select id="qr-ecc" class="form-control">
+                                <option value="L">L (7%)</option>
+                                <option value="M" selected>M (15%)</option>
+                                <option value="Q">Q (25%)</option>
+                                <option value="H">H (30%)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" id="qr-gen" class="btn btn-primary"><i class="fa fa-magic"></i> Tạo mã QR</button>
+                <a id="qr-download" class="btn btn-success" style="display:none;" download="qr-code.png"><i class="fa fa-download"></i> Tải PNG</a>
+
+                <hr />
+                <h5 style="font-weight:600; margin-top:0;">Mẫu thường dùng</h5>
+                <div class="btn-group btn-group-sm" role="group">
+                    <button type="button" class="btn btn-default" data-qr="https://ttytkinhmon.vn">Website</button>
+                    <button type="button" class="btn btn-default" data-qr="tel:02203822205">Cấp cứu</button>
+                    <button type="button" class="btn btn-default" data-qr="tel:0964801616">Hotline</button>
+                    <button type="button" class="btn btn-default" data-qr="mailto:ttytkinhmon@haiphong.gov.vn">Email</button>
+                    <button type="button" class="btn btn-default" data-qr="https://maps.google.com/?q=294+Tran+Hung+Dao+Kinh+Mon+Hai+Phong">Bản đồ</button>
+                </div>
+            </div>
+
+            <div class="col-md-6 text-center">
+                <div id="qr-output" style="padding:24px; background:white; border:1px solid #e0e6ed; border-radius:6px; min-height:340px; display:flex; align-items:center; justify-content:center;">
+                    <span class="text-muted"><i class="fa fa-qrcode" style="font-size:80px; opacity:0.3;"></i><br />Mã QR sẽ hiện ở đây</span>
+                </div>
+                <small class="text-muted">Click chuột phải lên ảnh → "Save image as..." để lưu</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            // Dùng QR generator API miễn phí của goqr.me — không phụ thuộc thư viện ngoài
+            function generateQr() {
+                var content = document.getElementById('qr-content').value.trim();
+                var size    = document.getElementById('qr-size').value;
+                var ecc     = document.getElementById('qr-ecc').value;
+                if (!content) { alert('Vui lòng nhập nội dung.'); return; }
+                var url = 'https://api.qrserver.com/v1/create-qr-code/?size=' + size + 'x' + size +
+                          '&ecc=' + ecc + '&data=' + encodeURIComponent(content);
+                document.getElementById('qr-output').innerHTML =
+                    '<img src="' + url + '" alt="QR" style="max-width:100%; height:auto;" />';
+                var dl = document.getElementById('qr-download');
+                dl.href = url;
+                dl.download = 'qr-' + Date.now() + '.png';
+                dl.style.display = 'inline-block';
+            }
+            document.getElementById('qr-gen').addEventListener('click', generateQr);
+            // Templates
+            document.querySelectorAll('[data-qr]').forEach(function (b) {
+                b.addEventListener('click', function () {
+                    document.getElementById('qr-content').value = this.getAttribute('data-qr');
+                    generateQr();
+                });
+            });
+            // Enter trong textarea (Ctrl+Enter)
+            document.getElementById('qr-content').addEventListener('keydown', function (e) {
+                if (e.ctrlKey && e.key === 'Enter') generateQr();
+            });
+        })();
+    </script>
+}

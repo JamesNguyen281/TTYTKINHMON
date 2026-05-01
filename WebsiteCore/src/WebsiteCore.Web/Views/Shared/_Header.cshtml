@@ -1,0 +1,139 @@
+﻿@using WebsiteCore.Business.ViewModels
+@using WebsiteCore.Data.Entities
+@using WebsiteCore.Business.Services
+@inject ICategoryService CategoryService
+@inject IDepartmentService DepartmentService
+@{
+    var siteHd = ViewBag.Site as Site;
+    var loggedUser = ViewBag.CurrentUser as LoggedInUser;
+    var locate    = (ViewBag.Locate as string) ?? "vi";
+    bool isEn     = locate == "en";
+
+    string LocalizeStr(string? l, string? e) =>
+        isEn ? (string.IsNullOrEmpty(e) ? (l ?? "") : e) : (l ?? "");
+
+    var hdAddress = isEn
+        ? (!string.IsNullOrEmpty(siteHd?.AddressE) ? siteHd.AddressE : (siteHd?.AddressL ?? "294 Tran Hung Dao Road, Kinh Mon Ward, Hai Phong City"))
+        : (!string.IsNullOrEmpty(siteHd?.AddressL) ? siteHd.AddressL : "Số 294 đường Trần Hưng Đạo, phường Kinh Môn, Thành phố Hải Phòng");
+    var hdEmer    = !string.IsNullOrEmpty(siteHd?.EmergencyNumber) ? siteHd.EmergencyNumber : "02203.822.205";
+    var hdHotline = !string.IsNullOrEmpty(siteHd?.Hotline) ? siteHd.Hotline : "0964.801.616";
+    var brandName = LocalizeStr(siteHd?.NameCompanyL, siteHd?.NameCompanyE);
+    if (string.IsNullOrEmpty(brandName)) brandName = isEn ? "Kinh Mon Ward Medical Center" : "Trung tâm Y tế phường Kinh Môn";
+    var logoSrc = !string.IsNullOrEmpty(siteHd?.LogoUrl) ? siteHd.LogoUrl : "/assets/client/images/logo-kinhmon.png";
+    var siteId = siteHd?.Id ?? Guid.Empty;
+    var dynamicMenu = await CategoryService.GetMainMenuAsync(siteId);
+
+    // i18n labels cho top-bar
+    var lblEmer    = isEn ? "EMERGENCY 24/7" : "CẤP CỨU 24/7";
+    var lblHotline = isEn ? "HOTLINE"        : "ĐƯỜNG DÂY NÓNG";
+    var lblHome    = isEn ? "Home"           : "Trang chủ";
+    var lblLogin   = isEn ? "Sign in"        : "Đăng nhập";
+    var lblLogout  = isEn ? "Sign out"       : "Đăng xuất";
+    var lblAddrPrefix = isEn ? "Address:" : "Địa chỉ:";
+    string portalUrl = loggedUser?.GroupId switch
+    {
+        "ADMIN"     => "/AdminCP/Default",
+        "RECEPTION" => "/le-tan",
+        "DOCTOR"    => "/bac-si-portal",
+        _           => "/ho-so"
+    };
+
+    // Auto-sync submenu: với menu cha có alias chuyen-khoa / doi-ngu-bac-si,
+    // children lấy từ bảng Department thay vì Category — để dropdown luôn đồng bộ
+    // với /AdminCP/Departments (admin thêm khoa thì menu tự cập nhật).
+    async Task<(string label, string url)[]> GetSubmenuAsync(Category m)
+    {
+        if (m.AliasL == "chuyen-khoa" || m.AliasL == "doi-ngu-bac-si")
+        {
+            var depts = await DepartmentService.GetActiveBySiteAsync(siteId);
+            var prefix = m.AliasL == "doi-ngu-bac-si" ? "/bac-si/" : "/chuyen-khoa/";
+            return depts.Select(d => (LocalizeStr(d.NameL, d.NameE), prefix + (d.Alias ?? ""))).ToArray();
+        }
+        var children = await CategoryService.GetChildrenAsync(m.Id);
+        return children.Select(c => (LocalizeStr(c.NameL, c.NameE), "/" + (c.Link ?? ""))).ToArray();
+    }
+}
+<header class="header full-section">
+    <div class="header-top full-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-6 visible-lg header-top-left">
+                    <span class="address" style="display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;" title="@hdAddress">
+                        @lblAddrPrefix <i class="address-child">@hdAddress</i>
+                    </span>
+                </div>
+                <div class="col-lg-6 col-sm-12 col-xs-12 header-top-right">
+                    <ul>
+                        <li class="li1">
+                            <p>@lblEmer</p>
+                            <a class="emergency_phone" href="tel:@hdEmer">@hdEmer</a>
+                        </li>
+                        <li class="li1 li1-2">
+                            <p>@lblHotline</p>
+                            <a class="hotline" href="tel:@hdHotline">@hdHotline</a>
+                        </li>
+                        @if (loggedUser != null)
+                        {
+                            <li class="social">
+                                <a href="@portalUrl" title="@loggedUser.FullName">
+                                    <i class="fa fa-user"></i> @loggedUser.FullName
+                                </a>
+                            </li>
+                            <li class="social">
+                                <a href="/dang-xuat" title="@lblLogout">
+                                    <i class="fa fa-sign-out"></i> @lblLogout
+                                </a>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="social">
+                                <a href="/dang-nhap" title="@lblLogin">
+                                    <i class="fa fa-sign-in"></i> @lblLogin
+                                </a>
+                            </li>
+                        }
+                        @* Tạm thời ẩn nút chuyển ngôn ngữ — site mặc định tiếng Việt *@
+                        @* <li class="social">
+                            <a href="javascript:;" class="change_language" title="@(isEn ? "Tiếng Việt" : "English")">@(isEn ? "VI" : "EN")</a>
+                        </li> *@
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <partial name="_NotificationBanner" />
+    <div class="header-nav full-section">
+        <div class="container">
+            <div class="row">
+                <div class="logo brand-block col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                    <a href="/" class="brand-link" title="@brandName">
+                        <img src="@logoSrc" alt="@brandName" class="brand-logo-img" />
+                    </a>
+                </div>
+                <div class="bars hidden-lg col-md-12 col-sm-12 col-xs-4"><i class="fa fa-bars" aria-hidden="true"></i></div>
+                <div class="nav-header col-lg-12 col-xs-12">
+                    <ul id="nav" class="menu_list">
+                        <li><a href="/">@lblHome</a></li>
+                        @foreach (var m in dynamicMenu)
+                        {
+                            var subs = await GetSubmenuAsync(m);
+                            <li class="col-li-2">
+                                <a href="/@m.Link">@LocalizeStr(m.NameL, m.NameE)</a>
+                                @if (subs.Length > 0)
+                                {
+                                    <ul class="sub_menu">
+                                        @foreach (var s in subs)
+                                        {
+                                            <li><a href="@s.url">@s.label</a></li>
+                                        }
+                                    </ul>
+                                }
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>

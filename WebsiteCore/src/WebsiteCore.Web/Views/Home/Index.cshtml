@@ -1,0 +1,481 @@
+﻿@using WebsiteCore.Data.Entities
+@{
+    var locate = (ViewBag.Locate as string) ?? "vi";
+    bool isEn  = locate == "en";
+    ViewData["Title"] = isEn ? "Home" : "Trang chủ";
+    var depts        = ViewBag.Departments         as List<Department> ?? new();
+    var outstanding  = ViewBag.OutstandingServices as List<Category>   ?? new();
+    var news         = ViewBag.FeaturedNews        as List<News>       ?? new();
+    var slideBox     = ViewBag.SlideBox            as List<Category>   ?? new();
+    var slideTextBox = ViewBag.SlideTextBox        as List<Category>   ?? new();
+    var videos       = ViewBag.Videos              as List<Video>      ?? new();
+    var doctorIn     = ViewBag.DoctorIn            as List<Doctor>     ?? new();
+    var doctorForeign= ViewBag.DoctorForeign       as List<Doctor>     ?? new();
+
+    string L(string? l, string? e) => isEn ? (string.IsNullOrEmpty(e) ? (l ?? "") : e) : (l ?? "");
+    var lblFeaturedNews   = isEn ? "Featured news"        : "Tin tức nổi bật";
+    var lblOurDoctors     = isEn ? "Our doctors"          : "Đội ngũ bác sĩ";
+    var lblOurServices    = isEn ? "Our services"         : "Dịch vụ tiêu biểu";
+    var lblBookAppt       = isEn ? "Book appointment"     : "Đặt lịch khám";
+    var lblViewMore       = isEn ? "Read more"            : "Xem thêm";
+
+    // Logo fallback đồng bộ Site.LogoUrl (admin set qua /AdminCP/Sites)
+    var siteLogoUrl = (ViewBag.Site as Site)?.LogoUrl;
+    if (string.IsNullOrEmpty(siteLogoUrl)) siteLogoUrl = "/assets/client/images/logo-kinhmon.png";
+}
+
+@functions {
+    string ImgPath(string? p, string fallback)
+    {
+        if (string.IsNullOrEmpty(p)) return fallback;
+        if (p.StartsWith("http://") || p.StartsWith("https://") || p.StartsWith("//")) return p;
+        return "/" + p.TrimStart('/');
+    }
+    bool IsFaIcon(string? p) => !string.IsNullOrEmpty(p) && p.StartsWith("fa:", StringComparison.OrdinalIgnoreCase);
+    string FaClass(string p) => p.Substring(3).Trim();
+}
+
+<h1 style="position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden;">
+    Trung tâm Y tế phường Kinh Môn, TP Hải Phòng — đặt lịch khám, chuyên khoa, đội ngũ bác sĩ
+</h1>
+
+@* ============= .st7 — Tin tức nổi bật ============= *@
+<section class="st7 full-section">
+    <div class="container">
+        <div class="row">
+            <div class="box-heading col-xs-12">
+                <div class="box-heading col-xs-12 text-center">
+                    <h2 class="title-st3 title-st5"><span>@lblFeaturedNews</span></h2>
+                </div>
+            </div>
+            <div class="box-content full-section">
+                <div class="slide-st7">
+                    @foreach (var item in news)
+                    {
+                        var titleX = L(item.TitleL, item.TitleE);
+                        var descX  = L(item.DescriptionL, item.DescriptionE);
+                        var aliasX = isEn && !string.IsNullOrEmpty(item.AliasE) ? item.AliasE : item.AliasL;
+                        <div class="col-5">
+                            <div class="item">
+                                <div class="img-item">
+                                    <a href="/tin-tuc/@aliasX">
+                                        <img src="@ImgPath(item.ImagePath, siteLogoUrl)" alt="@titleX" loading="lazy"
+                                             onerror="this.onerror=null;this.src='@siteLogoUrl';" />
+                                    </a>
+                                </div>
+                                <div class="text-item">
+                                    <h2><a href="/tin-tuc/@aliasX">@titleX</a></h2>
+                                    <p>@descX</p>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@* ============= .st1 — 3 thẻ tròn dịch vụ chính (BLOCK_SLIDE) ============= *@
+@if (slideBox.Any())
+{
+    <section class="st1 full-section">
+        <div class="container">
+            <div class="row">
+                <div class="box-heading full-section">
+                    @foreach (var item in slideBox)
+                    {
+                        <div class="col-md-4 col-sm-4 col-xs-4">
+                            <div class="item-st1">
+                                <div class="img-item-st1">
+                                    <a href="/@item.Link" class="view">
+                                        @if (IsFaIcon(item.ImagePath))
+                                        {
+                                            <i class="@FaClass(item.ImagePath!)" style="font-size:64px; line-height:156px; color:#fff;"></i>
+                                        }
+                                        else
+                                        {
+                                            <img src="@ImgPath(item.ImagePath, siteLogoUrl)" alt="@item.NameL" loading="lazy"
+                                             onerror="this.onerror=null;this.src='@siteLogoUrl';" />
+                                        }
+                                    </a>
+                                </div>
+                                <div class="text-item-st1">
+                                    <h2><a href="/@item.Link">@(item.NameL?.ToUpper())</a></h2>
+                                    <div class="des">@item.DescriptionL</div>
+                                    <a href="/@item.Link" class="view">Xem thêm ></a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+                <div class="box-content col-xs-12">
+                    <h2 class="title-st1">ĐĂNG KÝ DỊCH VỤ</h2>
+                    <div class="search-st1">
+                        <form method="get" action="/">
+                            <input type="text" name="q" value="@(Context.Request.Query["q"])" placeholder="Tìm kiếm..." />
+                            <button type="submit"><img src="/assets/client/images/icon4.png" /></button>
+                        </form>
+                    </div>
+                    <p>Liên hệ ngay <a class="phone" style="font-size:24px; color:#ff0000; font-weight:bold;">0964.801.616</a> để được hỗ trợ.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+}
+
+@* ============= .st2 — Vì sao chọn chúng tôi ============= *@
+<section class="st2 full-section">
+    <div class="col-md-6 st2-left no-padding">
+        <img src="/assets/client/images/img2.png" alt="Trung tâm Y tế phường Kinh Môn" />
+    </div>
+    <div class="col-md-6 st2-right">
+        <h2 class="tilte-st2">VÌ SAO CHỌN CHÚNG TÔI</h2>
+        @if (slideTextBox.Any())
+        {
+            <div class="slide-st2 owl-carousel owl-theme">
+                @foreach (var item in slideTextBox)
+                {
+                    <div class="item">
+                        <h3>@item.NameL</h3>
+                        <p>@item.DescriptionL</p>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="slide-st2">
+                <div class="item">
+                    <h3>Đội ngũ chuyên môn cao</h3>
+                    <p>Bác sĩ tận tâm, giàu kinh nghiệm, luôn cập nhật phác đồ điều trị mới nhất.</p>
+                </div>
+                <div class="item">
+                    <h3>Cơ sở vật chất hiện đại</h3>
+                    <p>Trang thiết bị y tế đồng bộ, đáp ứng đầy đủ nhu cầu chăm sóc sức khỏe ban đầu.</p>
+                </div>
+                <div class="item">
+                    <h3>Phục vụ tận tình</h3>
+                    <p>Quy trình tiếp đón nhanh chóng, hỗ trợ đặt lịch trực tuyến 24/7.</p>
+                </div>
+            </div>
+        }
+    </div>
+</section>
+
+@* ============= .st3 — Cơ sở vật chất / chuyên khoa grid ============= *@
+@if (depts.Any())
+{
+    <section class="st3 full-section csvc-section">
+        <div class="container">
+            <div class="row">
+                <div class="box-heading col-xs-12">
+                    <h2 class="title-st3"><span>CƠ SỞ VẬT CHẤT</span></h2>
+                </div>
+                <div class="box-content full-section">
+                    @{
+                        int csvcPerPage = 10;
+                        int csvcTotal = depts.Count;
+                        int csvcPages = csvcTotal == 0 ? 0 : (int)Math.Ceiling((double)csvcTotal / csvcPerPage);
+                    }
+                    <div class="csvc-wrap">
+                        <button type="button" class="csvc-arrow csvc-prev" aria-label="Trang trước">&#8249;</button>
+                        <div class="csvc-viewport">
+                            <div class="csvc-track">
+                                @for (int p = 0; p < csvcPages; p++)
+                                {
+                                    <div class="csvc-page">
+                                        @for (int idx = p * csvcPerPage; idx < Math.Min(csvcTotal, (p + 1) * csvcPerPage); idx++)
+                                        {
+                                            var item = depts[idx];
+                                            <div class="csvc-item">
+                                                <a class="csvc-item-img" title="@item.NameL" href="/@item.Link">
+                                                    @if (IsFaIcon(item.ImagePath))
+                                                    {
+                                                        <i class="@FaClass(item.ImagePath!) csvc-fa" aria-hidden="true"></i>
+                                                    }
+                                                    else
+                                                    {
+                                                        <img src="@ImgPath(item.ImagePath, siteLogoUrl)" alt="@item.NameL"
+                                                             onerror="this.onerror=null;this.src='@siteLogoUrl';" />
+                                                    }
+                                                </a>
+                                                <h2 class="csvc-item-name">
+                                                    <a title="@item.NameL" href="/@item.Link">@item.NameL</a>
+                                                </h2>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                        <button type="button" class="csvc-arrow csvc-next" aria-label="Trang sau">&#8250;</button>
+                        @if (csvcPages > 1)
+                        {
+                            <div class="csvc-dots">
+                                @for (int p = 0; p < csvcPages; p++)
+                                {
+                                    <button type="button" class="csvc-dot @(p == 0 ? "active" : "")" data-page="@p" aria-label="Trang @(p + 1)"></button>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+}
+
+@* ============= .st4 — Videos ============= *@
+@if (videos.Any())
+{
+    <section class="st4 full-section">
+        <div class="container">
+            <div class="row">
+                <div class="st4-inner col-xs-12">
+                    <h2 class="title-st4">VIDEOS</h2>
+                    <div class="st4-inner-form full-section">
+                        <div class="st4-left col-md-7 col-sm-12 col-xs-12">
+                            <div class="tab-content">
+                                @for (int i = 0; i < videos.Count; i++)
+                                {
+                                    <div id="video@(i+1)" class="tab-pane fade @(i==0 ? "in active" : "")">
+                                        <iframe style="max-width:100%; width:100%;" height="480" src="@videos[i].VideoLink" frameborder="0" allowfullscreen></iframe>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                        <div class="st4-right col-md-5 col-sm-12 col-xs-12">
+                            <ul class="nav">
+                                @for (int i = 0; i < videos.Count; i++)
+                                {
+                                    <li class="@(i==0 ? "active" : "")">
+                                        <a data-toggle="tab" href="#video@(i+1)">
+                                            <div class="img-item">
+                                                <img src="@ImgPath(videos[i].VideoThumbnail, siteLogoUrl)" alt="@videos[i].VideoDescriptionL" loading="lazy" />
+                                            </div>
+                                            <div class="text-item">@videos[i].VideoDescriptionL</div>
+                                        </a>
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+}
+
+@* ============= .st5 — Đội ngũ bác sĩ ============= *@
+@if (doctorIn.Any() || doctorForeign.Any())
+{
+    <section class="st5 full-section">
+        <div class="container">
+            <div class="row">
+                <div class="box-heading col-xs-12 text-center">
+                    <h2 class="title-st3 title-st5"><span>ĐỘI NGŨ BÁC SĨ</span></h2>
+                </div>
+                <div class="col-xs-12">
+                    <div class="tab-bs full-section tab-js">
+                        <ul>
+                            <li class="active"><a href="#bangd">Ban Giám đốc</a></li>
+                            <li><a href="#bsi">Bác sĩ chuyên khoa</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="box-content col-xs-12">
+                    <div class="tab-content">
+                        <div id="bangd" class="active">
+                            @{ var deanGrid = doctorIn.Count <= 4; }
+                            <div class="slide-st5 @(deanGrid ? "km-static-grid" : "owl-carousel owl-theme")">
+                                @foreach (var doctor in doctorIn)
+                                {
+                                    <div class="item">
+                                        <a href="javascript:;" class="item-doctor btn-doctor-detail" data-id="@doctor.Id"
+                                           data-toggle="modal" data-target="#detaildoctor1">
+                                            <img src="@ImgPath(doctor.ImagePath, "/assets/client/images/doctor-default.svg")" alt="@L(doctor.NameL, doctor.NameE)"
+                                                 onerror="this.onerror=null;this.src='/assets/client/images/doctor-default.svg';" loading="lazy" />
+                                            <h3>@L(doctor.NameL, doctor.NameE)</h3>
+                                            <p>@L(doctor.SpeciallyL, doctor.SpeciallyE)</p>
+                                            <span class="view-info-btn">@(isEn ? "VIEW DETAIL" : "XEM THÔNG TIN")</span>
+                                        </a>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                        <div id="bsi">
+                            @{ var mgrGrid = doctorForeign.Count <= 4; }
+                            <div class="slide-st5 @(mgrGrid ? "km-static-grid" : "owl-carousel owl-theme")">
+                                @foreach (var doctor in doctorForeign)
+                                {
+                                    <div class="item">
+                                        <a href="javascript:;" class="item-doctor btn-doctor-detail" data-id="@doctor.Id"
+                                           data-toggle="modal" data-target="#detaildoctor1">
+                                            <img src="@ImgPath(doctor.ImagePath, "/assets/client/images/doctor-default.svg")" alt="@L(doctor.NameL, doctor.NameE)"
+                                                 onerror="this.onerror=null;this.src='/assets/client/images/doctor-default.svg';" loading="lazy" />
+                                            <h3>@L(doctor.NameL, doctor.NameE)</h3>
+                                            <p>@L(doctor.SpeciallyL, doctor.SpeciallyE)</p>
+                                            <span class="view-info-btn">@(isEn ? "VIEW DETAIL" : "XEM THÔNG TIN")</span>
+                                        </a>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <a href="/bac-si" class="view-st5">Xem thêm</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+}
+
+@* ============= .st6 — Dịch vụ nổi bật grid ============= *@
+@if (outstanding.Any())
+{
+    <section class="st6 full-section">
+        <div class="container">
+            <div class="row">
+                <div class="box-heading col-xs-12">
+                    <h2 class="title-st3">Dịch vụ nổi bật</h2>
+                </div>
+                <div class="box-content full-section">
+                    @foreach (var item in outstanding)
+                    {
+                        <div class="item-st6 col-md-2 col-sm-4 col-xs-6">
+                            <a href="/@item.Link">
+                                @if (IsFaIcon(item.ImagePath))
+                                {
+                                    <span class="item-st6-icon-wrap">
+                                        <i class="@FaClass(item.ImagePath!) item-st6-fa" aria-hidden="true"></i>
+                                    </span>
+                                }
+                                else
+                                {
+                                    <img src="@ImgPath(item.ImagePath, siteLogoUrl)" alt="@item.NameL" loading="lazy"
+                                             onerror="this.onerror=null;this.src='@siteLogoUrl';" />
+                                }
+                                <h2>@(item.NameL?.ToUpper())</h2>
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </section>
+}
+
+@section Scripts {
+    <script>
+        // CSVC carousel
+        (function () {
+            var sec = document.querySelector('.csvc-section'); if (!sec) return;
+            var track = sec.querySelector('.csvc-track');
+            var pages = sec.querySelectorAll('.csvc-page');
+            var dots  = sec.querySelectorAll('.csvc-dot');
+            var prev  = sec.querySelector('.csvc-prev');
+            var next  = sec.querySelector('.csvc-next');
+            if (!track || pages.length === 0) return;
+            var i = 0;
+            function go(idx) {
+                if (idx < 0 || idx >= pages.length) return;
+                i = idx;
+                track.style.transform = 'translateX(-' + (i * 100) + '%)';
+                for (var k = 0; k < dots.length; k++) {
+                    if (k === i) dots[k].classList.add('active');
+                    else dots[k].classList.remove('active');
+                }
+                if (prev) prev.disabled = (i === 0);
+                if (next) next.disabled = (i === pages.length - 1);
+            }
+            if (prev) prev.addEventListener('click', function () { go(i - 1); });
+            if (next) next.addEventListener('click', function () { go(i + 1); });
+            for (var k = 0; k < dots.length; k++) {
+                (function (idx) {
+                    dots[idx].addEventListener('click', function () { go(idx); });
+                })(k);
+            }
+            go(0);
+        })();
+
+        // st5 doctor tabs (vanilla JS — không phụ thuộc owl/bootstrap)
+        (function () {
+            var nav = document.querySelector('.tab-bs.tab-js');
+            if (!nav) return;
+            var links = nav.querySelectorAll('a[href^="#"]');
+            for (var i = 0; i < links.length; i++) {
+                links[i].addEventListener('click', function (e) {
+                    e.preventDefault();
+                    var target = this.getAttribute('href');
+                    var lis = nav.querySelectorAll('li');
+                    for (var j = 0; j < lis.length; j++) lis[j].classList.remove('active');
+                    this.parentElement.classList.add('active');
+                    var panes = document.querySelectorAll('.box-content > .tab-content > div');
+                    for (var k = 0; k < panes.length; k++) panes[k].classList.remove('active');
+                    var pane = document.querySelector(target);
+                    if (pane) pane.classList.add('active');
+                });
+            }
+        })();
+
+        // Center align owl carousel khi count ≤ 4 — owl mặc định float-left, items
+        // ít hơn slot → cards bị dồn trái và còn slot trống bên phải.
+        (function () {
+            function centerSmallCarousel() {
+                document.querySelectorAll('.slide-st5').forEach(function (c) {
+                    var items = c.querySelectorAll('.owl-item:not(.cloned), .item');
+                    var stage = c.querySelector('.owl-stage');
+                    if (items.length > 0 && items.length <= 4) {
+                        c.classList.add('km-centered');
+                        if (stage) {
+                            stage.style.transform = 'none';
+                            stage.style.width = '100%';
+                            stage.style.display = 'flex';
+                            stage.style.justifyContent = 'center';
+                            stage.style.flexWrap = 'wrap';
+                            stage.style.gap = '16px';
+                        }
+                        // Ẩn nút prev/next khi không cần kéo
+                        var nav = c.querySelector('.owl-nav');
+                        if (nav) nav.style.display = 'none';
+                    }
+                });
+            }
+            // Run sau khi owl init xong (delay để owl-stage render)
+            if (window.jQuery) {
+                jQuery(window).on('load', function () { setTimeout(centerSmallCarousel, 200); });
+                setTimeout(centerSmallCarousel, 800);
+            } else {
+                window.addEventListener('load', function () { setTimeout(centerSmallCarousel, 400); });
+            }
+            // Re-apply when tab switches
+            document.querySelectorAll('.tab-bs.tab-js a').forEach(function (a) {
+                a.addEventListener('click', function () { setTimeout(centerSmallCarousel, 50); });
+            });
+        })();
+
+        // st4 video tabs (vanilla — không cần bootstrap.js)
+        (function () {
+            var nav = document.querySelector('.st4-right .nav');
+            if (!nav) return;
+            var links = nav.querySelectorAll('a[href^="#video"]');
+            for (var i = 0; i < links.length; i++) {
+                links[i].addEventListener('click', function (e) {
+                    e.preventDefault();
+                    var target = this.getAttribute('href');
+                    var lis = nav.querySelectorAll('li');
+                    for (var j = 0; j < lis.length; j++) lis[j].classList.remove('active');
+                    this.parentElement.classList.add('active');
+                    var panes = document.querySelectorAll('.st4-left .tab-content .tab-pane');
+                    for (var k = 0; k < panes.length; k++) {
+                        panes[k].classList.remove('in', 'active');
+                    }
+                    var pane = document.querySelector(target);
+                    if (pane) pane.classList.add('in', 'active');
+                });
+            }
+        })();
+    </script>
+}

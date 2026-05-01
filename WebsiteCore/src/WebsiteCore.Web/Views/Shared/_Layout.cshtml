@@ -1,0 +1,175 @@
+﻿@using WebsiteCore.Business.ViewModels
+@using WebsiteCore.Data.Entities
+@{
+    var site = ViewBag.Site as Site;
+    var defaultName    = "Trung tâm Y tế phường Kinh Môn";
+    var defaultAddress = "Số 294 đường Trần Hưng Đạo, phường Kinh Môn, Thành phố Hải Phòng";
+    var defaultPhone   = "02203.822.205";
+    var defaultEmail   = "ttytkinhmon@gmail.com";
+    var defaultDesc    = "Trung tâm Y tế phường Kinh Môn, TP Hải Phòng — chăm sóc sức khỏe ban đầu, khám chữa bệnh, tư vấn y tế trực tuyến.";
+    var defaultKw      = "TTYT Kinh Môn, Trung tâm Y tế Kinh Môn, Hải Phòng, khám bệnh, đặt lịch khám, tư vấn y tế";
+
+    var siteName    = site?.NameCompanyL ?? defaultName;
+    var siteAddress = site?.AddressL     ?? defaultAddress;
+    var sitePhone   = site?.Phone        ?? defaultPhone;
+    var siteEmail   = site?.Email        ?? defaultEmail;
+    var siteDesc    = site?.MetaDescription ?? defaultDesc;
+    var siteKw      = site?.MetaKeyword     ?? defaultKw;
+
+    var pageTitle = ViewData["Title"] as string;
+    if (string.IsNullOrEmpty(pageTitle)) pageTitle = siteName;
+    var pageTitleFull = pageTitle + " — " + siteName;
+
+    var canonicalUrl = $"{Context.Request.Scheme}://{Context.Request.Host}{Context.Request.Path}";
+
+    // Per-page SEO overrides (set ViewData["MetaDescription"], ["OgImage"], ["JsonLd"], ["OgType"])
+    var pageMetaDesc = (ViewData["MetaDescription"] as string ?? ViewBag.MetaDescription as string ?? siteDesc).Trim();
+    var pageMetaKw   = (ViewData["MetaKeywords"]    as string ?? ViewBag.MetaKeywords    as string ?? siteKw).Trim();
+    var pageOgImage  = ViewData["OgImage"] as string ?? ViewBag.OgImage as string;
+    if (string.IsNullOrEmpty(pageOgImage))
+        pageOgImage = $"{Context.Request.Scheme}://{Context.Request.Host}/assets/client/images/logo.png";
+    else if (!pageOgImage.Contains("://"))
+        pageOgImage = $"{Context.Request.Scheme}://{Context.Request.Host}/{pageOgImage.TrimStart('/')}";
+    var pageOgType   = ViewData["OgType"] as string ?? "website";
+    var pageJsonLd   = ViewData["JsonLd"] as string;
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <title>@pageTitleFull</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="theme-color" content="#0a3d62" />
+
+    @* Favicon — logo TTYT Kinh Môn (multi-size để browser pick cái phù hợp, bản gốc 5.5MB không dùng làm favicon) *@
+    <link rel="icon" type="image/png" sizes="32x32"  href="/assets/client/images/logo-kinhmon-32.png" />
+    <link rel="icon" type="image/png" sizes="64x64"  href="/assets/client/images/logo-kinhmon-64.png" />
+    <link rel="apple-touch-icon" sizes="180x180"     href="/assets/client/images/logo-kinhmon-180.png" />
+    <link rel="shortcut icon" type="image/png"       href="/assets/client/images/logo-kinhmon-64.png" />
+
+    <meta name="description" content="@pageMetaDesc" />
+    <meta name="keywords" content="@pageMetaKw" />
+    <meta name="author" content="@siteName" />
+    <meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large,max-video-preview:-1" />
+    <meta name="googlebot" content="index,follow" />
+    <meta name="language" content="Vietnamese" />
+    <meta name="geo.region" content="VN-HP" />
+    <meta name="geo.placename" content="Hải Phòng" />
+    <link rel="canonical" href="@canonicalUrl" />
+
+    <meta property="og:type" content="@pageOgType" />
+    <meta property="og:site_name" content="@siteName" />
+    <meta property="og:title" content="@pageTitle" />
+    <meta property="og:description" content="@pageMetaDesc" />
+    <meta property="og:url" content="@canonicalUrl" />
+    <meta property="og:image" content="@pageOgImage" />
+    <meta property="og:locale" content="vi_VN" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="@pageTitle" />
+    <meta name="twitter:description" content="@pageMetaDesc" />
+    <meta name="twitter:image" content="@pageOgImage" />
+
+    @* JSON-LD structured data: MedicalOrganization *@
+    <script type="application/ld+json">
+    {
+      "@@context": "https://schema.org",
+      "@@type": "MedicalOrganization",
+      "name": "@siteName",
+      "url": "@(Context.Request.Scheme)://@(Context.Request.Host)/",
+      "logo": "@pageOgImage",
+      "image": "@pageOgImage",
+      "telephone": "@sitePhone",
+      "email": "@siteEmail",
+      "address": {
+        "@@type": "PostalAddress",
+        "streetAddress": "@siteAddress",
+        "addressLocality": "Phường Kinh Môn",
+        "addressRegion": "Hải Phòng",
+        "addressCountry": "VN"
+      },
+      "medicalSpecialty": [
+        "GeneralPractice", "InternalMedicine", "Pediatric", "Obstetric", "Surgery"
+      ],
+      "openingHours": "Mo-Su 00:00-23:59"
+    }
+    </script>
+    @if (!string.IsNullOrEmpty(pageJsonLd))
+    {
+        @Html.Raw($"<script type=\"application/ld+json\">{pageJsonLd}</script>")
+    }
+
+    @* Google Fonts — Be Vietnam Pro (VN-optimized modern sans) *@
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+    <link href="~/assets/client/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="~/assets/client/css/font-awesome.min.css" rel="stylesheet" />
+    <link href="~/assets/client/css/animate.css" rel="stylesheet" />
+    <link href="~/assets/client/css/owl.carousel.min.css" rel="stylesheet" />
+    <link href="~/assets/client/css/style.css" rel="stylesheet" />
+    <link href="~/assets/client/css/responsive-fixes.css?v=20260430b" rel="stylesheet" />
+    <link href="~/assets/client/css/custom-ux.css?v=8" rel="stylesheet" />
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+    <partial name="_Header" />
+
+    @if (ViewData["HideHero"] == null)
+    {
+        <section class="kinhmon-hero full-section">
+            <a href="/" title="@siteName">
+                <img src="~/assets/client/images/hero-kinhmon.jpg"
+                     alt="@siteName — Sở Y tế Thành phố Hải Phòng"
+                     class="kinhmon-hero-img" />
+            </a>
+        </section>
+    }
+
+    @if (ViewData["Breadcrumb"] is List<(string label, string? url)> bc && bc.Count > 0)
+    {
+        <nav aria-label="breadcrumb" class="container" style="margin-top:12px;">
+            <ol class="breadcrumb-custom">
+                <li><a href="/"><i class="fa fa-home"></i> Trang chủ</a></li>
+                @for (int i = 0; i < bc.Count; i++)
+                {
+                    var (label, url) = bc[i];
+                    if (i == bc.Count - 1 || string.IsNullOrEmpty(url))
+                    {
+                        <li class="active">@label</li>
+                    }
+                    else
+                    {
+                        <li><a href="@url">@label</a></li>
+                    }
+                }
+            </ol>
+        </nav>
+    }
+
+    <div class="main-section full-section">
+        @if (TempData["Success"] != null)
+        {
+            <div class="container" style="margin-top:16px;">
+                <div class="alert alert-success">
+                    <i class="fa fa-check-circle"></i> @TempData["Success"]
+                </div>
+            </div>
+        }
+        @RenderBody()
+    </div>
+
+    <partial name="_Footer" />
+    <partial name="_DoctorDetail" />
+
+    <script src="~/assets/client/js/jquery.min.js"></script>
+    <script src="~/assets/client/js/bootstrap.min.js"></script>
+    <script src="~/assets/client/js/owl.carousel.min.js"></script>
+    <script src="~/assets/client/js/custom.js?v=3"></script>
+    <script src="~/assets/client/js/services.js?v=4"></script>
+    <script src="~/assets/client/js/password-eye.js?v=2"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

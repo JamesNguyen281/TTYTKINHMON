@@ -1,0 +1,160 @@
+﻿@inject WebsiteCore.Data.TtytlpDbContext DbCtx
+@using Microsoft.EntityFrameworkCore
+@{
+    var u = ViewBag.CurrentUser as WebsiteCore.Business.ViewModels.LoggedInUser;
+    string curPath = (Context.Request.Path.Value ?? "").ToLowerInvariant();
+    string curQuery = (Context.Request.QueryString.Value ?? "").ToLowerInvariant();
+    bool On(string p) => curPath.StartsWith(p.ToLowerInvariant());
+    bool OnExact(string p) => curPath.TrimEnd('/').Equals(p.ToLowerInvariant().TrimEnd('/'));
+
+    int newComplete = await DbCtx.News.CountAsync(n => n.ActiveFlag == 1);
+    int newWaiting  = await DbCtx.News.CountAsync(n => n.ActiveFlag == 0);
+    int newNo       = await DbCtx.News.CountAsync(n => n.ActiveFlag == -1);
+    int newDel      = await DbCtx.News.CountAsync(n => n.ActiveFlag == -2);
+    int userCount   = await DbCtx.Users.CountAsync(x => x.ActiveFlag == 1);
+    int unreadComment = await DbCtx.Comments.CountAsync(c => c.ActiveFlag != 1);
+
+    bool isNewsActive = On("/admincp/news");
+    bool isCategoryActive = On("/admincp/sites") || On("/admincp/departments")
+        || On("/admincp/partners") || On("/admincp/doctors") || On("/admincp/doctorschedules")
+        || On("/admincp/medicalrecords") || On("/admincp/appointments") || On("/admincp/quotas");
+    bool isSysActive = On("/admincp/users") || On("/admincp/auditsystems");
+}
+<script type="text/javascript">
+    try { ace.settings.check('sidebar', 'fixed') } catch (e) { }
+</script>
+
+<ul class="nav nav-list">
+    <li class="@(OnExact("/admincp/default") || OnExact("/admincp") ? "active" : "")">
+        <a href="/AdminCP/Default">
+            <i class="menu-icon fa fa-tachometer"></i>
+            <span class="menu-text">Trang chủ</span>
+        </a>
+        <b class="arrow"></b>
+    </li>
+    <li class="@(On("/admincp/categories") ? "active" : "")">
+        <a href="/AdminCP/Categories">
+            <i class="menu-icon fa fa-list"></i>
+            <span class="menu-text">Danh mục tin tức</span>
+        </a>
+        <b class="arrow"></b>
+    </li>
+    <li class="hsub @(isNewsActive ? "active open" : "")">
+        <a href="#" class="dropdown-toggle">
+            <i class="menu-icon fa fa-list-ol"></i>
+            <span class="menu-text">Quản lý tin tức</span>
+            <b class="arrow fa fa-angle-down"></b>
+        </a>
+        <b class="arrow"></b>
+        <ul class="submenu" >
+            <li class="@((isNewsActive && (curQuery.Contains("type=complete") || !curQuery.Contains("type="))) ? "active" : "")">
+                <a href="/AdminCP/News?type=complete">
+                    <i class="menu-icon fa fa-caret-right"></i>
+                    Tin đã đăng (@newComplete)
+                </a>
+            </li>
+            <li class="@(curQuery.Contains("type=waiting") ? "active" : "")">
+                <a href="/AdminCP/News?type=waiting">
+                    <i class="menu-icon fa fa-caret-right"></i>
+                    Tin chờ duyệt (@newWaiting)
+                </a>
+            </li>
+            <li class="@(curQuery.Contains("type=no") ? "active" : "")">
+                <a href="/AdminCP/News?type=no">
+                    <i class="menu-icon fa fa-caret-right"></i>
+                    Tin không duyệt (@newNo)
+                </a>
+            </li>
+            <li class="@(curQuery.Contains("type=delete") ? "active" : "")">
+                <a href="/AdminCP/News?type=delete">
+                    <i class="menu-icon fa fa-caret-right"></i>
+                    Tin đã xoá (@newDel)
+                </a>
+            </li>
+            <li>
+                <a href="/AdminCP/News/Create">
+                    <i class="menu-icon fa fa-plus-circle"></i>
+                    Thêm tin mới
+                </a>
+            </li>
+        </ul>
+    </li>
+    <li class="@(On("/admincp/slides") ? "active" : "")">
+        <a href="/AdminCP/Slides">
+            <i class="menu-icon fa fa-image"></i>
+            <span class="menu-text">Quản lý hình ảnh</span>
+        </a>
+        <b class="arrow"></b>
+    </li>
+    <li class="@(On("/admincp/videos") ? "active" : "")">
+        <a href="/AdminCP/Videos">
+            <i class="menu-icon fa fa-video-camera"></i>
+            <span class="menu-text">Quản lý video</span>
+        </a>
+        <b class="arrow"></b>
+    </li>
+    <li class="@(On("/admincp/documents") ? "active" : "")">
+        <a href="/AdminCP/Documents">
+            <i class="menu-icon fa fa-folder-open-o"></i>
+            <span class="menu-text">Quản lý văn bản</span>
+        </a>
+        <b class="arrow"></b>
+    </li>
+    <li class="@(On("/admincp/comment") ? "active" : "")">
+        <a href="/AdminCP/Comment">
+            <i class="menu-icon fa fa-envelope"></i>
+            <span class="menu-text">Hộp thư góp ý</span>
+            @if (unreadComment > 0)
+            {
+                <span class="badge" style="background:#e74c3c; float:right; margin-top:2px;">@unreadComment</span>
+            }
+        </a>
+        <b class="arrow"></b>
+    </li>
+    <li class="@(On("/admincp/qrcode") ? "active" : "")">
+        <a href="/AdminCP/QrCode">
+            <i class="menu-icon fa fa-qrcode"></i>
+            <span class="menu-text">Tạo mã QR</span>
+        </a>
+        <b class="arrow"></b>
+    </li>
+
+    <li class="hsub @(isCategoryActive ? "active open" : "")">
+        <a href="#" class="dropdown-toggle">
+            <i class="menu-icon fa fa-list-alt"></i>
+            <span class="menu-text">Các danh mục</span>
+            <b class="arrow fa fa-angle-down"></b>
+        </a>
+        <b class="arrow"></b>
+        <ul class="submenu" >
+            <li class="@(On("/admincp/sites") ? "active" : "")"><a href="/AdminCP/Sites"><i class="menu-icon fa fa-caret-right"></i> Cấu hình site</a></li>
+            <li class="@(On("/admincp/departments") ? "active" : "")"><a href="/AdminCP/Departments"><i class="menu-icon fa fa-caret-right"></i> Chuyên khoa</a></li>
+            <li class="@(On("/admincp/partners") ? "active" : "")"><a href="/AdminCP/Partners"><i class="menu-icon fa fa-caret-right"></i> Đối tác</a></li>
+            <li class="@(On("/admincp/doctors") ? "active" : "")"><a href="/AdminCP/Doctors"><i class="menu-icon fa fa-caret-right"></i> Bác sĩ</a></li>
+            <li class="@(On("/admincp/doctorschedules") ? "active" : "")"><a href="/AdminCP/DoctorSchedules"><i class="menu-icon fa fa-caret-right"></i> Lịch trực BS</a></li>
+            <li class="@(On("/admincp/medicalrecords") ? "active" : "")"><a href="/AdminCP/MedicalRecords"><i class="menu-icon fa fa-caret-right"></i> Hồ sơ khám</a></li>
+            <li class="@(On("/admincp/appointments") ? "active" : "")"><a href="/AdminCP/Appointments"><i class="menu-icon fa fa-caret-right"></i> Lịch hẹn khám</a></li>
+            <li class="@(On("/admincp/quotas") ? "active" : "")"><a href="/AdminCP/Quotas"><i class="menu-icon fa fa-caret-right"></i> Suất khám</a></li>
+        </ul>
+    </li>
+
+    <li class="hsub @(isSysActive ? "active open" : "")">
+        <a href="#" class="dropdown-toggle">
+            <i class="menu-icon fa fa-cogs"></i>
+            <span class="menu-text">Cấu hình hệ thống</span>
+            <b class="arrow fa fa-angle-down"></b>
+        </a>
+        <b class="arrow"></b>
+        <ul class="submenu" >
+            <li class="@(On("/admincp/auditsystems") ? "active" : "")"><a href="/AdminCP/AuditSystems"><i class="menu-icon fa fa-caret-right"></i> Nhật ký hệ thống</a></li>
+            <li class="@(On("/admincp/users") ? "active" : "")"><a href="/AdminCP/Users"><i class="menu-icon fa fa-caret-right"></i> Người dùng (@userCount)</a></li>
+        </ul>
+    </li>
+</ul>
+
+<div class="sidebar-toggle sidebar-collapse" id="sidebar-collapse" title="Thu/mở sidebar">
+    <i class="ace-icon fa fa-angle-double-left" data-icon1="ace-icon fa fa-angle-double-left" data-icon2="ace-icon fa fa-angle-double-right"></i>
+</div>
+<script type="text/javascript">
+    try { ace.settings.check('sidebar', 'collapsed') } catch (e) { }
+</script>

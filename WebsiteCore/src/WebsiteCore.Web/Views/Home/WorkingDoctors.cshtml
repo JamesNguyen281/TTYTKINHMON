@@ -1,0 +1,50 @@
+@using WebsiteCore.Data.Entities
+@using WebsiteCore.Business
+@{
+    ViewData["Title"] = "Lịch làm việc bác sĩ";
+    var schedules = ViewBag.Schedules as List<DoctorSchedule> ?? new();
+    var doctors = ViewBag.Doctors as List<Doctor> ?? new();
+    var docDict = doctors.ToDictionary(d => d.Id, d => d);
+    string[] weekdays = { "CN", "Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7" };
+}
+
+<div class="container" style="padding-top:24px;">
+    <h2 style="color:#0a3d62;"><i class="fa fa-calendar-o"></i> Lịch làm việc bác sĩ</h2>
+
+    <div class="table-responsive">
+        <table class="table table-hover table-bordered" style="background:white;">
+            <thead style="background:#0a3d62; color:white;">
+                <tr><th>Bác sĩ</th><th>Ngày</th><th>Buổi</th><th>Phòng</th><th>Ghi chú</th></tr>
+            </thead>
+            <tbody>
+            @foreach (var s in schedules.OrderBy(x => x.Weekday).ThenBy(x => x.Session))
+            {
+                docDict.TryGetValue(s.DoctorId, out var d);
+                <tr>
+                    <td>
+                        @if (d != null)
+                        {
+                            @if (!string.IsNullOrEmpty(d.ImagePath))
+                            {
+                                <img src="/@d.ImagePath.TrimStart('/')" alt="@d.NameL"
+                                     style="height:32px; width:32px; object-fit:cover; border-radius:50%; margin-right:8px;"
+                                     onerror="this.onerror=null;this.src='/assets/client/images/doctor-default.svg';" />
+                            }
+                            <strong>@d.NameL</strong>
+                            <br /><small class="text-muted">@d.SpeciallyL</small>
+                        }
+                    </td>
+                    <td>@(s.Weekday < weekdays.Length ? weekdays[s.Weekday] : "—")</td>
+                    <td>@(s.Session == Constants.SessionMorning ? "Sáng" : "Chiều")</td>
+                    <td>@s.Room</td>
+                    <td>@s.Note</td>
+                </tr>
+            }
+            @if (!schedules.Any())
+            {
+                <tr><td colspan="5" class="text-center text-muted">Hiện chưa có lịch trực nào.</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

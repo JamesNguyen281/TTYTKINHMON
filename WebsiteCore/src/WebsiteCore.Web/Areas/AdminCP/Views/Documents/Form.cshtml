@@ -1,0 +1,52 @@
+@model WebsiteCore.Data.Entities.Document
+@{ var isEdit = Model.Id != Guid.Empty; }
+
+<h2 style="color:#0a3d62;"><i class="fa fa-folder-open-o"></i> @ViewData["Title"]</h2>
+<a href="/AdminCP/Documents" class="btn btn-default" style="margin-bottom:12px;">← Quay lại</a>
+
+<form asp-action="@(isEdit ? "Edit" : "Create")" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+    <div class="row">
+        <div class="col-md-8 form-group">
+            <label>Tên tài liệu <span class="text-danger">*</span></label>
+            <input asp-for="DocumentName" class="form-control" required />
+        </div>
+        <div class="col-md-4 form-group">
+            <label>Mã</label>
+            <input asp-for="DocumentCode" class="form-control" />
+        </div>
+        <div class="col-md-12 form-group">
+            <label>Mô tả</label>
+            <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+        </div>
+        <div class="col-md-4 form-group">
+            <label>Ngày ban hành</label>
+            <input name="DocumentDate" class="form-control" type="date" value="@(Model.DocumentDate?.ToString("yyyy-MM-dd"))" />
+        </div>
+        <div class="col-md-4 form-group">
+            <label>Hiệu lực từ</label>
+            <input name="EffectiveFromDate" class="form-control" type="date" value="@(Model.EffectiveFromDate?.ToString("yyyy-MM-dd"))" />
+        </div>
+        <div class="col-md-4 form-group">
+            <label>Đến</label>
+            <input name="EffectiveToDate" class="form-control" type="date" value="@(Model.EffectiveToDate?.ToString("yyyy-MM-dd"))" />
+        </div>
+        <div class="col-md-12 form-group">
+            <label>File đính kèm (path)</label>
+            <input asp-for="AttachFilePath" class="form-control" placeholder="assets/admin/documents/quy-trinh.pdf" />
+        </div>
+        <div class="col-md-6 form-group">
+            <label>Người ký duyệt</label>
+            <input asp-for="ApprovedBy" class="form-control" />
+        </div>
+        <div class="col-md-6 form-group">
+            <label>Active</label>
+            <select asp-for="ActiveFlag" class="form-control">
+                <option value="1" selected="@(Model.ActiveFlag == 1)">Active</option>
+                <option value="0" selected="@(Model.ActiveFlag == 0)">Inactive</option>
+            </select>
+        </div>
+    </div>
+    <button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> Lưu</button>
+</form>

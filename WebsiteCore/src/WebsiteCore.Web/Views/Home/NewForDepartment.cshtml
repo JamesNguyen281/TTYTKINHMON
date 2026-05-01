@@ -1,0 +1,59 @@
+@model WebsiteCore.Data.Entities.Department
+@using WebsiteCore.Data.Entities
+@{
+    ViewData["Title"] = Model.NameL;
+    var newsList = ViewBag.NewsList as List<News> ?? new();
+    var doctors = ViewBag.Doctors as List<Doctor> ?? new();
+}
+
+<div class="container" style="padding-top:24px;">
+    <h1 style="color:#0a3d62;">@Model.NameL</h1>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="panel panel-default">
+                <div class="panel-heading"><strong>Giới thiệu</strong></div>
+                <div class="panel-body">
+                    @Html.Raw(Model.DetailL ?? Model.DescriptionL)
+                </div>
+            </div>
+
+            @if (newsList.Any())
+            {
+                <h3>Tin tức của khoa</h3>
+                <ul class="list-group">
+                    @foreach (var n in newsList)
+                    {
+                        <li class="list-group-item">
+                            <a href="/tin-tuc/@n.AliasL"><strong>@n.TitleL</strong></a>
+                            <p class="text-muted">@n.DescriptionL</p>
+                            <small>@n.CreatedDate?.ToString("dd/MM/yyyy")</small>
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+        <div class="col-md-4">
+            <div class="panel panel-primary">
+                <div class="panel-heading"><strong>Bác sĩ trong khoa</strong></div>
+                <div class="panel-body">
+                    @foreach (var d in doctors)
+                    {
+                        <div style="margin-bottom:10px; padding:8px; border-bottom:1px solid #eee;">
+                            @if (!string.IsNullOrEmpty(d.ImagePath))
+                            {
+                                <img src="/@d.ImagePath.TrimStart('/')" alt="@d.NameL"
+                                     style="height:48px; width:48px; object-fit:cover; border-radius:50%; float:left; margin-right:10px;"
+                                     onerror="this.onerror=null;this.src='/assets/client/images/doctor-default.svg';" />
+                            }
+                            <strong>@d.NameL</strong>
+                            <br /><small class="text-muted">@d.SpeciallyL</small>
+                            <div style="clear:both;"></div>
+                        </div>
+                    }
+                    @if (!doctors.Any()) { <p class="text-muted">Chưa có thông tin bác sĩ.</p> }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

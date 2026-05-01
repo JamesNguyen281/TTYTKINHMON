@@ -1,0 +1,32 @@
+@model List<WebsiteCore.Data.Entities.Question>
+@{ ViewData["Title"] = "Câu hỏi của tôi"; }
+
+<h2 style="color:#0a3d62;"><i class="fa fa-question-circle-o"></i> Câu hỏi của tôi</h2>
+
+<a class="btn btn-primary mb-3" href="/dat-cau-hoi"><i class="fa fa-plus"></i> Đặt câu hỏi mới</a>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">Bạn chưa đặt câu hỏi nào.</div>
+}
+else
+{
+    foreach (var q in Model)
+    {
+        <div class="card mb-2 shadow-sm">
+            <div class="card-body">
+                <h5>@q.Title</h5>
+                <p class="mb-1">@q.Body</p>
+                <small class="text-muted">
+                    @q.CreatedDate.ToString("dd/MM/yyyy HH:mm") ·
+                    @switch (q.Status)
+                    {
+                        case "answered": <span class="badge bg-success">Đã trả lời</span> break;
+                        case "pending":  <span class="badge bg-warning">Chờ trả lời</span> break;
+                        default:         <span class="badge bg-secondary">@q.Status</span> break;
+                    }
+                </small>
+            </div>
+        </div>
+    }
+}

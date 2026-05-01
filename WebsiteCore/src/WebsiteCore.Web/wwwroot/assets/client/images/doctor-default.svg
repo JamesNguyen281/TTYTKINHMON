@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#eef5fb"/>
+      <stop offset="100%" stop-color="#dde6ef"/>
+    </linearGradient>
+  </defs>
+  <rect width="200" height="200" fill="url(#bg)"/>
+  <!-- Coat (white blouse) -->
+  <path d="M30 200 Q30 130 70 115 L130 115 Q170 130 170 200 Z" fill="#f4f6f8"/>
+  <path d="M70 115 L100 145 L130 115 L100 200 Z" fill="#ffffff"/>
+  <!-- Tie -->
+  <path d="M95 130 L105 130 L108 175 L100 185 L92 175 Z" fill="#fa7268"/>
+  <!-- Stethoscope -->
+  <path d="M75 130 Q60 165 75 180" stroke="#37474f" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <circle cx="75" cy="183" r="6" fill="#37474f"/>
+  <circle cx="75" cy="183" r="3" fill="#90a4ae"/>
+  <!-- Head -->
+  <circle cx="100" cy="80" r="32" fill="#fcd9b6"/>
+  <!-- Hair -->
+  <path d="M68 78 Q68 50 100 48 Q132 50 132 78 L132 65 Q120 55 100 55 Q80 55 68 65 Z" fill="#34495e"/>
+  <!-- Neck -->
+  <rect x="92" y="105" width="16" height="14" fill="#fcd9b6"/>
+  <!-- Subtle face hint (no eyes, simple silhouette) -->
+  <ellipse cx="100" cy="92" rx="14" ry="6" fill="#f4c79c" opacity="0.4"/>
+</svg>

@@ -1,0 +1,169 @@
+@model WebsiteCore.Business.ViewModels.AppointmentRow
+@using WebsiteCore.Data.Entities
+@using WebsiteCore.Business
+@{
+    ViewData["Title"] = "Chi tiết lịch hẹn";
+    var availDoctors = ViewBag.AvailableDoctors as List<Doctor> ?? new();
+    int allDocCount = (int)(ViewBag.AllDoctorsCount ?? 0);
+    bool canAssign = Model.Status != "completed" && Model.Status != "cancelled" && Model.Status != "rejected";
+    var assignedName = Model.DoctorId.HasValue
+        ? availDoctors.FirstOrDefault(d => d.Id == Model.DoctorId.Value)?.NameL
+        : null;
+}
+
+<div class="container" style="padding-top:24px;">
+    <h2 style="color:#0a3d62;"><i class="fa fa-clipboard"></i> Chi tiết lịch hẹn</h2>
+
+    <a href="/le-tan/lich-hen?status=@Model.Status" class="btn btn-sm btn-default" style="margin-bottom:12px;">← Hàng đợi</a>
+
+    <div class="panel panel-default">
+        <div class="panel-heading"><strong>Thông tin</strong></div>
+        <div class="panel-body">
+            <dl class="dl-horizontal">
+                <dt>Bệnh nhân</dt> <dd><strong>@Model.PatientName</strong></dd>
+                <dt>SĐT</dt> <dd><a href="tel:@Model.PatientPhone">@Model.PatientPhone</a></dd>
+                <dt>Email</dt> <dd>@(Model.PatientEmail ?? "—")</dd>
+                <dt>Chuyên khoa</dt> <dd>@Model.DepartmentName</dd>
+                <dt>Ngày/buổi</dt> <dd>
+                    @(Model.AppointmentDate?.ToString("dddd, dd/MM/yyyy", new System.Globalization.CultureInfo("vi-VN")) ?? "—")
+                    · @(Model.Session == "morning" ? "Buổi sáng" : "Buổi chiều")
+                </dd>
+                <dt>Lý do</dt> <dd>@Model.Reason</dd>
+                <dt>Mã khám</dt> <dd>
+                    @if (!string.IsNullOrEmpty(Model.BookingCode))
+                    { <code style="font-size:18px;">@Model.BookingCode</code> }
+                    else { <em class="text-muted">Chưa sinh (chỉ tạo khi duyệt confirmed)</em> }
+                </dd>
+                <dt>Trạng thái</dt> <dd>
+                    <span class="label label-@(Model.Status == "confirmed" ? "success" : Model.Status == "pending" ? "warning" : "default")">@Constants.ApptStatusLabel(Model.Status)</span>
+                    @if (Model.CheckedIn) { <span class="label label-info">Đã check-in</span> }
+                </dd>
+                <dt>Bác sĩ phụ trách</dt> <dd>
+                    @if (Model.DoctorId.HasValue)
+                    {
+                        <strong style="color:#0a3d62;"><i class="fa fa-user-md"></i> @(assignedName ?? "BS đã phân (ngoài khoa)")</strong>
+                    }
+                    else
+                    {
+                        <em class="text-muted">Chưa phân — bác sĩ chưa thấy lịch này trong danh sách "Bệnh nhân hôm nay"</em>
+                    }
+                </dd>
+                @if (!string.IsNullOrEmpty(Model.StaffNote))
+                {
+                    <dt>Ghi chú lễ tân</dt> <dd>@Model.StaffNote</dd>
+                }
+            </dl>
+        </div>
+    </div>
+
+    @if (canAssign)
+    {
+        <div class="panel panel-info">
+            <div class="panel-heading"><strong><i class="fa fa-user-md"></i> Phân bác sĩ phụ trách</strong>
+                <small style="font-weight:normal; opacity:.85; margin-left:8px;">— quyết định bác sĩ nào sẽ thấy lịch trong "Bệnh nhân hôm nay"</small>
+            </div>
+            <div class="panel-body">
+                @if (!availDoctors.Any())
+                {
+                    <div class="alert alert-warning" style="margin:0;">
+                        <i class="fa fa-warning"></i>
+                        Khoa <strong>@Model.DepartmentName</strong> chưa có bác sĩ nào.
+                        Vui lòng nhờ Quản trị viên thêm bác sĩ qua <a href="/AdminCP/Doctors">AdminCP / Bác sĩ</a> trước.
+                    </div>
+                }
+                else
+                {
+                    <form asp-action="AssignDoctor" method="post" class="form-inline">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <select name="doctorId" class="form-control" style="min-width:280px;">
+                            <option value="">— Bỏ phân —</option>
+                            @foreach (var d in availDoctors)
+                            {
+                                <option value="@d.Id" selected="@(d.Id == Model.DoctorId)">@d.NameL @(string.IsNullOrEmpty(d.SpeciallyL) ? "" : "(" + d.SpeciallyL + ")")</option>
+                            }
+                        </select>
+                        <button type="submit" class="btn btn-info"><i class="fa fa-save"></i> Lưu phân công</button>
+                        <small class="text-muted" style="margin-left:10px;">Khoa @Model.DepartmentName có @availDoctors.Count BS @(availDoctors.Count < allDocCount ? $"/ tổng {allDocCount} BS toàn site" : "")</small>
+                    </form>
+                }
+            </div>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> @TempData["Error"]</div>
+    }
+
+    @{
+        // Whitelist transition cho từng status — đồng bộ với AppointmentService.AllowedTransitions
+        var transitions = Model.Status switch
+        {
+            "pending"     => new[] { ("confirmed", "Xác nhận (sẽ sinh mã khám)"), ("rescheduled","Đề nghị đổi lịch"), ("rejected","Từ chối"), ("cancelled","Huỷ") },
+            "confirmed"   => new[] { ("completed","Hoàn tất"), ("cancelled","Huỷ"), ("rescheduled","Đổi lịch") },
+            "rescheduled" => new[] { ("confirmed","Xác nhận"), ("rejected","Từ chối"), ("cancelled","Huỷ") },
+            _ => Array.Empty<(string, string)>()
+        };
+    }
+
+    @if (transitions.Length > 0)
+    {
+        <div class="panel panel-primary">
+            <div class="panel-heading"><strong>Cập nhật trạng thái</strong></div>
+            <div class="panel-body">
+                <form action="/le-tan/cap-nhat-trang-thai" method="post" id="frm-status">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@Model.Id" />
+                    <div class="form-group">
+                        <label>Trạng thái mới</label>
+                        <select name="newStatus" id="ns" class="form-control" required>
+                            @foreach (var (val, lbl) in transitions)
+                            {
+                                <option value="@val">@lbl</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label id="lblNote">Ghi chú (tuỳ chọn) <small class="text-muted">— bắt buộc khi từ chối</small></label>
+                        <textarea name="staffNote" id="staffNote" class="form-control" rows="3"
+                                  maxlength="500" placeholder="Lý do từ chối/đổi lịch... (tối đa 500 ký tự)"></textarea>
+                        <small class="text-muted">Lý do sẽ hiển thị cho bệnh nhân ở trang "Lịch khám của tôi".</small>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="btnSubmit">
+                        <i class="fa fa-check"></i> Cập nhật trạng thái
+                    </button>
+                </form>
+                <script>
+                  (function(){
+                    var ns = document.getElementById('ns');
+                    var note = document.getElementById('staffNote');
+                    var lbl = document.getElementById('lblNote');
+                    function refresh(){
+                      var rejected = ns.value === 'rejected';
+                      note.required = rejected;
+                      lbl.innerHTML = rejected
+                        ? 'Lý do từ chối <span class="text-danger">*</span>'
+                        : 'Ghi chú (tuỳ chọn) <small class="text-muted">— bắt buộc khi từ chối</small>';
+                    }
+                    ns.addEventListener('change', refresh);
+                    refresh();
+                    document.getElementById('frm-status').addEventListener('submit', function(e){
+                      if(ns.value === 'rejected' && !note.value.trim()){
+                        e.preventDefault();
+                        alert('Vui lòng nhập lý do từ chối.');
+                        note.focus();
+                      }
+                    });
+                  })();
+                </script>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info">
+            <i class="fa fa-info-circle"></i> Lịch ở trạng thái <code>@Constants.ApptStatusLabel(Model.Status)</code> — không thể thay đổi tiếp.
+        </div>
+    }
+</div>

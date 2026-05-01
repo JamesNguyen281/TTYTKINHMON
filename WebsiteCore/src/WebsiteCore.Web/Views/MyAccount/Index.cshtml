@@ -1,0 +1,372 @@
+@model WebsiteCore.Data.Entities.User
+@{
+    ViewData["Title"] = "Hồ sơ của tôi";
+    string genderLabel = Model?.Gender switch { 1 => "Nam", 2 => "Nữ", _ => "—" };
+    string memberSince = Model?.CreatedDate?.ToString("dd/MM/yyyy") ?? "—";
+    string lastLogin   = Model?.LastLogin?.ToString("dd/MM/yyyy HH:mm") ?? "—";
+    int? age = Model?.Dob.HasValue == true
+        ? (int)Math.Floor((DateTime.Today - Model.Dob.Value.ToDateTime(TimeOnly.MinValue)).TotalDays / 365.25)
+        : null;
+
+    // First-time = chưa nhập định danh tối thiểu (Cccd + Dob + Address rỗng cả 3)
+    bool firstTime = string.IsNullOrEmpty(Model?.Cccd)
+                  && Model?.Dob == null
+                  && string.IsNullOrEmpty(Model?.Address);
+
+    // Tính độ hoàn thiện: số field đã có / tổng fields quan trọng
+    int filled = 0;
+    int total  = 9;
+    if (!string.IsNullOrEmpty(Model?.FullName)) filled++;
+    if (!string.IsNullOrEmpty(Model?.Phone)) filled++;
+    if (!string.IsNullOrEmpty(Model?.Email)) filled++;
+    if (Model?.Gender != null) filled++;
+    if (Model?.Dob != null) filled++;
+    if (!string.IsNullOrEmpty(Model?.Cccd)) filled++;
+    if (!string.IsNullOrEmpty(Model?.Address)) filled++;
+    if (!string.IsNullOrEmpty(Model?.BloodType)) filled++;
+    if (!string.IsNullOrEmpty(Model?.EmergencyContact)) filled++;
+    int pct = (int)Math.Round(filled * 100.0 / total);
+
+    string defaultTab = firstTime ? "edit-identity" : "overview";
+}
+
+<style>
+    .myacc-wrap { background:#f5f7fa; padding:20px 0 50px; }
+    .myacc-wrap .container { max-width:1200px; }
+
+    .myacc-hero { background:linear-gradient(135deg,#0a3d62 0%,#1d5688 100%); color:white; padding:18px 24px; border-radius:8px; margin-bottom:18px; box-shadow:0 4px 12px rgba(10,61,98,0.18); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; }
+    .myacc-hero h1 { margin:0; font-size:20px; font-weight:600; }
+    .myacc-hero .meta { font-size:12px; opacity:0.85; margin-top:4px; }
+    .myacc-hero .meta span { margin-right:14px; }
+    .myacc-hero .progress-pill { background:rgba(255,255,255,0.15); border-radius:20px; padding:6px 14px; font-size:13px; min-width:170px; text-align:center; }
+    .myacc-hero .progress-pill .bar { height:5px; background:rgba(255,255,255,0.25); border-radius:3px; margin-top:5px; overflow:hidden; }
+    .myacc-hero .progress-pill .bar > span { display:block; height:100%; background:#1abc9c; transition:width 0.4s; }
+
+    .first-time-alert { background:#fff7e6; border:1px solid #ffd591; border-left:4px solid #f39c12; padding:12px 16px; border-radius:4px; margin-bottom:14px; color:#7a4f0c; }
+    .first-time-alert .fa { color:#f39c12; margin-right:6px; }
+
+    .layout-grid { display:grid; grid-template-columns:240px 1fr; gap:18px; }
+    @@media (max-width: 768px) { .layout-grid { grid-template-columns:1fr; } }
+
+    .side-menu { background:white; border:1px solid #e5e9ee; border-radius:6px; box-shadow:0 1px 3px rgba(0,0,0,0.04); padding:8px; position:sticky; top:80px; align-self:start; }
+    .side-menu .item { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:4px; color:#3c4858; text-decoration:none; font-size:14px; cursor:pointer; transition:all 0.15s; border:0; background:none; width:100%; text-align:left; }
+    .side-menu .item .fa { width:18px; text-align:center; opacity:0.75; }
+    .side-menu .item:hover { background:#f5f7fa; color:#0a3d62; }
+    .side-menu .item.active { background:#0a3d62; color:white; font-weight:500; }
+    .side-menu .item.active .fa { opacity:1; }
+    .side-menu .divider { height:1px; background:#e5e9ee; margin:6px 8px; }
+    .side-menu .item.danger { color:#c0392b; }
+    .side-menu .item.danger:hover { background:#fde7e9; }
+
+    .myacc-card { background:white; border:1px solid #e5e9ee; border-radius:6px; box-shadow:0 1px 3px rgba(0,0,0,0.04); margin-bottom:14px; overflow:hidden; }
+    .myacc-card .head { padding:12px 16px; background:#f7f9fc; border-bottom:1px solid #e5e9ee; font-weight:600; color:#0a3d62; display:flex; justify-content:space-between; align-items:center; }
+    .myacc-card .head .fa-stack { margin-right:6px; }
+    .myacc-card .body { padding:16px; }
+
+    /* === VIEW MODE (read-only) === */
+    .info-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px,1fr)); gap:14px 22px; }
+    .info-grid .row-item .lbl { font-size:11px; text-transform:uppercase; color:#8898aa; letter-spacing:0.4px; margin-bottom:3px; }
+    .info-grid .row-item .lbl .fa { width:14px; margin-right:4px; opacity:0.7; }
+    .info-grid .row-item .val { font-size:15px; color:#0a3d62; font-weight:600; word-break:break-word; }
+    .info-grid .row-item .val.empty { color:#a0a8b3; font-weight:400; font-style:italic; }
+    .info-grid .row-item.full-row { grid-column:1 / -1; }
+    .info-grid .row-item .val pre { font-family:inherit; white-space:pre-wrap; margin:0; font-weight:400; font-size:14px; color:#3c4858; }
+    .quick-edit-btn { display:inline-flex; align-items:center; gap:5px; font-size:12px; padding:4px 10px; background:#eef5fb; color:#0a3d62; border:1px solid #d1e0ec; border-radius:3px; text-decoration:none; cursor:pointer; }
+    .quick-edit-btn:hover { background:#0a3d62; color:white; border-color:#0a3d62; }
+
+    /* === EDIT MODE === */
+    .myacc-form .form-group { margin-bottom:14px; }
+    .myacc-form label { font-weight:500; color:#3c4858; font-size:13px; margin-bottom:4px; display:block; }
+    .myacc-form label .fa { margin-right:5px; color:#0a3d62; opacity:0.7; width:14px; text-align:center; }
+    .myacc-form label .req { color:#c0392b; }
+    .myacc-form .form-control { border-radius:4px; border:1px solid #d1d8e0; padding:7px 10px; font-size:14px; }
+    .myacc-form .form-control:focus { border-color:#0a3d62; box-shadow:0 0 0 2px rgba(10,61,98,0.15); }
+    .myacc-form .form-control[disabled] { background:#f5f7fa; color:#6c757d; }
+    .form-actions { padding-top:8px; border-top:1px solid #e5e9ee; margin-top:8px; display:flex; gap:8px; justify-content:flex-end; }
+
+    .pane { display:none; }
+    .pane.active { display:block; }
+</style>
+
+<div class="myacc-wrap">
+    <div class="container">
+        <div class="myacc-hero">
+            <div>
+                <h1><i class="fa fa-user-circle-o"></i> Xin chào, @(Model?.FullName ?? Model?.UserName)</h1>
+                <div class="meta">
+                    <span><i class="fa fa-id-badge"></i> @Model?.UserName</span>
+                    <span><i class="fa fa-calendar-o"></i> Tham gia: @memberSince</span>
+                    <span><i class="fa fa-clock-o"></i> Đăng nhập gần nhất: @lastLogin</span>
+                </div>
+            </div>
+            <div class="progress-pill">
+                Hoàn thiện hồ sơ: <strong>@pct%</strong>
+                <div class="bar"><span style="width:@pct%;"></span></div>
+            </div>
+        </div>
+
+        @if (firstTime)
+        {
+            <div class="first-time-alert">
+                <i class="fa fa-info-circle"></i>
+                <strong>Chào mừng bạn đến với TTYT Kinh Môn!</strong>
+                Vui lòng dành 30 giây bổ sung thông tin định danh (CCCD, ngày sinh, địa chỉ) để lễ tân và bác sĩ phục vụ bạn nhanh hơn ở các lần khám sau.
+            </div>
+        }
+
+        <div class="layout-grid">
+            <div class="side-menu">
+                <button type="button" class="item @(defaultTab == "overview" ? "active" : "")" data-target="overview">
+                    <i class="fa fa-th-large"></i> Tổng quan
+                </button>
+                <div class="divider"></div>
+                <button type="button" class="item @(defaultTab == "edit-identity" ? "active" : "")" data-target="edit-identity">
+                    <i class="fa fa-id-card"></i> Sửa định danh
+                </button>
+                <button type="button" class="item" data-target="edit-contact">
+                    <i class="fa fa-phone"></i> Sửa liên hệ
+                </button>
+                <button type="button" class="item" data-target="edit-medical">
+                    <i class="fa fa-heartbeat"></i> Sửa hồ sơ y tế
+                </button>
+                <div class="divider"></div>
+                <button type="button" class="item" data-target="change-password">
+                    <i class="fa fa-key"></i> Đổi mật khẩu
+                </button>
+                <div class="divider"></div>
+                <a class="item" href="/lich-cua-toi"><i class="fa fa-calendar"></i> Lịch hẹn của tôi</a>
+                <a class="item" href="/lich-su-kham"><i class="fa fa-file-text-o"></i> Lịch sử khám</a>
+                <a class="item" href="/cau-hoi-cua-toi"><i class="fa fa-question-circle"></i> Câu hỏi của tôi</a>
+                <a class="item" href="/dat-lich-kham"><i class="fa fa-plus-circle"></i> Đặt lịch mới</a>
+                <a class="item danger" href="/dang-xuat"><i class="fa fa-sign-out"></i> Đăng xuất</a>
+            </div>
+
+            <div class="content-area">
+
+                <div id="pane-overview" class="pane @(defaultTab == "overview" ? "active" : "")">
+                    <div class="myacc-card">
+                        <div class="head"><span><i class="fa fa-id-card"></i> Định danh</span>
+                            <button type="button" class="quick-edit-btn" data-jump="edit-identity"><i class="fa fa-pencil"></i> Chỉnh sửa</button>
+                        </div>
+                        <div class="body">
+                            <div class="info-grid">
+                                <div class="row-item"><div class="lbl"><i class="fa fa-user"></i> Họ tên</div><div class="val">@(Model?.FullName ?? "—")</div></div>
+                                <div class="row-item"><div class="lbl"><i class="fa fa-venus-mars"></i> Giới tính</div><div class="val">@genderLabel @(age.HasValue ? $"({age} tuổi)" : "")</div></div>
+                                <div class="row-item"><div class="lbl"><i class="fa fa-birthday-cake"></i> Ngày sinh</div><div class="val @(Model?.Dob == null ? "empty" : "")">@(Model?.Dob?.ToString("dd/MM/yyyy") ?? "Chưa cập nhật")</div></div>
+                                <div class="row-item"><div class="lbl"><i class="fa fa-id-badge"></i> CCCD/CMND</div><div class="val @(string.IsNullOrEmpty(Model?.Cccd) ? "empty" : "")">@(Model?.Cccd ?? "Chưa cập nhật")</div></div>
+                                <div class="row-item"><div class="lbl"><i class="fa fa-credit-card-alt"></i> Mã BHYT</div><div class="val @(string.IsNullOrEmpty(Model?.BhytCard) ? "empty" : "")">@(Model?.BhytCard ?? "Chưa cập nhật")</div></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="myacc-card">
+                        <div class="head"><span><i class="fa fa-phone"></i> Liên hệ</span>
+                            <button type="button" class="quick-edit-btn" data-jump="edit-contact"><i class="fa fa-pencil"></i> Chỉnh sửa</button>
+                        </div>
+                        <div class="body">
+                            <div class="info-grid">
+                                <div class="row-item"><div class="lbl"><i class="fa fa-phone"></i> SĐT</div><div class="val @(string.IsNullOrEmpty(Model?.Phone) ? "empty" : "")">@(Model?.Phone ?? "Chưa cập nhật")</div></div>
+                                <div class="row-item"><div class="lbl"><i class="fa fa-envelope"></i> Email</div><div class="val @(string.IsNullOrEmpty(Model?.Email) ? "empty" : "")">@(Model?.Email ?? "Chưa cập nhật")</div></div>
+                                <div class="row-item full-row"><div class="lbl"><i class="fa fa-map-marker"></i> Địa chỉ</div><div class="val @(string.IsNullOrEmpty(Model?.Address) ? "empty" : "")">@(Model?.Address ?? "Chưa cập nhật")</div></div>
+                                <div class="row-item full-row"><div class="lbl"><i class="fa fa-life-ring"></i> Liên hệ khẩn cấp</div><div class="val @(string.IsNullOrEmpty(Model?.EmergencyContact) ? "empty" : "")">@(Model?.EmergencyContact ?? "Chưa cập nhật")</div></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="myacc-card">
+                        <div class="head"><span><i class="fa fa-heartbeat"></i> Hồ sơ y tế</span>
+                            <button type="button" class="quick-edit-btn" data-jump="edit-medical"><i class="fa fa-pencil"></i> Chỉnh sửa</button>
+                        </div>
+                        <div class="body">
+                            <div class="info-grid">
+                                <div class="row-item"><div class="lbl"><i class="fa fa-tint"></i> Nhóm máu</div><div class="val @(string.IsNullOrEmpty(Model?.BloodType) ? "empty" : "")">@(Model?.BloodType ?? "Chưa biết")</div></div>
+                                <div class="row-item full-row"><div class="lbl"><i class="fa fa-warning"></i> Dị ứng</div><div class="val @(string.IsNullOrEmpty(Model?.Allergies) ? "empty" : "")"><pre>@(Model?.Allergies ?? "Chưa khai báo")</pre></div></div>
+                                <div class="row-item full-row"><div class="lbl"><i class="fa fa-history"></i> Tiền sử bệnh / bệnh nền</div><div class="val @(string.IsNullOrEmpty(Model?.MedicalHistory) ? "empty" : "")"><pre>@(Model?.MedicalHistory ?? "Chưa khai báo")</pre></div></div>
+                            </div>
+                            <p class="text-muted" style="font-size:12px; margin:10px 0 0;">
+                                <i class="fa fa-info-circle"></i> Bác sĩ có thể bổ sung thông tin Nhóm máu / Dị ứng / Tiền sử bệnh sau mỗi buổi khám — bạn vẫn có thể tự sửa.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <form asp-action="UpdateProfile" method="post" class="myacc-form" id="profile-form">
+                    @Html.AntiForgeryToken()
+
+                    @* Hidden mirror để submit ALL fields dù tab nào đang active — giữ nguyên giá trị các tab khác *@
+                    <input type="hidden" name="FullName" value="@Model?.FullName" id="h-FullName" />
+                    <input type="hidden" name="Phone" value="@Model?.Phone" id="h-Phone" />
+                    <input type="hidden" name="Email" value="@Model?.Email" id="h-Email" />
+                    <input type="hidden" name="Gender" value="@Model?.Gender" id="h-Gender" />
+                    <input type="hidden" name="Dob" value="@Model?.Dob?.ToString("yyyy-MM-dd")" id="h-Dob" />
+                    <input type="hidden" name="Cccd" value="@Model?.Cccd" id="h-Cccd" />
+                    <input type="hidden" name="BhytCard" value="@Model?.BhytCard" id="h-BhytCard" />
+                    <input type="hidden" name="Address" value="@Model?.Address" id="h-Address" />
+                    <input type="hidden" name="EmergencyContact" value="@Model?.EmergencyContact" id="h-EmergencyContact" />
+                    <input type="hidden" name="BloodType" value="@Model?.BloodType" id="h-BloodType" />
+                    <input type="hidden" name="Allergies" value="@Model?.Allergies" id="h-Allergies" />
+                    <input type="hidden" name="MedicalHistory" value="@Model?.MedicalHistory" id="h-MedicalHistory" />
+
+                    <div id="pane-edit-identity" class="pane @(defaultTab == "edit-identity" ? "active" : "")">
+                        <div class="myacc-card">
+                            <div class="head"><span><i class="fa fa-id-card"></i> Sửa thông tin định danh</span></div>
+                            <div class="body">
+                                <div class="row">
+                                    <div class="col-md-6 form-group">
+                                        <label><i class="fa fa-user"></i> Họ và tên <span class="req">*</span></label>
+                                        <input data-mirror="h-FullName" class="form-control" value="@Model?.FullName" required maxlength="150" />
+                                    </div>
+                                    <div class="col-md-3 form-group">
+                                        <label><i class="fa fa-venus-mars"></i> Giới tính</label>
+                                        <select data-mirror="h-Gender" class="form-control">
+                                            <option value="">— Chưa chọn —</option>
+                                            <option value="1" selected="@(Model?.Gender == 1)">Nam</option>
+                                            <option value="2" selected="@(Model?.Gender == 2)">Nữ</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3 form-group">
+                                        <label><i class="fa fa-birthday-cake"></i> Ngày sinh</label>
+                                        <input data-mirror="h-Dob" type="date" class="form-control" value="@Model?.Dob?.ToString("yyyy-MM-dd")" />
+                                    </div>
+                                    <div class="col-md-6 form-group">
+                                        <label><i class="fa fa-id-badge"></i> Số CCCD/CMND</label>
+                                        <input data-mirror="h-Cccd" class="form-control" value="@Model?.Cccd" maxlength="20" placeholder="VD: 030xxxxxxxxxx" pattern="^[0-9]{9,12}$" title="9–12 chữ số" />
+                                    </div>
+                                    <div class="col-md-6 form-group">
+                                        <label><i class="fa fa-credit-card-alt"></i> Mã thẻ BHYT</label>
+                                        <input data-mirror="h-BhytCard" class="form-control" value="@Model?.BhytCard" maxlength="20" placeholder="VD: HSxxxxxxxxxxxx" />
+                                    </div>
+                                </div>
+                                <div class="form-actions">
+                                    <button type="button" class="btn btn-default cancel-edit" data-target="overview"><i class="fa fa-times"></i> Huỷ</button>
+                                    <button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> Lưu thay đổi</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="pane-edit-contact" class="pane">
+                        <div class="myacc-card">
+                            <div class="head"><span><i class="fa fa-phone"></i> Sửa thông tin liên hệ</span></div>
+                            <div class="body">
+                                <div class="row">
+                                    <div class="col-md-6 form-group">
+                                        <label><i class="fa fa-phone"></i> SĐT <span class="req">*</span></label>
+                                        <input data-mirror="h-Phone" type="tel" class="form-control" value="@Model?.Phone" required pattern="^[0-9+\-\s]{8,20}$" />
+                                    </div>
+                                    <div class="col-md-6 form-group">
+                                        <label><i class="fa fa-envelope"></i> Email</label>
+                                        <input data-mirror="h-Email" type="email" class="form-control" value="@Model?.Email" />
+                                    </div>
+                                    <div class="col-md-12 form-group">
+                                        <label><i class="fa fa-map-marker"></i> Địa chỉ</label>
+                                        <input data-mirror="h-Address" class="form-control" value="@Model?.Address" maxlength="250" placeholder="Số nhà, đường, phường, thành phố..." />
+                                    </div>
+                                    <div class="col-md-12 form-group">
+                                        <label><i class="fa fa-life-ring"></i> Liên hệ khẩn cấp <small class="text-muted">(họ tên + SĐT người thân)</small></label>
+                                        <input data-mirror="h-EmergencyContact" class="form-control" value="@Model?.EmergencyContact" maxlength="200" placeholder="VD: Nguyễn Văn A — 0987xxxxxx (chồng)" />
+                                    </div>
+                                </div>
+                                <div class="form-actions">
+                                    <button type="button" class="btn btn-default cancel-edit" data-target="overview"><i class="fa fa-times"></i> Huỷ</button>
+                                    <button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> Lưu thay đổi</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="pane-edit-medical" class="pane">
+                        <div class="myacc-card">
+                            <div class="head"><span><i class="fa fa-heartbeat"></i> Sửa hồ sơ y tế</span></div>
+                            <div class="body">
+                                <div class="row">
+                                    <div class="col-md-4 form-group">
+                                        <label><i class="fa fa-tint"></i> Nhóm máu</label>
+                                        <select data-mirror="h-BloodType" class="form-control">
+                                            <option value="">— Chưa biết —</option>
+                                            @foreach (var bt in new[]{ "A+","A-","B+","B-","AB+","AB-","O+","O-" })
+                                            {
+                                                <option value="@bt" selected="@(Model?.BloodType == bt)">@bt</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-md-8 form-group">
+                                        <label><i class="fa fa-warning"></i> Dị ứng <small class="text-muted">(thuốc/thực phẩm/môi trường, tối đa 500 ký tự)</small></label>
+                                        <textarea data-mirror="h-Allergies" class="form-control" rows="2" maxlength="500" placeholder="VD: Dị ứng penicillin, hải sản.">@Model?.Allergies</textarea>
+                                    </div>
+                                    <div class="col-md-12 form-group">
+                                        <label><i class="fa fa-history"></i> Tiền sử bệnh / bệnh nền</label>
+                                        <textarea data-mirror="h-MedicalHistory" class="form-control" rows="4" placeholder="VD: Tăng huyết áp 5 năm; mổ ruột thừa 2018; bố bị đột quỵ.">@Model?.MedicalHistory</textarea>
+                                        <small class="text-muted">Bác sĩ có thể bổ sung sau mỗi buổi khám. Khai báo trung thực giúp kê đơn an toàn.</small>
+                                    </div>
+                                </div>
+                                <div class="form-actions">
+                                    <button type="button" class="btn btn-default cancel-edit" data-target="overview"><i class="fa fa-times"></i> Huỷ</button>
+                                    <button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> Lưu thay đổi</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+
+                <div id="pane-change-password" class="pane">
+                    <div class="myacc-card">
+                        <div class="head"><span><i class="fa fa-key"></i> Đổi mật khẩu</span></div>
+                        <div class="body">
+                            <form asp-action="ChangePassword" method="post" class="myacc-form" style="max-width:480px;">
+                                @Html.AntiForgeryToken()
+                                <div class="form-group">
+                                    <label>Mật khẩu hiện tại <span class="req">*</span></label>
+                                    <input name="currentPassword" type="password" class="form-control" required autocomplete="current-password" />
+                                </div>
+                                <div class="form-group">
+                                    <label>Mật khẩu mới <span class="req">*</span></label>
+                                    <input name="newPassword" type="password" class="form-control" required minlength="6" autocomplete="new-password" />
+                                </div>
+                                <div class="form-group">
+                                    <label>Xác nhận mật khẩu mới <span class="req">*</span></label>
+                                    <input name="confirmPassword" type="password" class="form-control" required minlength="6" autocomplete="new-password" />
+                                </div>
+                                <div class="form-actions">
+                                    <button type="button" class="btn btn-default cancel-edit" data-target="overview"><i class="fa fa-times"></i> Huỷ</button>
+                                    <button type="submit" class="btn btn-warning"><i class="fa fa-key"></i> Đổi mật khẩu</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+(function () {
+    function activate(target) {
+        document.querySelectorAll('.side-menu .item').forEach(function (b) { b.classList.toggle('active', b.dataset.target === target); });
+        document.querySelectorAll('.pane').forEach(function (p) { p.classList.toggle('active', p.id === 'pane-' + target); });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    document.querySelectorAll('.side-menu .item[data-target]').forEach(function (b) {
+        b.addEventListener('click', function (e) { e.preventDefault(); activate(b.dataset.target); });
+    });
+    document.querySelectorAll('[data-jump]').forEach(function (b) {
+        b.addEventListener('click', function (e) { e.preventDefault(); activate(b.dataset.jump); });
+    });
+    document.querySelectorAll('.cancel-edit').forEach(function (b) {
+        b.addEventListener('click', function (e) { e.preventDefault(); activate(b.dataset.target); });
+    });
+    // Mirror visible inputs → hidden inputs (giữ giá trị field section khác khi submit)
+    document.querySelectorAll('[data-mirror]').forEach(function (el) {
+        var hid = document.getElementById(el.dataset.mirror);
+        if (!hid) return;
+        function sync() { hid.value = el.value; }
+        el.addEventListener('input', sync);
+        el.addEventListener('change', sync);
+        sync();
+    });
+})();
+</script>
+}

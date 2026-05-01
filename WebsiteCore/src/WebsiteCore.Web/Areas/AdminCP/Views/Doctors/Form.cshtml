@@ -1,0 +1,104 @@
+@model WebsiteCore.Data.Entities.Doctor
+@using WebsiteCore.Data.Entities
+@{
+    var depts = ViewBag.Departments as List<Department> ?? new();
+    var isEdit = Model.Id != Guid.Empty;
+}
+
+<h2 style="color:#0a3d62;"><i class="fa fa-user-md"></i> @ViewData["Title"]</h2>
+<a href="/AdminCP/Doctors" class="btn btn-default" style="margin-bottom:12px;">← Quay lại</a>
+
+<form asp-action="@(isEdit ? "Edit" : "Create")" method="post" enctype="multipart/form-data">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+    <div class="row">
+        <div class="col-md-6 form-group">
+            <label>Họ tên (vi) <span class="text-danger">*</span></label>
+            <input asp-for="NameL" class="form-control" required />
+        </div>
+        <div class="col-md-6 form-group">
+            <label>Họ tên (en)</label>
+            <input asp-for="NameE" class="form-control" />
+        </div>
+        <div class="col-md-6 form-group">
+            <label>Chuyên khoa</label>
+            <select asp-for="DepartmentId" class="form-control">
+                <option value="">— Chọn —</option>
+                @foreach (var d in depts) { <option value="@d.Id" selected="@(d.Id == Model.DepartmentId)">@d.NameL</option> }
+            </select>
+        </div>
+        <div class="col-md-3 form-group">
+            <label>Chức vụ</label>
+            <input asp-for="Position" class="form-control" placeholder="Trưởng khoa, BS..." />
+        </div>
+        <div class="col-md-3 form-group">
+            <label>Giới tính</label>
+            <select asp-for="Gender" class="form-control">
+                <option value="">—</option>
+                <option value="1" selected="@(Model.Gender == 1)">Nam</option>
+                <option value="0" selected="@(Model.Gender == 0)">Nữ</option>
+            </select>
+        </div>
+        <div class="col-md-6 form-group">
+            <label>Chuyên môn (vi)</label>
+            <input asp-for="SpeciallyL" class="form-control" placeholder="VD: Nội tổng quát, Tim mạch..." />
+        </div>
+        <div class="col-md-6 form-group">
+            <label>Sở trường (vi) <small class="text-muted">— specialty interests</small></label>
+            <input asp-for="SpeciallyInterestsL" class="form-control" placeholder="VD: Điều trị tăng huyết áp, suy tim..." />
+        </div>
+        <div class="col-md-6 form-group">
+            <label>Ngôn ngữ giao tiếp</label>
+            <input asp-for="LanguageSpoken" class="form-control" placeholder="Tiếng Việt, Tiếng Anh..." />
+        </div>
+        <div class="col-md-6 form-group">
+            <label>Lịch khám (vi)</label>
+            <input asp-for="TimetableL" class="form-control" placeholder="Thứ 2-6: Sáng 7h-11h, Chiều 13h30-17h" />
+        </div>
+        <div class="col-md-12 form-group">
+            <label>Bằng cấp / Học vị (vi)</label>
+            <textarea asp-for="QuantificationL" class="form-control" rows="2" placeholder="VD: Bác sĩ Đa khoa — ĐH Y Dược Hải Phòng (2010); Thạc sĩ Y học (2015); CK1 Nội tim mạch (2018)"></textarea>
+        </div>
+        <div class="col-md-12 form-group">
+            <label>Kinh nghiệm / Quá trình công tác (vi)</label>
+            <textarea asp-for="ExperiencesL" class="form-control" rows="4" placeholder="VD:&#10;- 2010-2015: Bác sĩ điều trị Khoa Nội, BV Đa khoa Kinh Môn&#10;- 2015-2020: Trưởng khoa Nội, TTYT thị xã Kinh Môn&#10;- 2020-nay: Phó giám đốc TTYT phường Kinh Môn"></textarea>
+        </div>
+        <div class="col-md-6 form-group">
+            <label>Đường dẫn ảnh (hoặc upload bên dưới)</label>
+            <input asp-for="ImagePath" class="form-control" placeholder="assets/admin/images/doctors/abc.jpg" />
+            @if (!string.IsNullOrEmpty(Model.ImagePath))
+            {
+                <img src="/@Model.ImagePath.TrimStart('/')" style="height:60px; margin-top:6px;" />
+            }
+            <input type="file" name="imageFile" accept="image/*" class="form-control" style="margin-top:6px;" />
+            <small class="text-muted">Hỗ trợ jpg/png/gif/webp tối đa 5MB</small>
+        </div>
+        <div class="col-md-2 form-group">
+            <label>Thứ tự</label>
+            <input asp-for="Ord" class="form-control" type="number" />
+        </div>
+        <div class="col-md-2 form-group">
+            <label>Loại</label>
+            <select asp-for="IsPartner" class="form-control">
+                <option value="true" selected="@(Model.IsPartner == true)">Ban Giám đốc</option>
+                <option value="false" selected="@(Model.IsPartner == false)">BS chuyên khoa</option>
+            </select>
+        </div>
+        <div class="col-md-2 form-group">
+            <label>Hiển thị trang chủ</label>
+            <select asp-for="ShowOnHome" class="form-control">
+                <option value="true" selected="@(Model.ShowOnHome == true)">Có</option>
+                <option value="false" selected="@(Model.ShowOnHome == false)">Không</option>
+            </select>
+        </div>
+        <div class="col-md-12 form-group">
+            <label>Active</label>
+            <select name="ActiveFlag" class="form-control">
+                <option value="1" selected="@(Model.ActiveFlag == 1)">Active</option>
+                <option value="0" selected="@(Model.ActiveFlag == 0)">Inactive</option>
+            </select>
+        </div>
+    </div>
+    <div asp-validation-summary="All" class="text-danger"></div>
+    <button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> Lưu</button>
+</form>

@@ -1,0 +1,141 @@
+﻿@model List<WebsiteCore.Data.Entities.News>
+@{
+    var q = ViewBag.Q as string;
+    var type = (ViewBag.Type as string) ?? "complete";
+    var title = ViewData["Title"] as string ?? "Quản lý tin tức";
+    bool isWaiting = type == "waiting";
+    bool isNo      = type == "no";
+    bool isDel     = type == "delete";
+    bool isShow    = type == "complete";
+}
+
+<h2 class="admin-page-title"><i class="fa fa-newspaper-o"></i> @title</h2>
+
+<ul class="nav nav-tabs" style="margin-bottom:14px;">
+    <li class="@(isShow    ? "active" : "")"><a href="/AdminCP/News?type=complete">Tin đã đăng</a></li>
+    <li class="@(isWaiting ? "active" : "")"><a href="/AdminCP/News?type=waiting">Tin chờ duyệt</a></li>
+    <li class="@(isNo      ? "active" : "")"><a href="/AdminCP/News?type=no">Tin không duyệt</a></li>
+    <li class="@(isDel     ? "active" : "")"><a href="/AdminCP/News?type=delete">Tin đã xoá</a></li>
+    <li style="float:right;"><a href="/AdminCP/News/Create" class="text-success" style="font-weight:600;"><i class="fa fa-plus-circle"></i> Thêm tin mới</a></li>
+</ul>
+
+<div class="admin-toolbar">
+    <form method="get" action="/AdminCP/News" class="form-inline">
+        <input type="hidden" name="type" value="@type" />
+        <div class="form-group" style="margin-right:8px;">
+            <input type="text" name="q" value="@q" class="form-control" placeholder="Tìm theo tiêu đề..." style="min-width:280px;" />
+        </div>
+        <button class="btn btn-primary" type="submit"><i class="fa fa-search"></i> Tìm</button>
+        @if (!string.IsNullOrEmpty(q))
+        {
+            <a href="/AdminCP/News?type=@type" class="btn btn-default">Bỏ lọc</a>
+        }
+        <span class="pull-right text-muted" style="line-height:34px;">@Model.Count bài</span>
+    </form>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-hover table-bordered">
+        <thead>
+            <tr>
+                <th style="width:36%;">Tiêu đề</th>
+                <th>Alias</th>
+                <th style="width:90px;">Trạng thái</th>
+                <th style="width:60px; text-align:center;">Hot</th>
+                <th style="width:60px; text-align:center;">TC</th>
+                <th style="width:110px;">Tạo lúc</th>
+                <th style="width:60px; text-align:right;">Views</th>
+                <th style="width:200px;">Hành động</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var n in Model)
+        {
+            <tr>
+                <td>
+                    <strong>@n.TitleL</strong>
+                    @if (!string.IsNullOrEmpty(n.DescriptionL))
+                    {
+                        <br /><small class="text-muted">@(n.DescriptionL!.Length > 120 ? n.DescriptionL.Substring(0, 120) + "…" : n.DescriptionL)</small>
+                    }
+                </td>
+                <td><code style="font-size:11px;">@n.AliasL</code></td>
+                <td>
+                    @switch (n.ActiveFlag)
+                    {
+                        case 1: <span class="label label-success">Đã đăng</span> break;
+                        case 0: <span class="label label-warning">Chờ duyệt</span> break;
+                        case -1: <span class="label label-default">Không duyệt</span> break;
+                        case -2: <span class="label label-danger">Đã xoá</span> break;
+                        default: <span class="label label-default">@n.ActiveFlag</span> break;
+                    }
+                </td>
+                <td style="text-align:center;">
+                    @if (n.HotNew == true) { <span style="color:#e74c3c; font-size:16px;" title="Hot">★</span> }
+                </td>
+                <td style="text-align:center;">
+                    @if (n.ShowOnHome == true) { <i class="fa fa-home text-success" title="Hiện trang chủ"></i> }
+                </td>
+                <td><small>@(n.CreatedDate?.ToString("dd/MM/yyyy HH:mm") ?? "")</small></td>
+                <td style="text-align:right;">@(n.Views ?? 0)</td>
+                <td>
+                    <a href="/tin-tuc/@n.AliasL" target="_blank" class="btn btn-xs btn-default" title="Xem trên web"><i class="fa fa-external-link"></i></a>
+                    <a href="/AdminCP/News/Edit/@n.Id" class="btn btn-xs btn-warning" title="Sửa"><i class="fa fa-pencil"></i></a>
+
+                    @if (isWaiting)
+                    {
+                        <form method="post" action="/AdminCP/News/Approve/@n.Id" style="display:inline;" onsubmit="return confirm('Duyệt tin này?');">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="returnType" value="waiting" />
+                            <button class="btn btn-xs btn-success" title="Duyệt"><i class="fa fa-check"></i></button>
+                        </form>
+                        <form method="post" action="/AdminCP/News/Reject/@n.Id" style="display:inline;" onsubmit="return confirm('Từ chối tin này?');">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="returnType" value="waiting" />
+                            <button class="btn btn-xs btn-danger" title="Từ chối"><i class="fa fa-times"></i></button>
+                        </form>
+                    }
+                    else if (isNo)
+                    {
+                        <form method="post" action="/AdminCP/News/Approve/@n.Id" style="display:inline;" onsubmit="return confirm('Duyệt lại tin này?');">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="returnType" value="no" />
+                            <button class="btn btn-xs btn-success" title="Duyệt"><i class="fa fa-check"></i></button>
+                        </form>
+                    }
+                    else if (isDel)
+                    {
+                        <form method="post" action="/AdminCP/News/Restore/@n.Id" style="display:inline;" onsubmit="return confirm('Khôi phục về chờ duyệt?');">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="returnType" value="delete" />
+                            <button class="btn btn-xs btn-info" title="Khôi phục"><i class="fa fa-undo"></i></button>
+                        </form>
+                    }
+                    else
+                    {
+                        <form method="post" action="/AdminCP/News/ToggleShowHome/@n.Id" style="display:inline;">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="returnType" value="complete" />
+                            <button class="btn btn-xs @(n.ShowOnHome == true ? "btn-success" : "btn-default")" title="@(n.ShowOnHome == true ? "Tắt trang chủ" : "Bật trang chủ")"><i class="fa fa-home"></i></button>
+                        </form>
+                        <form method="post" action="/AdminCP/News/ToggleHot/@n.Id" style="display:inline;">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="returnType" value="complete" />
+                            <button class="btn btn-xs @(n.HotNew == true ? "btn-danger" : "btn-default")" title="@(n.HotNew == true ? "Bỏ Hot" : "Đánh dấu Hot")"><i class="fa fa-star"></i></button>
+                        </form>
+                        <form method="post" action="/AdminCP/News/Delete/@n.Id" style="display:inline;" onsubmit="return confirm('Chuyển vào thùng rác?');">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="returnType" value="complete" />
+                            <button class="btn btn-xs btn-danger" title="Xoá"><i class="fa fa-trash"></i></button>
+                        </form>
+                    }
+                </td>
+            </tr>
+        }
+        @if (!Model.Any())
+        {
+            <tr><td colspan="8" class="text-center text-muted" style="padding:30px;">Không có tin nào trong nhóm này.</td></tr>
+        }
+        </tbody>
+    </table>
+</div>

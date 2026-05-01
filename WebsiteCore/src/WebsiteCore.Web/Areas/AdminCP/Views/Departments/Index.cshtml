@@ -1,0 +1,63 @@
+﻿@model List<WebsiteCore.Data.Entities.Department>
+@{ ViewData["Title"] = "Quản lý chuyên khoa"; }
+
+<h2 class="admin-page-title"><i class="fa fa-stethoscope"></i> Quản lý chuyên khoa</h2>
+
+<div class="admin-toolbar">
+    <a href="/AdminCP/Departments/Create" class="btn btn-success">
+        <i class="fa fa-plus-circle"></i> Thêm chuyên khoa
+    </a>
+    <span class="pull-right text-muted" style="line-height:34px;">@Model.Count chuyên khoa</span>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-hover table-bordered">
+        <thead>
+            <tr>
+                <th style="width:40px;">#</th>
+                <th>Tên (vi)</th>
+                <th>Tên (en)</th>
+                <th style="width:140px;">Icon / ảnh</th>
+                <th style="width:80px; text-align:center;">Active</th>
+                <th style="width:140px;">Hành động</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var (d, idx) in Model.Select((d, i) => (d, i + 1)))
+        {
+            <tr>
+                <td>@idx</td>
+                <td><strong>@d.NameL</strong>@(string.IsNullOrEmpty(d.Alias) ? "" : Html.Raw($"<br/><small class='text-muted'>{d.Alias}</small>"))</td>
+                <td>@d.NameE</td>
+                <td>
+                    @if (!string.IsNullOrEmpty(d.ImagePath) && d.ImagePath.StartsWith("fa:", StringComparison.OrdinalIgnoreCase))
+                    {
+                        <i class="@d.ImagePath.Substring(3).Trim()" style="font-size:22px; color:#0a3d62;"></i>
+                    }
+                    else if (!string.IsNullOrEmpty(d.ImagePath))
+                    {
+                        <img src="/@d.ImagePath.TrimStart('/')" style="height:32px;" />
+                    }
+                </td>
+                <td style="text-align:center;">
+                    @if (d.ActiveFlag == 1) { <span class="label label-success">Active</span> }
+                    else { <span class="label label-default">Tắt</span> }
+                </td>
+                <td>
+                    <a href="/AdminCP/Departments/Edit/@d.Id" class="btn btn-xs btn-warning" title="Sửa"><i class="fa fa-pencil"></i></a>
+                    <form action="/AdminCP/Departments/ToggleStatus/@d.Id" method="post" style="display:inline;">
+                        @Html.AntiForgeryToken()
+                        <button class="btn btn-xs @(d.ActiveFlag == 1 ? "btn-default" : "btn-success")" title="@(d.ActiveFlag == 1 ? "Tắt" : "Bật")"><i class="fa @(d.ActiveFlag == 1 ? "fa-toggle-on" : "fa-toggle-off")"></i></button>
+                    </form>
+                    <form action="/AdminCP/Departments/Delete/@d.Id" method="post" style="display:inline;"
+                          onsubmit="return confirm('Bạn có chắc xoá chuyên khoa này?');">
+                        @Html.AntiForgeryToken()
+                        <button class="btn btn-xs btn-danger" title="Xoá"><i class="fa fa-trash"></i></button>
+                    </form>
+                </td>
+            </tr>
+        }
+        @if (!Model.Any()) { <tr><td colspan="6" class="text-center text-muted" style="padding:30px;">Chưa có chuyên khoa.</td></tr> }
+        </tbody>
+    </table>
+</div>

@@ -1,0 +1,121 @@
+@using WebsiteCore.Data.Entities
+@using WebsiteCore.Web.Helpers
+@inject VisitorCounter Counter
+@{
+    var siteFt = ViewBag.Site as Site;
+    var ftName     = !string.IsNullOrEmpty(siteFt?.NameCompanyL) ? siteFt.NameCompanyL : "Trung tâm Y tế phường Kinh Môn";
+    var ftAddress  = !string.IsNullOrEmpty(siteFt?.AddressL)     ? siteFt.AddressL     : "Số 294 đường Trần Hưng Đạo, phường Kinh Môn, Thành phố Hải Phòng";
+    var ftPhone    = !string.IsNullOrEmpty(siteFt?.Phone)        ? siteFt.Phone        : "02203.822.205";
+    var ftHotline  = !string.IsNullOrEmpty(siteFt?.Hotline)      ? siteFt.Hotline      : "0964.801.616";
+    var ftEmer     = !string.IsNullOrEmpty(siteFt?.EmergencyNumber) ? siteFt.EmergencyNumber : "02203.822.205";
+    var ftFax      = siteFt?.Fax ?? "";
+    var ftEmail    = !string.IsNullOrEmpty(siteFt?.Email) ? siteFt.Email : "ttytkinhmon@gmail.com";
+    var ftMap      = !string.IsNullOrEmpty(siteFt?.Map) ? siteFt.Map :
+        "https://www.google.com/maps/embed?pb=!1m16!1m12!1m3!1d931.2409067692928!2d106.54668788857039!3d20.994095091072193!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!2m1!1zdHJ1bmcgdMOibSB5IHThur8gdGjhu4sgeMOjIGtpbmggbcO0bg!5e0!3m2!1svi!2s!4v1730361784159!5m2!1svi!2s";
+    var ftLogo = !string.IsNullOrEmpty(siteFt?.LogoUrl) ? siteFt.LogoUrl : "/assets/client/images/logo.png";
+    var ftYear = DateTime.Now.Year;
+}
+<footer class="footer full-section">
+    <section class="st8 full-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-7 col-sm-12 col-xs-12">
+                    <ul class="st8-top">
+                        <li>
+                            <i class="fa fa-phone-square"></i>
+                            @ftPhone<span>Đặt lịch khám</span>
+                        </li>
+                        <li>
+                            <i class="fa fa-dollar"></i>
+                            Tư vấn miễn phí<span>Sức khỏe là vàng</span>
+                        </li>
+                    </ul>
+                    <div class="st8-bottom">
+                        <div class="st8-bottom-inner">
+                            <p>Hãy liên hệ với chúng tôi</p>
+                            <h2>Đăng ký dịch vụ</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-5 col-sm-12 col-xs-12 no-padding">
+                    <div class="st8-form">
+                        <p>
+                            <a href="/dat-lich-kham" class="btn btn-primary btn-lg" style="width: 100%; margin-top: 10px;">
+                                <i class="fa fa-calendar-plus-o"></i> Đặt lịch khám
+                            </a>
+                            <a href="/dat-cau-hoi" class="btn btn-default btn-lg" style="width: 100%; margin-top: 10px;">
+                                <i class="fa fa-question-circle"></i> Tư vấn
+                            </a>
+                            <a href="tel:@ftHotline" class="btn btn-success btn-lg" style="width: 100%; margin-top: 10px;">
+                                <i class="fa fa-phone"></i> Hotline @ftHotline
+                            </a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="footer-inner full-section">
+        <div class="col-md-5 col-sm-5 col-xs-12 no-padding">
+            <div class="footer-left">
+                <div class="footer-left-inner">
+                    <img src="@ftLogo" alt="@ftName" class="footer-logo-img" />
+                    <div class="line"></div>
+                    <ul class="address-footer">
+                        <li>
+                            <i class="fa fa-bank"></i>
+                            <span class="address-f">Địa chỉ: @ftAddress</span>
+                        </li>
+                        <li>
+                            <i class="fa fa-phone-square"></i>
+                            <span class="phone">Điện thoại: @ftPhone</span>
+                        </li>
+                        <li class="yewlow">
+                            <i class="fa fa-phone-square"></i>
+                            <span class="hotline">Hotline: @ftHotline</span>
+                        </li>
+                        <li class="blue">
+                            <i class="fa fa-phone-square"></i>
+                            <a class="emergency_phone" href="tel:@ftEmer">Cấp cứu: @ftEmer</a>
+                            @if (!string.IsNullOrEmpty(ftFax)) { <p class="fax">Fax: @ftFax</p> }
+                        </li>
+                        <li>
+                            <i class="fa fa-envelope"></i>
+                            <span class="email">Email: @ftEmail</span>
+                        </li>
+                    </ul>
+                    <p style="font-size: 12px; color: #cdd; margin: 8px 0 0;">
+                        Chịu trách nhiệm nội dung: <strong>BS. Nguyễn Hải Hùng</strong> – Phó giám đốc @ftName
+                    </p>
+                    <small>© @ftYear @ftName. All rights reserved.</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-7 col-sm-7 col-xs-12 footer-right no-padding">
+            <iframe class="map" style="max-width:100%; width:100%;" height="300" frameborder="0" src="@ftMap" allowfullscreen></iframe>
+
+            @{
+                string DigitImg(string folder, char digit) =>
+                    $"/assets/admin/images/ascess/{(string.IsNullOrEmpty(folder) ? "" : folder + "/")}{digit}.png";
+                var onlineStr = Counter.OnlineCount.ToString("000");
+                var todayStr  = Counter.TodayCount.ToString("000");
+                var totalStr  = Counter.TotalCount.ToString("00000000");
+            }
+            <div style="margin-top:8px;">
+                <div style="color:silver; width:90%; text-align:right;">
+                    Đang truy cập:
+                    @foreach (var ch in onlineStr) { <img src="@DigitImg("", ch)" alt="@ch" /> }
+                </div>
+                <div style="color:silver; width:90%; text-align:right;">
+                    Hôm nay:
+                    @foreach (var ch in todayStr) { <img src="@DigitImg("vstoday", ch)" alt="@ch" /> }
+                </div>
+                <div style="color:silver; width:90%; text-align:right;">
+                    Tổng truy cập:
+                    @foreach (var ch in totalStr) { <img src="@DigitImg("visit", ch)" alt="@ch" /> }
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>

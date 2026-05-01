@@ -1,0 +1,175 @@
+@model WebsiteCore.Data.Entities.User
+@{
+    ViewData["Title"] = "Hồ sơ cá nhân — cán bộ";
+    var u = ViewBag.CurrentUser as WebsiteCore.Business.ViewModels.LoggedInUser;
+    string roleLabel = u?.GroupId switch
+    {
+        WebsiteCore.Business.Constants.AdminGroup     => "Quản trị hệ thống",
+        WebsiteCore.Business.Constants.DoctorGroup    => "Bác sĩ",
+        WebsiteCore.Business.Constants.ReceptionGroup => "Lễ tân",
+        _ => "Cán bộ"
+    };
+    string portalHome = u?.GroupId switch
+    {
+        WebsiteCore.Business.Constants.AdminGroup     => "/AdminCP/Default",
+        WebsiteCore.Business.Constants.DoctorGroup    => "/bac-si-portal",
+        WebsiteCore.Business.Constants.ReceptionGroup => "/le-tan",
+        _ => "/"
+    };
+    string memberSince = Model?.CreatedDate?.ToString("dd/MM/yyyy") ?? "—";
+    string lastLogin   = Model?.LastLogin?.ToString("dd/MM/yyyy HH:mm") ?? "—";
+    string roleColor = u?.GroupId switch
+    {
+        WebsiteCore.Business.Constants.AdminGroup     => "#0a3d62",
+        WebsiteCore.Business.Constants.DoctorGroup    => "#16a085",
+        WebsiteCore.Business.Constants.ReceptionGroup => "#f39c12",
+        _ => "#6c757d"
+    };
+}
+@section Styles {
+<style>
+    body.staff-profile-body { background:#eef2f7; }
+    .sp-wrap { max-width:1100px; margin:0 auto; padding:30px 20px 60px; }
+    .sp-hero { background:linear-gradient(135deg,@roleColor 0%, #06283d 100%); color:white;
+        border-radius:8px; padding:22px 26px; box-shadow:0 4px 14px rgba(10,61,98,0.18);
+        display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px; margin-bottom:20px; }
+    .sp-hero h1 { margin:0; font-size:22px; font-weight:600; }
+    .sp-hero .meta { font-size:13px; opacity:0.85; margin-top:6px; }
+    .sp-hero .meta span { margin-right:16px; }
+    .sp-hero .role-badge { background:rgba(255,255,255,0.18); padding:6px 14px; border-radius:20px; font-size:13px; font-weight:500; }
+    .sp-hero a.back-btn { background:rgba(255,255,255,0.15); color:white; padding:8px 14px; border-radius:6px; font-size:13px; text-decoration:none; }
+    .sp-hero a.back-btn:hover { background:rgba(255,255,255,0.28); }
+    .sp-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+    @@media (max-width:768px) { .sp-grid { grid-template-columns:1fr; } }
+    .sp-card { background:white; border:1px solid #e0e6ed; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,0.04); overflow:hidden; }
+    .sp-card .head { background:#f6f8fb; padding:12px 18px; border-bottom:1px solid #e0e6ed; font-weight:600; color:#0a3d62; }
+    .sp-card .head .fa { margin-right:8px; }
+    .sp-card .body { padding:18px; }
+    .sp-row { display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px dashed #eef0f3; }
+    .sp-row:last-child { border-bottom:0; }
+    .sp-row .lbl { color:#7a8b99; font-size:13px; }
+    .sp-row .val { font-weight:600; color:#0a3d62; max-width:60%; text-align:right; word-break:break-word; }
+    .sp-row .val.empty { color:#a0a8b3; font-style:italic; font-weight:400; }
+    .sp-form label { display:block; font-size:13px; color:#3c4858; margin-bottom:4px; font-weight:500; }
+    .sp-form .form-control { font-size:14px; }
+    .sp-form .form-group { margin-bottom:14px; }
+    .sp-actions { padding:14px 18px; background:#f9fafc; border-top:1px solid #e0e6ed; text-align:right; }
+    .sp-quick { display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; }
+    .sp-quick a { background:white; border:1px solid #e0e6ed; padding:10px 14px; border-radius:6px; text-decoration:none; color:#0a3d62; font-size:13px; transition:all 0.15s; }
+    .sp-quick a:hover { border-color:@roleColor; background:#f1f6fb; }
+    .sp-quick a .fa { margin-right:6px; color:@roleColor; }
+</style>
+}
+
+<body class="staff-profile-body">
+<div class="sp-wrap">
+
+    <div class="sp-hero">
+        <div>
+            <h1><i class="fa fa-user-shield"></i> @(Model?.FullName ?? Model?.UserName)</h1>
+            <div class="meta">
+                <span><i class="fa fa-id-badge"></i> @Model?.UserName</span>
+                <span><i class="fa fa-clock-o"></i> Đăng nhập gần nhất: @lastLogin</span>
+                <span><i class="fa fa-calendar"></i> Tham gia: @memberSince</span>
+            </div>
+        </div>
+        <div style="display:flex; gap:10px; align-items:center;">
+            <span class="role-badge"><i class="fa fa-shield"></i> @roleLabel</span>
+            <a href="@portalHome" class="back-btn"><i class="fa fa-arrow-left"></i> Về trang quản trị</a>
+        </div>
+    </div>
+
+    @if (Model == null)
+    {
+        <div class="alert alert-danger">Không tìm thấy thông tin tài khoản.</div>
+    }
+    else
+    {
+    <div class="sp-grid">
+        <div class="sp-card">
+            <div class="head"><i class="fa fa-id-card"></i> Thông tin định danh</div>
+            <div class="body">
+                <div class="sp-row"><span class="lbl">Họ tên</span><span class="val @(string.IsNullOrEmpty(Model.FullName) ? "empty" : "")">@(string.IsNullOrEmpty(Model.FullName) ? "Chưa cập nhật" : Model.FullName)</span></div>
+                <div class="sp-row"><span class="lbl">Tên đăng nhập</span><span class="val">@Model.UserName</span></div>
+                <div class="sp-row"><span class="lbl">Vai trò</span><span class="val">@roleLabel (@Model.GroupId)</span></div>
+                <div class="sp-row"><span class="lbl">Giới tính</span><span class="val @(Model.Gender == null ? "empty" : "")">@(Model.Gender switch { 1 => "Nam", 2 => "Nữ", _ => "Chưa cập nhật" })</span></div>
+                <div class="sp-row"><span class="lbl">Trạng thái</span><span class="val">@(Model.ActiveFlag == 1 ? "Đang hoạt động" : "Đã khoá")</span></div>
+            </div>
+        </div>
+
+        <div class="sp-card">
+            <div class="head"><i class="fa fa-address-book"></i> Liên hệ</div>
+            <div class="body">
+                <div class="sp-row"><span class="lbl">Số điện thoại</span><span class="val @(string.IsNullOrEmpty(Model.Phone) ? "empty" : "")">@(string.IsNullOrEmpty(Model.Phone) ? "Chưa cập nhật" : Model.Phone)</span></div>
+                <div class="sp-row"><span class="lbl">Email</span><span class="val @(string.IsNullOrEmpty(Model.Email) ? "empty" : "")">@(string.IsNullOrEmpty(Model.Email) ? "Chưa cập nhật" : Model.Email)</span></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="sp-card" style="margin-top:18px;">
+        <div class="head"><i class="fa fa-pencil-square-o"></i> Cập nhật thông tin</div>
+        <form method="post" action="/staff-profile/update" class="sp-form">
+            @Html.AntiForgeryToken()
+            <div class="body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label><i class="fa fa-user"></i> Họ tên *</label>
+                            <input type="text" name="FullName" class="form-control" value="@Model.FullName" required maxlength="100" />
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label><i class="fa fa-phone"></i> SĐT *</label>
+                            <input type="tel" name="Phone" class="form-control" value="@Model.Phone" required maxlength="20" pattern="[0-9+\-\s]{8,20}" />
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label><i class="fa fa-envelope"></i> Email</label>
+                            <input type="email" name="Email" class="form-control" value="@Model.Email" maxlength="100" />
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label><i class="fa fa-venus-mars"></i> Giới tính</label>
+                            <select name="Gender" class="form-control">
+                                <option value="" selected="@(Model.Gender == null)">— Chưa chọn —</option>
+                                <option value="1" selected="@(Model.Gender == 1)">Nam</option>
+                                <option value="2" selected="@(Model.Gender == 2)">Nữ</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="sp-actions">
+                <a href="@portalHome" class="btn btn-default">Huỷ</a>
+                <button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> Lưu thay đổi</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="sp-quick">
+        <a href="/doi-mat-khau"><i class="fa fa-key"></i> Đổi mật khẩu</a>
+        @if (u?.GroupId == WebsiteCore.Business.Constants.AdminGroup)
+        {
+            <a href="/AdminCP/AuditSystems"><i class="fa fa-history"></i> Nhật ký hệ thống</a>
+            <a href="/AdminCP/Users"><i class="fa fa-users"></i> Quản lý người dùng</a>
+        }
+        @if (u?.GroupId == WebsiteCore.Business.Constants.DoctorGroup)
+        {
+            <a href="/bac-si-portal/benh-nhan-hom-nay"><i class="fa fa-stethoscope"></i> Bệnh nhân hôm nay</a>
+        }
+        @if (u?.GroupId == WebsiteCore.Business.Constants.ReceptionGroup)
+        {
+            <a href="/le-tan/lich-hen?status=pending"><i class="fa fa-calendar-check-o"></i> Lịch chờ duyệt</a>
+            <a href="/le-tan/check-in"><i class="fa fa-id-card-o"></i> Check-in</a>
+        }
+        <a href="/AdminCP/Login/Logout" style="color:#c0392b;"><i class="fa fa-sign-out"></i> Đăng xuất</a>
+    </div>
+    }
+
+</div>
+</body>

@@ -1,0 +1,193 @@
+@using WebsiteCore.Data.Entities
+@using WebsiteCore.Business
+@{
+    ViewData["Title"] = "Suất khám";
+    var depts  = ViewBag.Departments as List<Department> ?? new();
+    var dates  = ViewBag.Dates as List<DateOnly> ?? new();
+    var matrix = ViewBag.Matrix as Dictionary<(Guid DeptId, DateOnly Date, string Session), AppointmentQuotum>
+                 ?? new Dictionary<(Guid, DateOnly, string), AppointmentQuotum>();
+    var from   = (DateOnly)ViewBag.From;
+    var to     = (DateOnly)ViewBag.To;
+    var mode   = (ViewBag.Mode as string) ?? "week";
+    var defMax = (int)(ViewBag.DefaultMax ?? 30);
+
+    string ModeBtn(string m, string label)
+    {
+        var cls = mode == m ? "btn btn-primary btn-sm" : "btn btn-default btn-sm";
+        return $"<a href='?mode={m}' class='{cls}'>{label}</a>";
+    }
+}
+
+<style>
+    .quota-toolbar { background:#fff; border:1px solid #e0e6ed; border-radius:4px; padding:10px 14px; margin-bottom:12px; box-shadow:0 1px 3px rgba(0,0,0,0.04); }
+    .quota-toolbar .mode-group .btn { margin-right:4px; }
+    .quota-pivot { background:white; border:1px solid #e0e6ed; border-collapse:separate; border-spacing:0; font-size:13px; width:auto; min-width:100%; }
+    .quota-pivot th, .quota-pivot td { padding:6px 8px; border-right:1px solid #e8eaed; border-bottom:1px solid #e8eaed; vertical-align:middle; text-align:center; white-space:nowrap; }
+    .quota-pivot thead th { background:#0a3d62; color:white; font-weight:600; position:sticky; top:0; z-index:2; }
+    .quota-pivot thead .date-row th { background:#0a3d62; }
+    .quota-pivot thead .sess-row th { background:#1d5688; font-size:11px; padding:4px 8px; }
+    .quota-pivot thead th.dept-col, .quota-pivot tbody th.dept-col { background:#f5f7fa; color:#0a3d62; text-align:left; position:sticky; left:0; z-index:1; min-width:160px; }
+    .quota-pivot thead th.dept-col { z-index:3; }
+    .quota-pivot tbody tr:nth-child(even) td { background:#fbfcfd; }
+    .quota-pivot tbody tr:hover td { background:#eef5fb; }
+    .quota-cell { display:inline-flex; align-items:center; gap:3px; }
+    .quota-cell input.q-max { width:46px; padding:2px 4px; text-align:center; border:1px solid #cbd5e0; border-radius:3px; font-size:12px; }
+    .quota-cell input.q-max:focus { border-color:#0a3d62; outline:none; box-shadow:0 0 0 2px rgba(10,61,98,0.15); }
+    .quota-cell .booked { font-size:11px; color:#888; }
+    .quota-cell.full input.q-max { background:#fde7e9; border-color:#e74c3c; color:#c0392b; font-weight:600; }
+    .quota-cell.warn input.q-max { background:#fff5e0; border-color:#f39c12; }
+    .quota-cell.empty input.q-max { background:#fafbfc; color:#7a8b99; }
+    .quota-pivot .saving { background:#fffacc !important; transition:background 0.4s; }
+    .quota-pivot .saved  { background:#d6f5e6 !important; transition:background 0.4s; }
+    .quota-pivot .err    { background:#fde7e9 !important; }
+    .legend { font-size:12px; color:#6c757d; margin:6px 0 0; }
+    .legend span { display:inline-block; padding:1px 8px; border-radius:3px; margin-right:8px; }
+</style>
+
+<h2 style="color:#0a3d62; margin-bottom:10px;"><i class="fa fa-ticket"></i> Suất khám</h2>
+
+<div class="quota-toolbar">
+    <div class="row">
+        <div class="col-md-7 mode-group">
+            <strong>Khoảng thời gian:</strong>
+            @Html.Raw(ModeBtn("day",   "Hôm nay"))
+            @Html.Raw(ModeBtn("3days", "3 ngày"))
+            @Html.Raw(ModeBtn("week",  "Tuần"))
+            @Html.Raw(ModeBtn("month", "Tháng"))
+        </div>
+        <div class="col-md-5 text-right">
+            <form method="get" class="form-inline" style="display:inline-block;">
+                <input type="hidden" name="mode" value="custom" />
+                <label>Từ:</label>
+                <input type="date" name="from" value="@from.ToString("yyyy-MM-dd")" class="form-control input-sm" style="width:140px;" />
+                <label>Đến:</label>
+                <input type="date" name="to" value="@to.ToString("yyyy-MM-dd")" class="form-control input-sm" style="width:140px;" />
+                <button type="submit" class="btn btn-default btn-sm"><i class="fa fa-filter"></i> Lọc</button>
+            </form>
+        </div>
+    </div>
+    <div class="legend" style="margin-top:8px;">
+        <strong>Đang xem:</strong> @from.ToString("dd/MM/yyyy") → @to.ToString("dd/MM/yyyy") · @dates.Count ngày · @depts.Count khoa.
+        <span style="background:#fde7e9;">đỏ = hết suất</span>
+        <span style="background:#fff5e0;">vàng = sắp hết</span>
+        <span style="background:#fafbfc; border:1px solid #e0e6ed;">xám = chưa thiết lập (mặc định @defMax)</span>
+        Sửa số → Enter để lưu.
+    </div>
+</div>
+
+@if (!depts.Any())
+{
+    <div class="alert alert-warning">Chưa có khoa active nào. Hãy thêm khoa trước qua <a href="/AdminCP/Departments">Quản lý chuyên khoa</a>.</div>
+}
+else
+{
+    <div class="table-responsive" style="background:white; border-radius:4px; box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+        <table class="quota-pivot">
+            <thead>
+                <tr class="date-row">
+                    <th class="dept-col" rowspan="2">Khoa</th>
+                    @foreach (var d in dates)
+                    {
+                        <th colspan="2">@d.ToString("dd/MM") <small style="opacity:.7; font-weight:400;">(@(d.DayOfWeek == DayOfWeek.Sunday ? "CN" : ("T" + ((int)d.DayOfWeek + 1))))</small></th>
+                    }
+                </tr>
+                <tr class="sess-row">
+                    @foreach (var d in dates)
+                    {
+                        <th>Sáng</th>
+                        <th>Chiều</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var dept in depts)
+                {
+                    <tr>
+                        <th class="dept-col">@dept.NameL</th>
+                        @foreach (var d in dates)
+                        {
+                            foreach (var sess in new[] { Constants.SessionMorning, Constants.SessionAfternoon })
+                            {
+                                AppointmentQuotum? q = null;
+                                matrix.TryGetValue((dept.Id, d, sess), out q);
+                                int max = q?.MaxCount ?? defMax;
+                                int booked = q?.BookedCount ?? 0;
+                                int remain = max - booked;
+                                string cls = q == null ? "empty" : (remain <= 0 ? "full" : (remain <= 3 ? "warn" : ""));
+                                <td>
+                                    <span class="quota-cell @cls">
+                                        <input type="number" class="q-max" min="0" max="999"
+                                               value="@max"
+                                               data-dept="@dept.Id"
+                                               data-date="@d.ToString("yyyy-MM-dd")"
+                                               data-session="@sess"
+                                               title="Đã đặt @booked / Tối đa @max" />
+                                        <span class="booked">@booked</span>
+                                    </span>
+                                </td>
+                            }
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <p class="text-muted" style="margin-top:8px; font-size:12px;">
+        <i class="fa fa-info-circle"></i> Số nhỏ bên phải mỗi ô là số lịch đã đặt — không sửa được, tự cập nhật khi lễ tân duyệt lịch.
+    </p>
+}
+
+@section Scripts {
+<script>
+(function () {
+    var token = document.querySelector('input[name="__RequestVerificationToken"]');
+    // Lấy CSRF từ form ẩn nếu có, hoặc từ AntiForgery của ASP.NET (thêm 1 form rỗng để có token)
+    function getCsrf() {
+        var t = document.querySelector('input[name="__RequestVerificationToken"]');
+        return t ? t.value : '';
+    }
+    document.querySelectorAll('input.q-max').forEach(function (inp) {
+        inp.dataset.original = inp.value;
+        inp.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') { e.preventDefault(); inp.blur(); }
+        });
+        inp.addEventListener('blur', function () {
+            var newVal = parseInt(inp.value, 10);
+            if (isNaN(newVal) || newVal < 0) { inp.value = inp.dataset.original; return; }
+            if (String(newVal) === inp.dataset.original) return;
+            var cell = inp.closest('td');
+            cell.classList.add('saving');
+
+            var fd = new FormData();
+            fd.append('departmentId', inp.dataset.dept);
+            fd.append('date',         inp.dataset.date);
+            fd.append('session',      inp.dataset.session);
+            fd.append('max',          newVal);
+            fd.append('__RequestVerificationToken', getCsrf());
+
+            fetch('/AdminCP/Quotas/SetMax', {
+                method: 'POST', body: fd, credentials: 'same-origin', redirect: 'manual'
+            }).then(function (r) {
+                cell.classList.remove('saving');
+                if (r.ok || r.status === 0 || r.type === 'opaqueredirect') {
+                    cell.classList.add('saved');
+                    inp.dataset.original = String(newVal);
+                    setTimeout(function () { cell.classList.remove('saved'); }, 800);
+                } else {
+                    cell.classList.add('err');
+                    inp.value = inp.dataset.original;
+                    setTimeout(function () { cell.classList.remove('err'); }, 1200);
+                }
+            }).catch(function () {
+                cell.classList.remove('saving');
+                cell.classList.add('err');
+                inp.value = inp.dataset.original;
+                setTimeout(function () { cell.classList.remove('err'); }, 1200);
+            });
+        });
+    });
+})();
+</script>
+<form id="csrf-form" style="display:none;">@Html.AntiForgeryToken()</form>
+}

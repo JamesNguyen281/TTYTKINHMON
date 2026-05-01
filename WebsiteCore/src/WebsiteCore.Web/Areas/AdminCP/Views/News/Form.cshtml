@@ -1,0 +1,116 @@
+@model WebsiteCore.Data.Entities.News
+@using WebsiteCore.Data.Entities
+@{
+    var cats = ViewBag.Categories as List<Category> ?? new();
+    var depts = ViewBag.Departments as List<Department> ?? new();
+    var isEdit = Model.Id != Guid.Empty;
+}
+
+<h2 style="color:#0a3d62;"><i class="fa fa-newspaper-o"></i> @ViewData["Title"]</h2>
+<a href="/AdminCP/News" class="btn btn-default" style="margin-bottom:12px;">← Quay lại</a>
+
+<form asp-action="@(isEdit ? "Edit" : "Create")" method="post" enctype="multipart/form-data">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+    <div class="row">
+        <div class="col-md-8">
+            <div class="form-group">
+                <label>Tiêu đề (vi) <span class="text-danger">*</span></label>
+                <input asp-for="TitleL" class="form-control" required />
+            </div>
+            <div class="form-group">
+                <label>Tiêu đề (en)</label>
+                <input asp-for="TitleE" class="form-control" />
+            </div>
+            <div class="form-group">
+                <label>Mô tả ngắn (vi)</label>
+                <textarea asp-for="DescriptionL" class="form-control" rows="3"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Nội dung chi tiết</label>
+                <textarea asp-for="DetailL" id="DetailL" class="form-control" rows="14"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Meta description (SEO)</label>
+                <textarea asp-for="MetaDescription" class="form-control" rows="2"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Meta keyword (SEO)</label>
+                <input asp-for="MetaKeyword" class="form-control" />
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="form-group">
+                <label>Chuyên mục</label>
+                <select asp-for="CategoryId" class="form-control">
+                    <option value="">— Chọn —</option>
+                    @foreach (var c in cats)
+                    {
+                        <option value="@c.Id" selected="@(c.Id == Model.CategoryId)">@c.NameL (@c.Type)</option>
+                    }
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Khoa liên quan</label>
+                <select asp-for="DepartmentId" class="form-control">
+                    <option value="">—</option>
+                    @foreach (var d in depts)
+                    {
+                        <option value="@d.Id" selected="@(d.Id == Model.DepartmentId)">@d.NameL</option>
+                    }
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Alias (vi)</label>
+                <input asp-for="AliasL" class="form-control" placeholder="bo-trong-de-tu-sinh" />
+            </div>
+            <div class="form-group">
+                <label>Ảnh đại diện</label>
+                @if (!string.IsNullOrEmpty(Model.ImagePath))
+                {
+                    <img src="/@Model.ImagePath.TrimStart('/')" style="max-width:100%; margin-bottom:6px;" />
+                }
+                <input asp-for="ImagePath" class="form-control" placeholder="hoặc nhập path" />
+                <input type="file" name="imageFile" accept="image/*" class="form-control" style="margin-top:6px;" />
+            </div>
+            <div class="form-group">
+                <label><input type="checkbox" name="HotNew" value="true" checked="@(Model.HotNew == true)" /> Tin nổi bật (HotNew)</label><br />
+                <label><input type="checkbox" name="ShowOnHome" value="true" checked="@(Model.ShowOnHome == true)" /> Hiển thị trang chủ</label>
+            </div>
+            <div class="form-group">
+                <label>Thứ tự</label>
+                <input asp-for="Ord" type="number" class="form-control" />
+            </div>
+            <div class="form-group">
+                <label>Active</label>
+                <select asp-for="ActiveFlag" class="form-control">
+                    <option value="1" selected="@(Model.ActiveFlag == 1)">Active</option>
+                    <option value="0" selected="@(Model.ActiveFlag == 0)">Inactive</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    <button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> Lưu</button>
+</form>
+
+@section Scripts {
+    <script src="https://cdn.ckeditor.com/4.22.1/standard-all/ckeditor.js"></script>
+    <script>
+        if (window.CKEDITOR) {
+            CKEDITOR.replace('DetailL', {
+                height: 380,
+                language: 'vi',
+                removeButtons: 'Save,NewPage,Preview,Print,Templates,Form,Checkbox,Radio,TextField,Textarea,Select,Button,ImageButton,HiddenField,About',
+                toolbarGroups: [
+                    { name: 'clipboard', groups: ['clipboard','undo'] },
+                    { name: 'editing', groups: ['find','selection'] },
+                    { name: 'links' }, { name: 'insert' },
+                    { name: 'forms' }, '/',
+                    { name: 'basicstyles', groups: ['basicstyles','cleanup'] },
+                    { name: 'paragraph', groups: ['list','indent','blocks','align'] },
+                    { name: 'styles' }, { name: 'colors' }
+                ]
+            });
+        }
+    </script>
+}

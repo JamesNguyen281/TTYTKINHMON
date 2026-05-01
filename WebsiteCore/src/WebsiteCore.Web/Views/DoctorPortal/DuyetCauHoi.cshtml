@@ -1,0 +1,39 @@
+@model WebsiteCore.Data.Entities.Question
+@{ ViewData["Title"] = "Trả lời câu hỏi"; }
+
+<div class="container" style="padding-top:24px;">
+    <h2 style="color:#0a3d62;"><i class="fa fa-question-circle"></i> Trả lời câu hỏi</h2>
+
+    <a href="/bac-si-portal" class="btn btn-sm btn-default" style="margin-bottom:12px;">← Tổng quan</a>
+
+    <div class="panel panel-default">
+        <div class="panel-heading"><strong>@Model.Title</strong></div>
+        <div class="panel-body">
+            <p>@Model.Body</p>
+            <small class="text-muted">
+                @Model.CreatedDate.ToString("dd/MM/yyyy HH:mm")
+                @if (!string.IsNullOrEmpty(Model.Topic))
+                {
+                    <span class="label label-default" style="margin-left:6px;">@Model.Topic</span>
+                }
+            </small>
+        </div>
+    </div>
+
+    <div class="panel panel-primary">
+        <div class="panel-heading"><strong>Câu trả lời của bạn</strong></div>
+        <div class="panel-body">
+            <form action="/bac-si-portal/answer" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.Id" />
+                <div class="form-group">
+                    <textarea name="body" class="form-control" rows="8" required minlength="10"
+                              placeholder="Nội dung câu trả lời (tối thiểu 10 ký tự)..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="fa fa-paper-plane"></i> Gửi câu trả lời
+                </button>
+            </form>
+        </div>
+    </div>
+</div>

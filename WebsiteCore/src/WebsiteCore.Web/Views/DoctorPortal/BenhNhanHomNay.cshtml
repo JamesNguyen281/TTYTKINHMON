@@ -1,0 +1,134 @@
+@{
+    ViewData["Title"] = "Bệnh nhân hôm nay";
+    var todays = ViewBag.TodayAppts as List<WebsiteCore.Business.ViewModels.AppointmentRow> ?? new();
+    var linked = ViewBag.LinkedDoctorId as Guid?;
+    var u = ViewBag.CurrentUser as WebsiteCore.Business.ViewModels.LoggedInUser;
+    var checkedInCount = todays.Count(t => t.CheckedIn);
+    var waitingCount = todays.Count - checkedInCount;
+}
+
+<div style="margin-bottom:20px;">
+    <a href="/bac-si-portal" class="btn btn-default btn-sm" style="margin-bottom:8px;">← Tổng quan</a>
+    <h2 style="color:#0a3d62; margin:0;">
+        <i class="fa fa-stethoscope"></i> Bệnh nhân hôm nay
+    </h2>
+    <p class="text-muted">
+        BS. @(u?.FullName) · @DateTime.Today.ToString("dddd, dd/MM/yyyy", new System.Globalization.CultureInfo("vi-VN"))
+    </p>
+</div>
+
+@if (!linked.HasValue)
+{
+    <div class="alert alert-warning">
+        <i class="fa fa-exclamation-triangle"></i>
+        Tài khoản của bạn chưa được liên kết với hồ sơ bác sĩ trong bảng <code>Doctor</code>.
+        Vui lòng liên hệ <strong>quản trị viên</strong> để cập nhật.
+    </div>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4 col-sm-6">
+            <div class="stat-card stat-success">
+                <i class="fa fa-check-circle stat-icon"></i>
+                <div class="stat-value" id="dp-checkedin">@checkedInCount</div>
+                <div class="stat-label">Đã check-in</div>
+            </div>
+        </div>
+        <div class="col-md-4 col-sm-6">
+            <div class="stat-card stat-warning">
+                <i class="fa fa-clock-o stat-icon"></i>
+                <div class="stat-value" id="dp-waiting">@waitingCount</div>
+                <div class="stat-label">Đang chờ</div>
+            </div>
+        </div>
+        <div class="col-md-4 col-sm-6">
+            <div class="stat-card">
+                <i class="fa fa-users stat-icon" style="color:#0a3d62;"></i>
+                <div class="stat-value" id="dp-total">@todays.Count</div>
+                <div class="stat-label">Tổng lịch</div>
+            </div>
+        </div>
+    </div>
+    <div id="dp-banner" style="display:none;" class="alert alert-info" style="margin-top:12px;">
+        <i class="fa fa-bell"></i> <strong>Có bệnh nhân vừa được check-in</strong> — đang làm mới…
+    </div>
+    <script>
+    (function(){
+        var initial = parseInt(document.getElementById('dp-total').textContent, 10) || 0;
+        var initialIn = parseInt(document.getElementById('dp-checkedin').textContent, 10) || 0;
+        function tick(){
+            fetch('/bac-si-portal/counts?_=' + Date.now(), { credentials: 'same-origin' })
+              .then(function(r){ return r.ok ? r.json() : null; })
+              .then(function(d){
+                if(!d) return;
+                document.getElementById('dp-total').textContent = d.total;
+                document.getElementById('dp-checkedin').textContent = d.checkedIn;
+                document.getElementById('dp-waiting').textContent = Math.max(0, d.total - d.checkedIn);
+                if(d.total !== initial || d.checkedIn !== initialIn){
+                  document.getElementById('dp-banner').style.display = 'block';
+                  setTimeout(function(){ window.location.reload(); }, 1500);
+                }
+              })
+              .catch(function(){});
+        }
+        setInterval(tick, 20000);
+    })();
+    </script>
+
+    @if (!todays.Any())
+    {
+        <div class="alert alert-info" style="margin-top:24px;">
+            <i class="fa fa-info-circle"></i>
+            Hôm nay không có bệnh nhân được phân cho bạn. Hãy nghỉ ngơi nhé!
+        </div>
+    }
+    else
+    {
+        <div class="panel panel-primary" style="margin-top:24px;">
+            <div class="panel-heading"><strong><i class="fa fa-list"></i> Danh sách bệnh nhân</strong></div>
+            <div class="panel-body" style="padding:0;">
+                <div class="table-responsive">
+                    <table class="table table-hover" style="margin:0;">
+                        <thead>
+                            <tr>
+                                <th>STT</th><th>Mã khám</th><th>Họ tên</th><th>SĐT</th>
+                                <th>Buổi</th><th>Lý do</th><th>Trạng thái</th><th>Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var (a, idx) in todays.Select((a, i) => (a, i + 1)))
+                        {
+                            <tr>
+                                <td>@idx</td>
+                                <td><code>@a.BookingCode</code></td>
+                                <td><strong>@a.PatientName</strong></td>
+                                <td>@a.PatientPhone</td>
+                                <td>@(a.Session == "morning" ? "Sáng" : "Chiều")</td>
+                                <td><small>@a.Reason</small></td>
+                                <td>
+                                    @if (a.CheckedIn) { <span class="badge bg-success">Đã check-in</span> }
+                                    else if (a.Status == "confirmed") { <span class="badge bg-info">Chờ đến</span> }
+                                    else { <span class="badge bg-secondary">@WebsiteCore.Business.Constants.ApptStatusLabel(a.Status)</span> }
+                                </td>
+                                <td>
+                                    @if (a.CheckedIn)
+                                    {
+                                        <a href="/bac-si-portal/chan-doan/@a.Id" class="btn btn-sm btn-primary">
+                                            <i class="fa fa-stethoscope"></i> Chẩn đoán
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">Chờ check-in</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+}

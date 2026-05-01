@@ -1,0 +1,193 @@
+@{
+    ViewData["Title"] = "Tổng quan Lễ tân";
+    var pending = (int)(ViewBag.PendingCount ?? 0);
+    var today = (int)(ViewBag.TodayCount ?? 0);
+    var checkedIn = (int)(ViewBag.CheckedInCount ?? 0);
+    var unassigned = (int)(ViewBag.UnassignedCount ?? 0);
+    int notArrived = today - checkedIn;
+}
+
+<style>
+    .lt-wrap { max-width:1280px; margin:0 auto; padding:18px 0 40px; }
+    .lt-hero { background:linear-gradient(135deg,#0a3d62 0%,#1d5688 100%); color:white; padding:18px 24px; border-radius:8px; margin-bottom:18px; box-shadow:0 4px 12px rgba(10,61,98,0.18); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; }
+    .lt-hero h1 { margin:0; font-size:20px; font-weight:600; }
+    .lt-hero .meta { font-size:13px; opacity:0.9; margin-top:4px; }
+    .lt-hero #lt-banner { background:rgba(255,212,77,0.95); color:#06283d; padding:8px 14px; border-radius:6px; font-weight:600; }
+    .lt-hero #lt-banner a { color:#06283d; text-decoration:underline; }
+
+    .kpi-row { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:14px; margin-bottom:18px; }
+    .kpi { background:white; border:1px solid #e5e9ee; border-radius:8px; padding:18px 20px; box-shadow:0 1px 3px rgba(0,0,0,0.04); display:flex; align-items:center; gap:14px; text-decoration:none; color:inherit; transition:all 0.2s; cursor:pointer; }
+    .kpi:hover { transform:translateY(-2px); box-shadow:0 6px 18px rgba(10,61,98,0.12); border-color:#0a3d62; text-decoration:none; }
+    .kpi .ico { width:48px; height:48px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; }
+    .kpi.pending .ico { background:#fff5e0; color:#f39c12; }
+    .kpi.today .ico { background:#e8f5e9; color:#43aa8b; }
+    .kpi.checkedin .ico { background:#e3f2fd; color:#4d96ff; }
+    .kpi.unassigned .ico { background:#fde7e9; color:#e74c3c; }
+    .kpi .num { font-size:28px; font-weight:700; line-height:1; color:#0a3d62; }
+    .kpi .lbl { font-size:13px; color:#6c757d; margin-top:4px; }
+    .kpi .sub { font-size:11px; color:#8898aa; margin-top:2px; }
+
+    .lt-grid { display:grid; grid-template-columns:1.7fr 1fr; gap:18px; }
+    @@media (max-width: 992px) { .lt-grid { grid-template-columns:1fr; } }
+    .lt-card { background:white; border:1px solid #e5e9ee; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,0.04); margin-bottom:16px; overflow:hidden; }
+    .lt-card .head { padding:12px 16px; background:#f7f9fc; border-bottom:1px solid #e5e9ee; font-weight:600; color:#0a3d62; }
+    .lt-card .body { padding:16px; }
+    .workflow { counter-reset:step; }
+    .workflow .step { display:flex; gap:12px; padding:10px 0; border-bottom:1px solid #f0f3f7; }
+    .workflow .step:last-child { border-bottom:0; }
+    .workflow .step:before { counter-increment:step; content:counter(step); flex-shrink:0; width:30px; height:30px; border-radius:50%; background:#0a3d62; color:white; display:flex; align-items:center; justify-content:center; font-weight:600; font-size:14px; }
+    .workflow .step .txt { flex:1; }
+    .workflow .step .txt strong { color:#0a3d62; }
+    .workflow .step .txt small { display:block; color:#6c757d; margin-top:2px; font-size:12px; }
+    .quick-action { display:flex; align-items:center; gap:10px; padding:11px 14px; background:white; border:1px solid #e5e9ee; border-radius:6px; margin-bottom:8px; color:#0a3d62 !important; text-decoration:none; transition:all 0.15s; }
+    .quick-action:hover { background:#0a3d62; color:white !important; border-color:#0a3d62; transform:translateX(2px); }
+    .quick-action .fa { width:24px; font-size:16px; }
+    .quick-action.warn { border-left:3px solid #f39c12; }
+    .quick-action.success { border-left:3px solid #43aa8b; }
+    .quick-action.info { border-left:3px solid #4d96ff; }
+    .quick-action.alert { border-left:3px solid #e74c3c; }
+</style>
+
+<div class="lt-wrap">
+    <div class="lt-hero">
+        <div>
+            <h1><i class="fa fa-tachometer"></i> Tổng quan ngày @DateTime.Today.ToString("dd/MM/yyyy")</h1>
+            <div class="meta">Xin chào <strong>@ViewBag.CurrentUser?.FullName</strong> — bảng điều khiển Lễ tân.</div>
+        </div>
+        <div id="lt-banner" style="display:none;">
+            <i class="fa fa-bell"></i> Có lịch mới chờ duyệt!
+            <a href="/le-tan/lich-hen?status=pending">Xem ngay →</a>
+        </div>
+    </div>
+
+    <div class="kpi-row">
+        <a href="/le-tan/lich-hen?status=pending" class="kpi pending">
+            <div class="ico"><i class="fa fa-clock-o"></i></div>
+            <div>
+                <div class="num" id="cnt-pending">@pending</div>
+                <div class="lbl">Lịch chờ duyệt</div>
+                <div class="sub">Cần xác nhận để sinh mã khám</div>
+            </div>
+        </a>
+        <a href="/le-tan/check-in" class="kpi today">
+            <div class="ico"><i class="fa fa-calendar-check-o"></i></div>
+            <div>
+                <div class="num" id="cnt-today">@today</div>
+                <div class="lbl">Lịch hôm nay</div>
+                <div class="sub">Đã được duyệt</div>
+            </div>
+        </a>
+        <a href="/le-tan/check-in" class="kpi checkedin">
+            <div class="ico"><i class="fa fa-sign-in"></i></div>
+            <div>
+                <div class="num" id="cnt-checkedin">@checkedIn</div>
+                <div class="lbl">Đã đến + check-in</div>
+                <div class="sub">Còn @notArrived BN chưa tới</div>
+            </div>
+        </a>
+        <a href="/le-tan/lich-hen?status=confirmed" class="kpi unassigned">
+            <div class="ico"><i class="fa fa-user-md"></i></div>
+            <div>
+                <div class="num" id="cnt-unassigned">@unassigned</div>
+                <div class="lbl">Chưa phân bác sĩ</div>
+                <div class="sub">@(unassigned > 0 ? "BS không thấy lịch — phân ngay!" : "Tất cả đã phân ✓")</div>
+            </div>
+        </a>
+    </div>
+
+    <div class="lt-grid">
+        <div>
+            <div class="lt-card">
+                <div class="head"><i class="fa fa-list-ol"></i> Quy trình lễ tân</div>
+                <div class="body">
+                    <div class="workflow">
+                        <div class="step"><div class="txt"><strong>Tiếp nhận đặt lịch</strong>
+                            <small>Bệnh nhân đặt qua <code>/dat-lich-kham</code> → vào hàng đợi <span class="label label-warning">Chờ duyệt</span>.</small>
+                        </div></div>
+                        <div class="step"><div class="txt"><strong>Duyệt lịch + sinh mã khám</strong>
+                            <small><a href="/le-tan/lich-hen?status=pending">Hàng đợi chờ duyệt</a> → bấm <span class="label label-success">Xác nhận</span> → sinh mã <code>KMyymmddS|C......</code>.</small>
+                        </div></div>
+                        <div class="step"><div class="txt"><strong>Phân bác sĩ phụ trách</strong>
+                            <small>Mở chi tiết lịch → chọn bs trong khoa → lưu. <em>Không phân = bs không thấy lịch trong "BN hôm nay".</em></small>
+                        </div></div>
+                        <div class="step"><div class="txt"><strong>Check-in khi BN đến</strong>
+                            <small><a href="/le-tan/check-in">Trang check-in</a> → nhập mã khám hoặc tra theo tên → đánh dấu đã có mặt.</small>
+                        </div></div>
+                        <div class="step"><div class="txt"><strong>Bàn giao bác sĩ → Hoàn tất</strong>
+                            <small>Sau check-in, lịch tự xuất hiện trong "Bệnh nhân hôm nay" của bs đã phân. BS chẩn đoán + kê đơn → status <code>completed</code>.</small>
+                        </div></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lt-card">
+                <div class="head"><i class="fa fa-info-circle"></i> Logic phân lịch theo khoa &amp; bác sĩ</div>
+                <div class="body">
+                    <ul style="padding-left:18px; margin:0; line-height:1.8;">
+                        <li>Bệnh nhân chỉ chọn <strong>chuyên khoa</strong> + ngày + buổi (sáng/chiều) khi đặt — không chọn bs cụ thể.</li>
+                        <li>Mỗi <strong>khoa</strong> có nhiều bs (xem <a href="/AdminCP/Doctors">AdminCP / Bác sĩ</a>). Khi phân, dropdown chỉ hiện bs cùng khoa.</li>
+                        <li><strong>Quota</strong> kiểm soát số suất tối đa mỗi (khoa + ngày + buổi) — quản lý ở <a href="/le-tan/suat-kham">Suất khám</a>.</li>
+                        <li>Lịch trực bs (<a href="/le-tan/bac-si-truc">Bác sĩ trực hôm nay</a>) là dữ liệu tham khảo — admin cấu hình trong AdminCP / DoctorSchedules.</li>
+                        <li>Một lịch chỉ thuộc <strong>1 bác sĩ</strong>. Đổi bs → bs cũ không còn thấy, bs mới thấy ngay (real-time).</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div class="lt-card">
+                <div class="head"><i class="fa fa-bolt"></i> Tác vụ nhanh</div>
+                <div class="body" style="padding:12px;">
+                    <a href="/le-tan/lich-hen?status=pending" class="quick-action warn">
+                        <i class="fa fa-check-circle"></i> Duyệt lịch chờ <span style="margin-left:auto; background:#f39c12; color:white; padding:1px 8px; border-radius:10px; font-size:11px;">@pending</span>
+                    </a>
+                    <a href="/le-tan/check-in" class="quick-action success">
+                        <i class="fa fa-sign-in"></i> Check-in bệnh nhân
+                    </a>
+                    @if (unassigned > 0)
+                    {
+                        <a href="/le-tan/lich-hen?status=confirmed" class="quick-action alert">
+                            <i class="fa fa-exclamation-triangle"></i> Phân bs lịch confirmed <span style="margin-left:auto; background:#e74c3c; color:white; padding:1px 8px; border-radius:10px; font-size:11px;">@unassigned</span>
+                        </a>
+                    }
+                    <a href="/le-tan/bac-si-truc" class="quick-action info">
+                        <i class="fa fa-stethoscope"></i> Bác sĩ trực hôm nay
+                    </a>
+                    <a href="/le-tan/suat-kham" class="quick-action">
+                        <i class="fa fa-ticket"></i> Quản lý suất khám
+                    </a>
+                </div>
+            </div>
+
+            <div class="lt-card">
+                <div class="head"><i class="fa fa-question-circle-o"></i> Mẹo</div>
+                <div class="body" style="font-size:13px; line-height:1.7;">
+                    <p style="margin:0 0 8px;"><strong>📞</strong> Click số điện thoại trong chi tiết lịch để gọi nhanh.</p>
+                    <p style="margin:0 0 8px;"><strong>🔔</strong> Trang này tự refresh KPI mỗi 15s — không cần F5.</p>
+                    <p style="margin:0;"><strong>🏥</strong> Đổi bs giữa chừng OK — chỉ chặn khi lịch đã <code>completed</code>.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function(){
+    var initialPending = @pending;
+    var banner = document.getElementById('lt-banner');
+    function tick(){
+        fetch('/le-tan/counts?_=' + Date.now(), { credentials:'same-origin' })
+          .then(function(r){ return r.ok ? r.json() : null; })
+          .then(function(d){
+            if (!d) return;
+            document.getElementById('cnt-pending').textContent    = d.pending;
+            document.getElementById('cnt-today').textContent      = d.today;
+            document.getElementById('cnt-checkedin').textContent  = d.checkedIn;
+            document.getElementById('cnt-unassigned').textContent = d.unassigned;
+            if (d.pending > initialPending) banner.style.display = 'inline-block';
+          })
+          .catch(function(){});
+    }
+    setInterval(tick, 15000);
+})();
+</script>

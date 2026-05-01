@@ -1,0 +1,40 @@
+@model WebsiteCore.Data.Entities.Partner
+@{ var isEdit = Model.Id != Guid.Empty; }
+
+<h2 style="color:#0a3d62;"><i class="fa fa-handshake-o"></i> @ViewData["Title"]</h2>
+<a href="/AdminCP/Partners" class="btn btn-default" style="margin-bottom:12px;">← Quay lại</a>
+
+<form asp-action="@(isEdit ? "Edit" : "Create")" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+    <div class="row">
+        <div class="col-md-6 form-group">
+            <label>Tên (vi) <span class="text-danger">*</span></label>
+            <input asp-for="NameL" class="form-control" required />
+        </div>
+        <div class="col-md-6 form-group">
+            <label>Tên (en)</label>
+            <input asp-for="NameE" class="form-control" />
+        </div>
+        <div class="col-md-6 form-group">
+            <label>Logo path</label>
+            <input asp-for="ImagePath" class="form-control" />
+        </div>
+        <div class="col-md-6 form-group">
+            <label>Link</label>
+            <input asp-for="Link" class="form-control" />
+        </div>
+        <div class="col-md-3 form-group">
+            <label>Thứ tự</label>
+            <input asp-for="Ord" class="form-control" type="number" />
+        </div>
+        <div class="col-md-3 form-group">
+            <label>Active</label>
+            <select asp-for="ActiveFlag" class="form-control">
+                <option value="1" selected="@(Model.ActiveFlag == 1)">Active</option>
+                <option value="0" selected="@(Model.ActiveFlag == 0)">Inactive</option>
+            </select>
+        </div>
+    </div>
+    <button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> Lưu</button>
+</form>

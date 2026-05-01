@@ -1,0 +1,109 @@
+﻿@model WebsiteCore.Data.Entities.News
+@{
+    var locate = (ViewBag.Locate as string) ?? "vi";
+    bool isEn  = locate == "en";
+    string L(string? l, string? e) => isEn ? (string.IsNullOrEmpty(e) ? (l ?? "") : e) : (l ?? "");
+    var titleX = L(Model.TitleL, Model.TitleE);
+    var descX  = L(Model.DescriptionL, Model.DescriptionE);
+    var detailX = L(Model.DetailL,     Model.DetailE);
+    var lblNews = isEn ? "News" : "Tin tức";
+    var lblDetail = isEn ? "Detail" : "Chi tiết";
+    var lblViews = isEn ? "views" : "lượt xem";
+
+    ViewData["Title"] = titleX;
+    ViewData["MetaDescription"] = !string.IsNullOrEmpty(descX) ? descX : titleX;
+    ViewData["MetaKeywords"] = string.IsNullOrEmpty(Model.MetaKeyword) ? titleX : Model.MetaKeyword;
+    ViewData["OgType"] = "article";
+    if (!string.IsNullOrEmpty(Model.ImagePath))
+        ViewData["OgImage"] = Model.ImagePath.TrimStart('/');
+    ViewData["HideHero"] = true;
+    ViewData["Breadcrumb"] = new List<(string, string?)>
+    {
+        (lblNews, "/chuyen-muc/tin-tuc"),
+        (string.IsNullOrEmpty(titleX) ? lblDetail : titleX, null)
+    };
+
+    var datePublished = (Model.CreatedDate ?? DateTime.Now).ToString("yyyy-MM-ddTHH:mm:sszzz");
+    var dateModified  = (Model.LuUpdated ?? Model.CreatedDate ?? DateTime.Now).ToString("yyyy-MM-ddTHH:mm:sszzz");
+    var jsonHeadline = System.Text.Json.JsonEncodedText.Encode(titleX).ToString();
+    var jsonDesc     = System.Text.Json.JsonEncodedText.Encode(descX).ToString();
+    var imgUrl       = $"{Context.Request.Scheme}://{Context.Request.Host}/{(Model.ImagePath ?? "assets/client/images/logo-kinhmon.png").TrimStart('/')}";
+    var logoUrl      = $"{Context.Request.Scheme}://{Context.Request.Host}/assets/client/images/logo-kinhmon.png";
+    var jsonLd = "{"
+        + "\"@context\":\"https://schema.org\","
+        + "\"@type\":\"NewsArticle\","
+        + "\"headline\":\"" + jsonHeadline + "\","
+        + "\"description\":\"" + jsonDesc + "\","
+        + "\"image\":[\"" + imgUrl + "\"],"
+        + "\"datePublished\":\"" + datePublished + "\","
+        + "\"dateModified\":\"" + dateModified + "\","
+        + "\"author\":{\"@type\":\"Organization\",\"name\":\"Trung tâm Y tế phường Kinh Môn\"},"
+        + "\"publisher\":{\"@type\":\"Organization\",\"name\":\"Trung tâm Y tế phường Kinh Môn\",\"logo\":{\"@type\":\"ImageObject\",\"url\":\"" + logoUrl + "\"}}"
+        + "}";
+    ViewData["JsonLd"] = jsonLd;
+}
+
+<div class="container" style="padding-top:16px;">
+    <article class="news-detail-article" itemscope itemtype="https://schema.org/NewsArticle">
+        <header style="margin-bottom:16px;">
+            <h1 itemprop="headline" style="color:#0a3d62; font-size:28px; line-height:1.3; margin-top:0;">@titleX</h1>
+            <div class="news-meta text-muted" style="font-size:13px; margin:8px 0;">
+                <i class="fa fa-calendar"></i>
+                <time itemprop="datePublished" datetime="@datePublished">
+                    @(Model.CreatedDate?.ToString("HH:mm dd/MM/yyyy") ?? "")
+                </time>
+                @if ((Model.Views ?? 0) > 0)
+                {
+                    <span style="margin-left:12px;"><i class="fa fa-eye"></i> @Model.Views @lblViews</span>
+                }
+                @if (!string.IsNullOrEmpty(Model.Copyright))
+                {
+                    <span style="margin-left:12px;"><i class="fa fa-copyright"></i> @Model.Copyright</span>
+                }
+            </div>
+        </header>
+
+        <figure class="news-cover" style="margin-bottom:16px;">
+            @{ var detailImg = !string.IsNullOrEmpty(Model.ImagePath)
+                    ? "/" + Model.ImagePath.TrimStart('/')
+                    : "/assets/client/images/logo-kinhmon.png"; }
+            <img src="@detailImg" alt="@titleX" itemprop="image" class="img-responsive"
+                 style="width:100%; max-height:480px; object-fit:cover; border-radius:6px; background:#f0f7fc;"
+                 onerror="this.onerror=null;this.src='/assets/client/images/logo-kinhmon.png';this.style.objectFit='contain';this.style.padding='24px';" />
+        </figure>
+
+        @if (!string.IsNullOrEmpty(descX))
+        {
+            <p class="news-lead" itemprop="description"
+               style="font-size:17px; font-style:italic; color:#444; border-left:4px solid #0a3d62; padding:8px 16px; background:#f8f9fa; border-radius:0 4px 4px 0;">
+                @descX
+            </p>
+        }
+
+        <div class="news-content" itemprop="articleBody" style="font-size:16px; line-height:1.7; color:#333;">
+            @Html.Raw(detailX)
+        </div>
+
+        <hr />
+        <footer class="news-footer" style="margin-top:16px;">
+            <div class="row">
+                <div class="col-md-6">
+                    <a href="/chuyen-muc/tin-tuc" class="btn btn-default">
+                        <i class="fa fa-arrow-left"></i> Danh sách tin tức
+                    </a>
+                </div>
+                <div class="col-md-6 text-right">
+                    <span class="text-muted">Chia sẻ:</span>
+                    <a href="https://www.facebook.com/sharer/sharer.php?u=@(Context.Request.Scheme)://@(Context.Request.Host)@(Context.Request.Path)"
+                       target="_blank" rel="noopener" class="btn btn-sm" style="background:#3b5998; color:white;">
+                        <i class="fa fa-facebook"></i> Facebook
+                    </a>
+                    <a href="https://twitter.com/intent/tweet?url=@(Context.Request.Scheme)://@(Context.Request.Host)@(Context.Request.Path)&text=@Uri.EscapeDataString(Model.TitleL ?? "")"
+                       target="_blank" rel="noopener" class="btn btn-sm" style="background:#1da1f2; color:white;">
+                        <i class="fa fa-twitter"></i> Twitter
+                    </a>
+                </div>
+            </div>
+        </footer>
+    </article>
+</div>

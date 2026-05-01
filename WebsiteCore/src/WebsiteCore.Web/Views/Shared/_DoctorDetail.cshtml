@@ -1,0 +1,159 @@
+@* Modal popup chi tiết bác sĩ — 2 cột, có scroll bên trong khi content dài. *@
+<div id="detaildoctor1" class="modal fade modal_doctor" role="dialog" aria-hidden="true" tabindex="-1">
+    <div class="modal-dialog km-doc-dialog" role="document">
+        <div class="modal-content km-doc-modal">
+            <button type="button" class="km-modal-close" data-dismiss="modal" aria-label="Close"><i class="fa fa-times"></i></button>
+            <div class="km-doc-grid">
+                <aside class="km-doc-left">
+                    <img class="km-doc-avatar" alt="" />
+                    <h2 class="name-doctor"></h2>
+                    <div class="km-doc-pos"></div>
+                    <div class="km-doc-specialty"></div>
+                </aside>
+                <section class="km-doc-right">
+                    <div class="km-doc-scroll linemodal"></div>
+                </section>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* === Wrapper modal — center, có giới hạn chiều cao + có scroll riêng === */
+    #detaildoctor1.modal { padding-right: 0 !important; }
+    #detaildoctor1 .km-doc-dialog {
+        max-width: 960px; width: calc(100% - 32px);
+        margin: 30px auto;
+    }
+    .km-doc-modal {
+        border-radius: 12px; overflow: hidden; border: 0;
+        box-shadow: 0 24px 60px rgba(10,61,98,0.30);
+        max-height: calc(100vh - 60px);
+        display: flex; flex-direction: column;
+    }
+    .km-modal-close {
+        position: absolute; top: 14px; right: 18px; z-index: 20;
+        font-size: 22px; line-height: 1; color: white; opacity: .9;
+        background: rgba(0,0,0,0.30); border-radius: 50%;
+        width: 32px; height: 32px; border: 0; padding: 0;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .km-modal-close:hover { opacity: 1; background: rgba(0,0,0,0.55); }
+
+    /* === Grid 2 cột === */
+    .km-doc-grid {
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        flex: 1 1 auto; min-height: 0;
+        overflow: hidden;
+    }
+    @@media (max-width: 768px) {
+        .km-doc-grid { grid-template-columns: 1fr; }
+        .km-doc-modal { max-height: calc(100vh - 30px); }
+        #detaildoctor1 .km-doc-dialog { margin: 15px auto; }
+    }
+
+    /* === Cột trái (sticky avatar) === */
+    .km-doc-left {
+        background: linear-gradient(160deg,#0a3d62 0%,#1d5688 100%);
+        color: white; padding: 32px 24px 28px; text-align: center;
+        overflow-y: auto;
+    }
+    .km-doc-left .km-doc-avatar {
+        width: 150px; height: 150px; border-radius: 50%;
+        object-fit: cover; background: white; padding: 6px;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.30);
+        margin: 0 auto 16px; display: block;
+        border: 3px solid rgba(255,255,255,0.45);
+    }
+    .km-doc-left .name-doctor {
+        font-size: 19px; font-weight: 700; margin: 6px 0; line-height: 1.35; color: #fff;
+    }
+    .km-doc-left .km-doc-pos {
+        display: inline-block; font-size: 13px; opacity: .95;
+        margin: 10px 0 6px; padding: 6px 14px;
+        background: rgba(255,255,255,0.15); border-radius: 16px; line-height: 1.4;
+    }
+    .km-doc-left .km-doc-pos:empty { display: none; }
+    .km-doc-left .km-doc-specialty {
+        font-size: 13px; opacity: .85; margin-top: 10px; font-style: italic;
+        line-height: 1.5;
+    }
+    @@media (max-width: 768px) {
+        .km-doc-left { padding: 22px 16px 18px; }
+        .km-doc-left .km-doc-avatar { width: 120px; height: 120px; }
+        .km-doc-left .name-doctor { font-size: 17px; }
+    }
+
+    /* === Cột phải — chứa scroll bên trong === */
+    .km-doc-right {
+        background: white;
+        display: flex; flex-direction: column;
+        min-height: 0;
+        overflow: hidden;
+    }
+    .km-doc-scroll {
+        padding: 32px 36px;
+        overflow-y: auto;
+        flex: 1 1 auto;
+        scrollbar-width: thin; scrollbar-color: #0a3d62 #eef5fb;
+    }
+    .km-doc-scroll::-webkit-scrollbar { width: 8px; }
+    .km-doc-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
+    .km-doc-scroll::-webkit-scrollbar-thumb { background: #1d5688; border-radius: 4px; }
+    .km-doc-scroll::-webkit-scrollbar-thumb:hover { background: #0a3d62; }
+    @@media (max-width: 768px) {
+        .km-doc-scroll { padding: 22px 20px; }
+    }
+
+    .km-doc-scroll .info-block { margin-bottom: 22px; }
+    .km-doc-scroll .info-block:last-child { margin-bottom: 0; }
+    .km-doc-scroll .info-block .info-label {
+        display: flex; align-items: center; gap: 10px;
+        font-size: 12px; text-transform: uppercase; letter-spacing: 0.6px;
+        color: #0a3d62; font-weight: 700; margin-bottom: 10px;
+        border-bottom: 2px solid #eef5fb; padding-bottom: 8px;
+    }
+    .km-doc-scroll .info-block .info-label .fa { color: #1d5688; font-size: 15px; width: 18px; text-align: center; }
+    .km-doc-scroll .info-block .info-content {
+        color: #2c3e50; font-size: 14.5px; line-height: 1.85;
+        white-space: pre-line; word-wrap: break-word;
+    }
+    .km-doc-scroll .info-block .info-content p { margin: 0 0 10px; }
+    .km-doc-scroll .info-block.empty { display: none; }
+
+    /* === Lịch trực — bảng tuần in modal === */
+    .km-sched-section { margin-top: 22px; padding-top: 18px; border-top: 2px solid #eef5fb; }
+    .km-sched-section h4 {
+        font-size: 14px; text-transform: uppercase; letter-spacing: 0.6px;
+        color: #0a3d62; font-weight: 700; margin: 0 0 12px;
+        display: flex; align-items: center; gap: 8px;
+    }
+    .km-sched-section h4 .fa { color: #1d5688; font-size: 16px; }
+    .km-sched-grid {
+        display: grid; grid-template-columns: 56px repeat(7, 1fr); gap: 1px;
+        background: #d0d7de; border: 1px solid #d0d7de; border-radius: 6px; overflow: hidden;
+        font-size: 12px;
+    }
+    .km-sched-cell { background: white; padding: 6px 4px; min-height: 38px; display: flex; align-items: center; justify-content: center; }
+    .km-sched-h-buoi { background: #f7f9fc; font-weight: 700; color: #0a3d62; font-size: 11px; }
+    .km-sched-h-day  { background: #0a3d62; color: white; font-weight: 700; font-size: 12px; }
+    .km-sched-h-sess { background: #f7f9fc; font-weight: 600; color: #0a3d62; font-size: 11px; }
+    .km-sched-block {
+        background: linear-gradient(135deg,#43aa8b 0%,#2f7a5e 100%);
+        color: white; border-radius: 4px; padding: 5px 4px; width: 100%;
+        text-align: center; box-shadow: 0 1px 3px rgba(67,170,139,0.25);
+    }
+    .km-sched-block.afternoon {
+        background: linear-gradient(135deg,#4d96ff 0%,#3673c9 100%);
+        box-shadow: 0 1px 3px rgba(77,150,255,0.25);
+    }
+    .km-sched-block .rm { font-weight: 700; font-size: 11px; line-height: 1.2; }
+    .km-sched-block .qt { font-size: 10px; opacity: 0.92; margin-top: 1px; }
+    .km-sched-empty { color: #cfd5dc; font-size: 13px; }
+    @@media (max-width: 768px) {
+        .km-sched-grid { grid-template-columns: 44px repeat(7, 1fr); font-size: 11px; }
+        .km-sched-block .rm { font-size: 10px; }
+        .km-sched-block .qt { font-size: 9px; }
+    }
+</style>

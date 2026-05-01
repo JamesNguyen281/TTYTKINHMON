@@ -1,0 +1,58 @@
+﻿@model List<WebsiteCore.Data.Entities.Partner>
+@{ ViewData["Title"] = "Đối tác"; }
+
+<h2 class="admin-page-title"><i class="fa fa-handshake-o"></i> Đối tác</h2>
+
+<div class="admin-toolbar">
+    <a href="/AdminCP/Partners/Create" class="btn btn-success"><i class="fa fa-plus-circle"></i> Thêm đối tác</a>
+    <span class="pull-right text-muted" style="line-height:34px;">@Model.Count đối tác</span>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-hover table-bordered">
+        <thead>
+            <tr>
+                <th style="width:40px;">#</th>
+                <th style="width:100px;">Logo</th>
+                <th>Tên</th>
+                <th>Link</th>
+                <th style="width:60px;">Thứ tự</th>
+                <th style="width:80px; text-align:center;">Active</th>
+                <th style="width:140px;">Hành động</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var (p, i) in Model.Select((p, i) => (p, i + 1)))
+        {
+            <tr>
+                <td>@i</td>
+                <td>
+                    @if (!string.IsNullOrEmpty(p.ImagePath))
+                    {
+                        <img src="/@p.ImagePath.TrimStart('/')" style="height:40px;" />
+                    }
+                </td>
+                <td><strong>@p.NameL</strong></td>
+                <td><small><a href="@p.Link" target="_blank">@p.Link</a></small></td>
+                <td>@p.Ord</td>
+                <td style="text-align:center;">
+                    @if (p.ActiveFlag == 1) { <span class="label label-success">Active</span> }
+                    else { <span class="label label-default">Tắt</span> }
+                </td>
+                <td>
+                    <a href="/AdminCP/Partners/Edit/@p.Id" class="btn btn-xs btn-warning" title="Sửa"><i class="fa fa-pencil"></i></a>
+                    <form action="/AdminCP/Partners/ToggleStatus/@p.Id" method="post" style="display:inline;">
+                        @Html.AntiForgeryToken()
+                        <button class="btn btn-xs @(p.ActiveFlag == 1 ? "btn-default" : "btn-success")" title="@(p.ActiveFlag == 1 ? "Tắt" : "Bật")"><i class="fa @(p.ActiveFlag == 1 ? "fa-toggle-on" : "fa-toggle-off")"></i></button>
+                    </form>
+                    <form action="/AdminCP/Partners/Delete/@p.Id" method="post" style="display:inline;" onsubmit="return confirm('Xoá đối tác này?');">
+                        @Html.AntiForgeryToken()
+                        <button class="btn btn-xs btn-danger" title="Xoá"><i class="fa fa-trash"></i></button>
+                    </form>
+                </td>
+            </tr>
+        }
+        @if (!Model.Any()) { <tr><td colspan="7" class="text-center text-muted" style="padding:30px;">Chưa có đối tác.</td></tr> }
+        </tbody>
+    </table>
+</div>

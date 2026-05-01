@@ -1,0 +1,61 @@
+@model WebsiteCore.Data.Entities.Slide
+@{ var isEdit = Model.Id != Guid.Empty; }
+
+<h2 style="color:#0a3d62;"><i class="fa fa-image"></i> @ViewData["Title"]</h2>
+<a href="/AdminCP/Slides" class="btn btn-default" style="margin-bottom:12px;">← Quay lại</a>
+
+<form asp-action="@(isEdit ? "Edit" : "Create")" method="post" enctype="multipart/form-data">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+    <div class="row">
+        <div class="col-md-6 form-group">
+            <label>Tiêu đề (vi)</label>
+            <input asp-for="TitleL" class="form-control" />
+        </div>
+        <div class="col-md-6 form-group">
+            <label>Tiêu đề (en)</label>
+            <input asp-for="TitleE" class="form-control" />
+        </div>
+        <div class="col-md-12 form-group">
+            <label>Mô tả (vi)</label>
+            <textarea asp-for="DescriptionL" class="form-control" rows="2"></textarea>
+        </div>
+        <div class="col-md-6 form-group">
+            <label>Đường dẫn ảnh (hoặc upload bên dưới)</label>
+            <input asp-for="ImagePath" class="form-control" placeholder="assets/admin/images/slides/banner1.jpg" />
+            @if (!string.IsNullOrEmpty(Model.ImagePath))
+            {
+                <img src="/@Model.ImagePath.TrimStart('/')" style="height:60px; margin-top:6px;" />
+            }
+            <input type="file" name="imageFile" accept="image/*" class="form-control" style="margin-top:6px;" />
+        </div>
+        <div class="col-md-6 form-group">
+            <label>Link đích</label>
+            <input asp-for="Link" class="form-control" />
+        </div>
+        <div class="col-md-3 form-group">
+            <label>Loại</label>
+            <input asp-for="Type" class="form-control" placeholder="banner, hero..." />
+        </div>
+        <div class="col-md-3 form-group">
+            <label>Icon</label>
+            <input asp-for="Icon" class="form-control" />
+        </div>
+        <div class="col-md-3 form-group">
+            <label>CSS class</label>
+            <input asp-for="CssClass" class="form-control" />
+        </div>
+        <div class="col-md-3 form-group">
+            <label>Thứ tự</label>
+            <input asp-for="Ord" class="form-control" type="number" />
+        </div>
+        <div class="col-md-3 form-group">
+            <label>Active</label>
+            <select asp-for="ActiveFlag" class="form-control">
+                <option value="1" selected="@(Model.ActiveFlag == 1)">Active</option>
+                <option value="0" selected="@(Model.ActiveFlag == 0)">Inactive</option>
+            </select>
+        </div>
+    </div>
+    <button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> Lưu</button>
+</form>

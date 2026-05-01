@@ -1,0 +1,44 @@
+@model List<WebsiteCore.Data.Entities.Site>
+@{ ViewData["Title"] = "Cấu hình site"; }
+
+<h2 style="color:#0a3d62;"><i class="fa fa-cog"></i> Sites</h2>
+<p class="text-muted">Cấu hình tên trung tâm, địa chỉ, hotline, email, map...</p>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success"><i class="fa fa-check-circle"></i> @TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> @TempData["Error"]</div>
+}
+
+<div class="table-responsive">
+    <table class="table table-hover table-bordered" style="background:white;">
+        <thead style="background:#0a3d62; color:white;">
+            <tr><th>#</th><th>Tên</th><th>Địa chỉ</th><th>Hotline</th><th>Email</th><th>Active</th><th>Hành động</th></tr>
+        </thead>
+        <tbody>
+        @foreach (var (s, i) in Model.Select((s, i) => (s, i + 1)))
+        {
+            <tr class="@(s.ActiveFlag == 1 ? "" : "warning")">
+                <td>@i</td>
+                <td><strong>@s.NameCompanyL</strong></td>
+                <td>@s.AddressL</td>
+                <td>@s.Hotline</td>
+                <td>@s.Email</td>
+                <td>@(s.ActiveFlag == 1 ? "✓" : "✗")</td>
+                <td style="white-space:nowrap;">
+                    <a href="/AdminCP/Sites/Edit/@s.Id" class="btn btn-xs btn-warning"><i class="fa fa-pencil"></i> Sửa</a>
+                    <form action="/AdminCP/Sites/Delete" method="post" style="display:inline;"
+                          onsubmit="return confirm('Xoá site &quot;@s.NameCompanyL&quot;? Chỉ thực hiện được nếu site KHÔNG còn dữ liệu (News/User/Category/...) tham chiếu.');">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@s.Id" />
+                        <button type="submit" class="btn btn-xs btn-danger"><i class="fa fa-trash"></i> Xoá</button>
+                    </form>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>

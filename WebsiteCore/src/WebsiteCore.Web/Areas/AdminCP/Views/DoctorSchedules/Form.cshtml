@@ -1,0 +1,73 @@
+@model WebsiteCore.Data.Entities.DoctorSchedule
+@using WebsiteCore.Data.Entities
+@using WebsiteCore.Business
+@{
+    var doctors = ViewBag.Doctors as List<Doctor> ?? new();
+    var depts = ViewBag.Departments as List<Department> ?? new();
+    var isEdit = Model.Id != Guid.Empty;
+}
+
+<h2 style="color:#0a3d62;"><i class="fa fa-calendar-o"></i> @ViewData["Title"]</h2>
+<a href="/AdminCP/DoctorSchedules" class="btn btn-default" style="margin-bottom:12px;">← Quay lại</a>
+
+<form asp-action="@(isEdit ? "Edit" : "Create")" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+    <div class="row">
+        <div class="col-md-6 form-group">
+            <label>Bác sĩ <span class="text-danger">*</span></label>
+            <select asp-for="DoctorId" class="form-control" required>
+                <option value="">— Chọn —</option>
+                @foreach (var d in doctors) { <option value="@d.Id" selected="@(d.Id == Model.DoctorId)">@d.NameL</option> }
+            </select>
+        </div>
+        <div class="col-md-6 form-group">
+            <label>Chuyên khoa</label>
+            <select asp-for="DepartmentId" class="form-control">
+                <option value="">—</option>
+                @foreach (var d in depts) { <option value="@d.Id" selected="@(d.Id == Model.DepartmentId)">@d.NameL</option> }
+            </select>
+        </div>
+        <div class="col-md-3 form-group">
+            <label>Ngày trong tuần <span class="text-danger">*</span></label>
+            <select asp-for="Weekday" class="form-control" required>
+                <option value="2" selected="@(Model.Weekday == 2)">Thứ Hai</option>
+                <option value="3" selected="@(Model.Weekday == 3)">Thứ Ba</option>
+                <option value="4" selected="@(Model.Weekday == 4)">Thứ Tư</option>
+                <option value="5" selected="@(Model.Weekday == 5)">Thứ Năm</option>
+                <option value="6" selected="@(Model.Weekday == 6)">Thứ Sáu</option>
+                <option value="7" selected="@(Model.Weekday == 7)">Thứ Bảy</option>
+                <option value="1" selected="@(Model.Weekday == 1)">Chủ Nhật</option>
+            </select>
+            <small style="color:#6c757d;">DB convention: 1=CN, 2=T2, …, 7=T7</small>
+        </div>
+        <div class="col-md-3 form-group">
+            <label>Buổi</label>
+            <select asp-for="Session" class="form-control">
+                <option value="@Constants.SessionMorning" selected="@(Model.Session == Constants.SessionMorning)">Sáng</option>
+                <option value="@Constants.SessionAfternoon" selected="@(Model.Session == Constants.SessionAfternoon)">Chiều</option>
+            </select>
+        </div>
+        <div class="col-md-3 form-group">
+            <label>Phòng</label>
+            <input asp-for="Room" class="form-control" />
+        </div>
+        <div class="col-md-3 form-group">
+            <label>Số BN tối đa</label>
+            <input asp-for="MaxPatients" class="form-control" type="number" />
+        </div>
+        <div class="col-md-3 form-group">
+            <label>Hiệu lực từ</label>
+            <input name="ValidFrom" class="form-control" type="date" value="@Model.ValidFrom.ToString("yyyy-MM-dd")" required />
+        </div>
+        <div class="col-md-3 form-group">
+            <label>Đến (tuỳ chọn)</label>
+            <input name="ValidTo" class="form-control" type="date" value="@(Model.ValidTo?.ToString("yyyy-MM-dd"))" />
+        </div>
+        <div class="col-md-6 form-group">
+            <label>Ghi chú</label>
+            <input asp-for="Note" class="form-control" />
+        </div>
+    </div>
+    <button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> Lưu</button>
+</form>

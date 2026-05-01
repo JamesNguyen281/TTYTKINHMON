@@ -1,0 +1,71 @@
+@using WebsiteCore.Data.Entities
+@{
+    ViewData["Title"] = "Tìm kiếm";
+    var q = ViewBag.Query as string;
+    var news = ViewBag.News as List<News> ?? new();
+    var depts = ViewBag.Departments as List<Department> ?? new();
+    var doctors = ViewBag.Doctors as List<Doctor> ?? new();
+}
+
+<div class="container" style="padding-top:24px;">
+    <h2 style="color:#0a3d62;"><i class="fa fa-search"></i> Tìm kiếm</h2>
+
+    <form method="get" action="/tim-kiem" class="form-inline" style="margin-bottom:16px;">
+        <input type="text" name="q" value="@q" class="form-control" placeholder="Nhập từ khoá..." style="width:60%;" />
+        <button type="submit" class="btn btn-primary"><i class="fa fa-search"></i> Tìm</button>
+    </form>
+
+    @if (string.IsNullOrEmpty(q))
+    {
+        <p class="text-muted">Nhập từ khoá để tìm tin tức, chuyên khoa, bác sĩ.</p>
+    }
+    else
+    {
+        <p>Kết quả cho: <strong>@q</strong></p>
+
+        @if (depts.Any())
+        {
+            <h3 style="color:#0a3d62;">Chuyên khoa (@depts.Count)</h3>
+            <ul class="list-group">
+                @foreach (var d in depts)
+                {
+                    <li class="list-group-item">
+                        <a href="/chuyen-khoa/@d.Alias">@d.NameL</a>
+                    </li>
+                }
+            </ul>
+        }
+
+        @if (doctors.Any())
+        {
+            <h3 style="color:#0a3d62; margin-top:20px;">Bác sĩ (@doctors.Count)</h3>
+            <ul class="list-group">
+                @foreach (var d in doctors)
+                {
+                    <li class="list-group-item">
+                        <strong>@d.NameL</strong> — @d.SpeciallyL
+                    </li>
+                }
+            </ul>
+        }
+
+        @if (news.Any())
+        {
+            <h3 style="color:#0a3d62; margin-top:20px;">Tin tức (@news.Count)</h3>
+            <ul class="list-group">
+                @foreach (var n in news)
+                {
+                    <li class="list-group-item">
+                        <a href="/tin-tuc/@n.AliasL"><strong>@n.TitleL</strong></a>
+                        <p class="text-muted">@n.DescriptionL</p>
+                    </li>
+                }
+            </ul>
+        }
+
+        @if (!depts.Any() && !doctors.Any() && !news.Any())
+        {
+            <div class="alert alert-info">Không tìm thấy kết quả nào.</div>
+        }
+    }
+</div>

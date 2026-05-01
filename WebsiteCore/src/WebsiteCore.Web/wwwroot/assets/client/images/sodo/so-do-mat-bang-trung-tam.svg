@@ -1,0 +1,123 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e0f2e0"/>
+      <stop offset="100%" stop-color="#c4e3c4"/>
+    </linearGradient>
+    <linearGradient id="hd2" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#43aa8b"/>
+      <stop offset="100%" stop-color="#2f7a5e"/>
+    </linearGradient>
+    <filter id="sh2" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2"/><feOffset dx="1" dy="2"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.25"/></feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="800" fill="url(#bg2)"/>
+
+  <!-- Header -->
+  <rect x="0" y="0" width="1200" height="100" fill="url(#hd2)"/>
+  <text x="600" y="40" font-family="Arial, sans-serif" font-size="22" font-weight="700"
+        fill="white" text-anchor="middle">TRUNG TÂM Y TẾ KINH MÔN</text>
+  <text x="600" y="78" font-family="Arial, sans-serif" font-size="32" font-weight="900"
+        fill="white" text-anchor="middle" letter-spacing="2">SƠ ĐỒ MẶT BẰNG TỔNG THỂ</text>
+
+  <!-- Khu xử lý rác (góc trái-trên) -->
+  <rect x="50" y="130" width="160" height="80" fill="#e74c3c" filter="url(#sh2)"/>
+  <text x="130" y="160" font-family="Arial, sans-serif" font-size="11" fill="white" text-anchor="middle">KHU XỬ LÝ</text>
+  <text x="130" y="178" font-family="Arial, sans-serif" font-size="11" fill="white" text-anchor="middle">RÁC THẢI</text>
+  <text x="130" y="200" font-family="Arial, sans-serif" font-size="10" fill="white" text-anchor="middle">+ Nhà đại thể</text>
+
+  <!-- Nhà F - Khoa Truyền nhiễm -->
+  <rect x="280" y="130" width="200" height="80" fill="#fff" stroke="#e74c3c" stroke-width="2" filter="url(#sh2)"/>
+  <rect x="280" y="130" width="200" height="20" fill="#e74c3c"/>
+  <text x="380" y="145" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="white" text-anchor="middle">NHÀ F</text>
+  <text x="380" y="180" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#0a3d62" text-anchor="middle">KHOA</text>
+  <text x="380" y="198" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#0a3d62" text-anchor="middle">TRUYỀN NHIỄM</text>
+
+  <!-- Nhà C - Khoa Nhi & LCK -->
+  <rect x="540" y="130" width="240" height="80" fill="#fff" stroke="#43aa8b" stroke-width="2" filter="url(#sh2)"/>
+  <rect x="540" y="130" width="240" height="20" fill="#43aa8b"/>
+  <text x="660" y="145" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="white" text-anchor="middle">NHÀ C</text>
+  <text x="660" y="178" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#0a3d62" text-anchor="middle">KHOA NHI · KHOA LCK</text>
+  <text x="660" y="198" font-family="Arial, sans-serif" font-size="11" fill="#0a3d62" text-anchor="middle">Khu CSSK sinh sản và Phụ sản</text>
+
+  <!-- Nhà D - Khoa Ngoại -->
+  <rect x="820" y="130" width="220" height="80" fill="#fff" stroke="#9d4edd" stroke-width="2" filter="url(#sh2)"/>
+  <rect x="820" y="130" width="220" height="20" fill="#9d4edd"/>
+  <text x="930" y="145" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="white" text-anchor="middle">NHÀ D — 3 TẦNG</text>
+  <text x="930" y="180" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#0a3d62" text-anchor="middle">KHOA NGOẠI</text>
+  <text x="930" y="198" font-family="Arial, sans-serif" font-size="11" fill="#0a3d62" text-anchor="middle">Phẫu thuật · Gây mê HS · Khoa Sản</text>
+
+  <!-- Nhà N - Xét nghiệm -->
+  <rect x="50" y="240" width="180" height="100" fill="#fff" stroke="#f39c12" stroke-width="2" filter="url(#sh2)"/>
+  <rect x="50" y="240" width="180" height="20" fill="#f39c12"/>
+  <text x="140" y="255" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="white" text-anchor="middle">NHÀ N — 3 TẦNG</text>
+  <text x="140" y="285" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#0a3d62" text-anchor="middle">KHOA XÉT NGHIỆM</text>
+  <text x="140" y="305" font-family="Arial, sans-serif" font-size="11" fill="#0a3d62" text-anchor="middle">Khoa Chẩn đoán</text>
+  <text x="140" y="320" font-family="Arial, sans-serif" font-size="11" fill="#0a3d62" text-anchor="middle">hình ảnh</text>
+
+  <!-- Nhà G + Nhà H -->
+  <rect x="1060" y="240" width="80" height="100" fill="#fff" stroke="#9d4edd" stroke-width="2" filter="url(#sh2)"/>
+  <rect x="1060" y="240" width="80" height="18" fill="#9d4edd"/>
+  <text x="1100" y="253" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="white" text-anchor="middle">NHÀ G</text>
+  <text x="1100" y="285" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#0a3d62" text-anchor="middle">Kiểm soát</text>
+  <text x="1100" y="298" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#0a3d62" text-anchor="middle">nhiễm khuẩn</text>
+
+  <rect x="1060" y="380" width="80" height="100" fill="#fff" stroke="#43aa8b" stroke-width="2" filter="url(#sh2)"/>
+  <rect x="1060" y="380" width="80" height="18" fill="#43aa8b"/>
+  <text x="1100" y="393" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="white" text-anchor="middle">NHÀ H</text>
+  <text x="1100" y="425" font-family="Arial, sans-serif" font-size="11" fill="#0a3d62" text-anchor="middle">Bộ phận</text>
+  <text x="1100" y="438" font-family="Arial, sans-serif" font-size="11" fill="#0a3d62" text-anchor="middle">Thận nhân tạo</text>
+
+  <!-- Nhà B - Khoa Cấp cứu / Nội (3 tầng) -->
+  <rect x="280" y="380" width="240" height="120" fill="#fff" stroke="#e74c3c" stroke-width="2" filter="url(#sh2)"/>
+  <rect x="280" y="380" width="240" height="20" fill="#e74c3c"/>
+  <text x="400" y="395" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="white" text-anchor="middle">NHÀ B — 3 TẦNG</text>
+  <text x="400" y="425" font-family="Arial, sans-serif" font-size="11" fill="#0a3d62" text-anchor="middle">T3: PHCN · YHCT · TMH-RHM-Mắt</text>
+  <text x="400" y="442" font-family="Arial, sans-serif" font-size="11" fill="#0a3d62" text-anchor="middle">T2: Khoa Nội</text>
+  <text x="400" y="459" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#e74c3c" text-anchor="middle">T1: KHOA CẤP CỨU - HSTC</text>
+
+  <!-- Nhà E - Hành chính -->
+  <rect x="600" y="380" width="240" height="120" fill="#fff" stroke="#1f78d1" stroke-width="2" filter="url(#sh2)"/>
+  <rect x="600" y="380" width="240" height="20" fill="#1f78d1"/>
+  <text x="720" y="395" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="white" text-anchor="middle">NHÀ E — 3 TẦNG</text>
+  <text x="720" y="425" font-family="Arial, sans-serif" font-size="11" fill="#0a3d62" text-anchor="middle">T3: Hội trường - Phòng giao ban</text>
+  <text x="720" y="442" font-family="Arial, sans-serif" font-size="11" fill="#0a3d62" text-anchor="middle">T2: Khu hành chính - Lãnh đạo</text>
+  <text x="720" y="459" font-family="Arial, sans-serif" font-size="11" fill="#0a3d62" text-anchor="middle">T1: Khoa Dược - VTYT</text>
+
+  <!-- Nhà A -->
+  <rect x="280" y="540" width="180" height="100" fill="#fff" stroke="#0a3d62" stroke-width="2" filter="url(#sh2)"/>
+  <rect x="280" y="540" width="180" height="20" fill="#0a3d62"/>
+  <text x="370" y="555" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="white" text-anchor="middle">NHÀ A — 2 TẦNG</text>
+  <text x="370" y="585" font-family="Arial, sans-serif" font-size="11" fill="#0a3d62" text-anchor="middle">T2: Khu nội soi - Huyết học</text>
+  <text x="370" y="603" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#0a3d62" text-anchor="middle">T1: KHOA KHÁM BỆNH</text>
+  <text x="370" y="620" font-family="Arial, sans-serif" font-size="11" fill="#0a3d62" text-anchor="middle">Thu viện phí</text>
+
+  <!-- Khu để xe + Nhà cấp cứu -->
+  <rect x="500" y="540" width="220" height="100" fill="#fff7e6" stroke="#f39c12" stroke-width="2" stroke-dasharray="4 2" filter="url(#sh2)"/>
+  <text x="610" y="585" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#7a4f0c" text-anchor="middle">KHU VỰC ĐỂ XE</text>
+  <text x="610" y="605" font-family="Arial, sans-serif" font-size="11" fill="#7a4f0c" text-anchor="middle">(bệnh nhân)</text>
+
+  <rect x="780" y="540" width="160" height="100" fill="#e74c3c" filter="url(#sh2)"/>
+  <text x="860" y="580" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="white" text-anchor="middle">NHÀ XE</text>
+  <text x="860" y="600" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="white" text-anchor="middle">CẤP CỨU</text>
+  <text x="860" y="618" font-family="Arial, sans-serif" font-size="10" fill="white" text-anchor="middle">+ Nhà xe nhân viên</text>
+
+  <!-- Đường + Cổng -->
+  <rect x="50" y="680" width="1100" height="50" fill="#666"/>
+  <text x="600" y="710" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="white" text-anchor="middle">
+    ĐƯỜNG TRẦN HƯNG ĐẠO — TL188
+  </text>
+
+  <rect x="540" y="660" width="80" height="20" fill="#1abc9c"/>
+  <text x="580" y="675" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="white" text-anchor="middle">CỔNG SỐ 2</text>
+  <rect x="700" y="660" width="80" height="20" fill="#1f78d1"/>
+  <text x="740" y="675" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="white" text-anchor="middle">CỔNG SỐ 1</text>
+
+  <!-- Footer -->
+  <text x="600" y="770" font-family="Arial, sans-serif" font-size="13" fill="#06283d" text-anchor="middle"
+        font-style="italic">⓿ Ảnh placeholder vector — admin upload ảnh thật vào /assets/client/images/sodo/so-do-mat-bang-trung-tam.jpg</text>
+</svg>

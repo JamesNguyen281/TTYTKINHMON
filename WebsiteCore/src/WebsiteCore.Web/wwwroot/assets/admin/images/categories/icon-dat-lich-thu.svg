@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="Đặt lịch khám online - bức thư">
+  <defs>
+    <linearGradient id="gEnv" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1e88e5"/>
+      <stop offset="1" stop-color="#0b65b5"/>
+    </linearGradient>
+    <linearGradient id="gFlap" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#42a5f5"/>
+      <stop offset="1" stop-color="#1976d2"/>
+    </linearGradient>
+    <linearGradient id="gPaper" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#f1f5f9"/>
+    </linearGradient>
+  </defs>
+
+  <!-- envelope body -->
+  <rect x="14" y="36" width="100" height="68" rx="6" ry="6" fill="url(#gEnv)" stroke="#0b4d86" stroke-width="2"/>
+
+  <!-- letter / paper sticking out -->
+  <rect x="26" y="28" width="76" height="56" rx="3" ry="3" fill="url(#gPaper)" stroke="#cfd8dc" stroke-width="1.5"/>
+
+  <!-- red medical cross on the letter -->
+  <g transform="translate(64 50)">
+    <rect x="-5" y="-14" width="10" height="28" rx="2" fill="#e53935"/>
+    <rect x="-14" y="-5" width="28" height="10" rx="2" fill="#e53935"/>
+  </g>
+
+  <!-- letter lines -->
+  <rect x="34" y="68" width="56" height="3" rx="1.5" fill="#90a4ae"/>
+  <rect x="34" y="74" width="44" height="3" rx="1.5" fill="#b0bec5"/>
+
+  <!-- envelope flap (closed, V-shape over top of paper area) -->
+  <path d="M14 42 L64 78 L114 42 L114 48 L64 84 L14 48 Z" fill="url(#gFlap)" stroke="#0b4d86" stroke-width="1.5" stroke-linejoin="round"/>
+
+  <!-- envelope bottom edge highlight -->
+  <path d="M14 100 L64 70 L114 100" fill="none" stroke="#0b4d86" stroke-width="1.5" opacity="0.35"/>
+
+  <!-- subtle clock badge bottom-right indicating "lịch / thời gian" -->
+  <g transform="translate(96 92)">
+    <circle r="14" fill="#ffffff" stroke="#0b65b5" stroke-width="2"/>
+    <line x1="0" y1="0" x2="0" y2="-8" stroke="#0b65b5" stroke-width="2" stroke-linecap="round"/>
+    <line x1="0" y1="0" x2="6" y2="2" stroke="#e53935" stroke-width="2" stroke-linecap="round"/>
+    <circle r="1.5" fill="#0b65b5"/>
+  </g>
+</svg>

@@ -1,0 +1,110 @@
+@model List<WebsiteCore.Business.ViewModels.AppointmentRow>
+@{ ViewData["Title"] = "Lịch khám của tôi"; }
+
+<div class="container" style="padding-top:20px;">
+    <h2 style="color:#0a3d62;"><i class="fa fa-calendar"></i> Lịch khám của tôi</h2>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success"><i class="fa fa-check-circle"></i> @TempData["Success"]</div>
+    }
+
+    <div id="appt-status-banner" style="display:none;" class="alert alert-info">
+        <i class="fa fa-bell"></i> <span id="appt-status-msg">Có cập nhật mới — đang làm mới…</span>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">
+            Bạn chưa có lịch khám nào. <a href="/dat-lich-kham">Đặt lịch ngay</a>.
+        </div>
+    }
+    else
+    {
+        <p class="text-muted small">
+            <i class="fa fa-refresh"></i> Trang tự động cập nhật khi nhân viên duyệt/từ chối lịch của bạn.
+        </p>
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover bg-white">
+                <thead style="background:#0a3d62;color:white;">
+                    <tr>
+                        <th>Mã khám</th>
+                        <th>Ngày</th>
+                        <th>Buổi</th>
+                        <th>Chuyên khoa</th>
+                        <th>Lý do</th>
+                        <th>Trạng thái</th>
+                        <th>Ghi chú từ Trung tâm</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var a in Model)
+                    {
+                        <tr>
+                            <td><code>@(a.BookingCode ?? "—")</code></td>
+                            <td>@(a.AppointmentDate?.ToString("dd/MM/yyyy") ?? "—")</td>
+                            <td>@(a.Session == "morning" ? "Sáng" : a.Session == "afternoon" ? "Chiều" : a.Session)</td>
+                            <td>@a.DepartmentName</td>
+                            <td><small>@a.Reason</small></td>
+                            <td>
+                                @switch (a.Status)
+                                {
+                                    case "pending":   <span class="label label-warning">Chờ duyệt</span> break;
+                                    case "confirmed":
+                                        if (a.CheckedIn) { <span class="label label-success">Đã check-in</span> }
+                                        else             { <span class="label label-info">Đã xác nhận</span> }
+                                        break;
+                                    case "rejected":     <span class="label label-danger">Từ chối</span> break;
+                                    case "rescheduled":  <span class="label label-warning">Đổi lịch</span> break;
+                                    case "completed":    <span class="label label-success">Hoàn tất</span> break;
+                                    case "cancelled":    <span class="label label-default">Đã hủy</span> break;
+                                    default:             <span class="label label-default">@WebsiteCore.Business.Constants.ApptStatusLabel(a.Status)</span> break;
+                                }
+                            </td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(a.StaffNote))
+                                {
+                                    <em style="color:#c0392b;">@a.StaffNote</em>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">—</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@section Scripts {
+<script>
+(function(){
+    // Real-time polling: cứ 20s lại hỏi server xem trạng thái có đổi không.
+    // Hash = JSON(status,bookingCode,staffNote,checkedIn) snapshot — nếu khác thì reload.
+    var snapshot = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+        Model.Select(m => new { id = m.Id, s = m.Status, c = m.BookingCode, n = m.StaffNote, ci = m.CheckedIn }).ToList()
+    ));
+    function snap(rows){ return JSON.stringify(rows||[]); }
+    var initial = snap(snapshot);
+    var banner = document.getElementById('appt-status-banner');
+    var msg = document.getElementById('appt-status-msg');
+    function tick(){
+        fetch('/lich-cua-toi/check-updates?_=' + Date.now(), { credentials: 'same-origin' })
+          .then(function(r){ return r.ok ? r.json() : null; })
+          .then(function(d){
+            if(!d || !d.rows) return;
+            if(snap(d.rows) !== initial){
+              banner.style.display = 'block';
+              msg.textContent = 'Có cập nhật mới — đang làm mới trang…';
+              setTimeout(function(){ window.location.reload(); }, 1200);
+            }
+          })
+          .catch(function(){ /* silent */ });
+    }
+    setInterval(tick, 20000);
+})();
+</script>
+}

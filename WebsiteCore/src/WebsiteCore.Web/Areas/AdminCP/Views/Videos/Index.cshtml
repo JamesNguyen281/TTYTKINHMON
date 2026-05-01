@@ -1,0 +1,60 @@
+﻿@model List<WebsiteCore.Data.Entities.Video>
+@{ ViewData["Title"] = "Video"; }
+
+<h2 class="admin-page-title"><i class="fa fa-video-camera"></i> Video</h2>
+
+<div class="admin-toolbar">
+    <a href="/AdminCP/Videos/Create" class="btn btn-success"><i class="fa fa-plus-circle"></i> Thêm video</a>
+    <span class="pull-right text-muted" style="line-height:34px;">@Model.Count video</span>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-hover table-bordered">
+        <thead>
+            <tr>
+                <th style="width:40px;">#</th>
+                <th style="width:80px;">Thumb</th>
+                <th>Tiêu đề</th>
+                <th>Mô tả</th>
+                <th>Link</th>
+                <th style="width:60px;">Thứ tự</th>
+                <th style="width:80px; text-align:center;">Active</th>
+                <th style="width:140px;">Hành động</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var (v, i) in Model.Select((v, i) => (v, i + 1)))
+        {
+            <tr>
+                <td>@i</td>
+                <td>
+                    @if (!string.IsNullOrEmpty(v.VideoThumbnail))
+                    {
+                        <img src="/@v.VideoThumbnail.TrimStart('/')" style="height:40px;" />
+                    }
+                </td>
+                <td><strong>@v.VideoTitleL</strong></td>
+                <td><small>@v.VideoDescriptionL</small></td>
+                <td><small><a href="@v.VideoLink" target="_blank">@v.VideoLink</a></small></td>
+                <td>@v.Ord</td>
+                <td style="text-align:center;">
+                    @if (v.Status == 1) { <span class="label label-success">Active</span> }
+                    else { <span class="label label-default">Tắt</span> }
+                </td>
+                <td>
+                    <a href="/AdminCP/Videos/Edit/@v.VideoId" class="btn btn-xs btn-warning" title="Sửa"><i class="fa fa-pencil"></i></a>
+                    <form action="/AdminCP/Videos/ToggleStatus/@v.VideoId" method="post" style="display:inline;">
+                        @Html.AntiForgeryToken()
+                        <button class="btn btn-xs @(v.Status == 1 ? "btn-default" : "btn-success")" title="@(v.Status == 1 ? "Tắt" : "Bật")"><i class="fa @(v.Status == 1 ? "fa-toggle-on" : "fa-toggle-off")"></i></button>
+                    </form>
+                    <form action="/AdminCP/Videos/Delete/@v.VideoId" method="post" style="display:inline;" onsubmit="return confirm('Xoá video này?');">
+                        @Html.AntiForgeryToken()
+                        <button class="btn btn-xs btn-danger" title="Xoá"><i class="fa fa-trash"></i></button>
+                    </form>
+                </td>
+            </tr>
+        }
+        @if (!Model.Any()) { <tr><td colspan="8" class="text-center text-muted" style="padding:30px;">Chưa có video.</td></tr> }
+        </tbody>
+    </table>
+</div>

@@ -1,0 +1,53 @@
+@model List<WebsiteCore.Data.Entities.MedicalRecord>
+@{
+    ViewData["Title"] = "Hồ sơ khám bệnh";
+    var q = ViewBag.Q as string;
+}
+
+<h2 style="color:#0a3d62;"><i class="fa fa-file-text-o"></i> Hồ sơ khám bệnh</h2>
+
+<form method="get" action="/AdminCP/MedicalRecords" style="margin: 12px 0;">
+    <div class="row">
+        <div class="col-md-6">
+            <input type="text" name="q" value="@q" class="form-control" placeholder="Tìm theo mã HS / chẩn đoán" />
+        </div>
+        <div class="col-md-2">
+            <button class="btn btn-primary" type="submit"><i class="fa fa-search"></i> Tìm</button>
+        </div>
+    </div>
+</form>
+
+@{
+    var curUser = ViewBag.CurrentUser as WebsiteCore.Business.ViewModels.LoggedInUser;
+    var isAdmin = curUser?.GroupId == WebsiteCore.Business.Constants.AdminGroup;
+}
+<div class="table-responsive">
+    <table class="table table-hover table-bordered" style="background:white;">
+        <thead style="background:#0a3d62; color:white;">
+            <tr><th>Mã HS</th><th>Ngày khám</th><th>Chẩn đoán</th><th>Lý do</th><th style="width:130px;">Hành động</th></tr>
+        </thead>
+        <tbody>
+        @foreach (var m in Model)
+        {
+            <tr>
+                <td><code>@m.RecordNo</code></td>
+                <td>@m.VisitDate.ToString("dd/MM/yyyy HH:mm")</td>
+                <td>@m.Diagnosis</td>
+                <td><small>@m.ChiefComplaint</small></td>
+                <td>
+                    <a href="/AdminCP/MedicalRecords/Detail/@m.Id" class="btn btn-xs btn-primary" title="Xem"><i class="fa fa-eye"></i> Xem</a>
+                    @if (isAdmin)
+                    {
+                        <form action="/AdminCP/MedicalRecords/Delete/@m.Id" method="post" style="display:inline;" onsubmit="return confirm('Xoá (ẩn) hồ sơ @m.RecordNo? Thao tác này được ghi audit.');">
+                            @Html.AntiForgeryToken()
+                            <button class="btn btn-xs btn-danger" title="Xoá"><i class="fa fa-trash"></i></button>
+                        </form>
+                    }
+                </td>
+            </tr>
+        }
+        @if (!Model.Any()) { <tr><td colspan="5" class="text-center text-muted" style="padding:30px;">Chưa có hồ sơ khám nào.</td></tr> }
+        </tbody>
+    </table>
+</div>
+<p class="text-muted">Hiển thị @Model.Count hồ sơ gần nhất.</p>

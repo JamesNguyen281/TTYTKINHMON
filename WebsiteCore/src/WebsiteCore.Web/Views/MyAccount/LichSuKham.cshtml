@@ -1,0 +1,32 @@
+@model List<WebsiteCore.Data.Entities.MedicalRecord>
+@{ ViewData["Title"] = "Lịch sử khám bệnh"; }
+
+<h2 style="color:#0a3d62;"><i class="fa fa-file-text-o"></i> Lịch sử khám bệnh</h2>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">Bạn chưa có hồ sơ khám nào tại Trung tâm.</div>
+}
+else
+{
+    @foreach (var m in Model)
+    {
+        <div class="card mb-3 shadow-sm">
+            <div class="card-header bg-light">
+                <strong>Hồ sơ <code>@m.RecordNo</code></strong> · @m.VisitDate.ToString("dd/MM/yyyy HH:mm")
+            </div>
+            <div class="card-body">
+                <p><strong>Lý do:</strong> @m.ChiefComplaint</p>
+                <p><strong>Chẩn đoán:</strong> @m.Diagnosis</p>
+                @if (!string.IsNullOrEmpty(m.TreatmentPlan))
+                {
+                    <p><strong>Điều trị:</strong> @m.TreatmentPlan</p>
+                }
+                @if (!string.IsNullOrEmpty(m.Notes))
+                {
+                    <p class="text-muted"><strong>Ghi chú:</strong> @m.Notes</p>
+                }
+            </div>
+        </div>
+    }
+}

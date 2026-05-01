@@ -1,0 +1,70 @@
+@model WebsiteCore.Data.Entities.Department
+@{ ViewData["Title"] = "Sửa chuyên khoa: " + Model.NameL; }
+
+<h2 style="color:#0a3d62;"><i class="fa fa-pencil"></i> @ViewData["Title"]</h2>
+
+<form asp-action="Edit" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="SiteId" />
+    <input type="hidden" asp-for="CreatedDate" />
+    <input type="hidden" asp-for="CreatedByUserId" />
+
+    <div asp-validation-summary="All" class="alert alert-danger" role="alert"
+         style="@(ViewData.ModelState.IsValid ? "display:none;" : "")"></div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="form-group">
+                <label>Tên (Tiếng Việt) <span class="text-danger">*</span></label>
+                <input asp-for="NameL" class="form-control" required maxlength="200" />
+            </div>
+            <div class="form-group">
+                <label>Tên (Tiếng Anh)</label>
+                <input asp-for="NameE" class="form-control" maxlength="200" />
+            </div>
+            <div class="form-group">
+                <label>Mô tả ngắn</label>
+                <textarea asp-for="DescriptionL" class="form-control" rows="3"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Chi tiết (HTML)</label>
+                <textarea asp-for="DetailL" class="form-control" rows="8"></textarea>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="form-group">
+                <label>Đường dẫn ảnh / FA icon</label>
+                <input asp-for="ImagePath" class="form-control" />
+                <small class="text-muted">
+                    Vd: <code>fa:fa fa-stethoscope</code>, <code>fa:fa fa-eye</code>, ...
+                </small>
+                <div style="margin-top: 8px; padding: 12px; background: #f8f9fa; border-radius: 4px; text-align: center;">
+                    @if (!string.IsNullOrEmpty(Model.ImagePath) && Model.ImagePath.StartsWith("fa:", StringComparison.OrdinalIgnoreCase))
+                    {
+                        <i class="@Model.ImagePath.Substring(3).Trim()" style="font-size:48px; color:#0a3d62;"></i>
+                    }
+                    else if (!string.IsNullOrEmpty(Model.ImagePath))
+                    {
+                        <img src="/@Model.ImagePath.TrimStart('/')" style="max-height:60px;" />
+                    }
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Thứ tự</label>
+                <input asp-for="Ord" type="number" class="form-control" />
+            </div>
+            <div class="form-group">
+                <div class="checkbox">
+                    <label>
+                        <input name="ActiveFlag" type="checkbox" value="1" checked="@(Model.ActiveFlag == 1)" />
+                        Active
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> Cập nhật</button>
+    <a href="/AdminCP/Departments" class="btn btn-default">Huỷ</a>
+</form>

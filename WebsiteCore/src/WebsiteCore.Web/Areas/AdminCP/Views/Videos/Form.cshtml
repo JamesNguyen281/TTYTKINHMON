@@ -1,0 +1,44 @@
+@model WebsiteCore.Data.Entities.Video
+@{ var isEdit = Model.VideoId != Guid.Empty; }
+
+<h2 style="color:#0a3d62;"><i class="fa fa-video-camera"></i> @ViewData["Title"]</h2>
+<a href="/AdminCP/Videos" class="btn btn-default" style="margin-bottom:12px;">← Quay lại</a>
+
+<form asp-action="@(isEdit ? "Edit" : "Create")" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="VideoId" />
+    <div class="row">
+        <div class="col-md-6 form-group">
+            <label>Tiêu đề (vi) <span class="text-danger">*</span></label>
+            <input asp-for="VideoTitleL" class="form-control" required />
+        </div>
+        <div class="col-md-6 form-group">
+            <label>Tiêu đề (en)</label>
+            <input asp-for="VideoTitleE" class="form-control" />
+        </div>
+        <div class="col-md-12 form-group">
+            <label>Mô tả (vi)</label>
+            <textarea asp-for="VideoDescriptionL" class="form-control" rows="2"></textarea>
+        </div>
+        <div class="col-md-6 form-group">
+            <label>Link video (YouTube embed) <span class="text-danger">*</span></label>
+            <input asp-for="VideoLink" class="form-control" required placeholder="https://www.youtube.com/embed/xxx" />
+        </div>
+        <div class="col-md-6 form-group">
+            <label>Thumbnail</label>
+            <input asp-for="VideoThumbnail" class="form-control" />
+        </div>
+        <div class="col-md-3 form-group">
+            <label>Thứ tự</label>
+            <input asp-for="Ord" class="form-control" type="number" />
+        </div>
+        <div class="col-md-3 form-group">
+            <label>Active</label>
+            <select asp-for="Status" class="form-control">
+                <option value="1" selected="@(Model.Status == 1)">Active</option>
+                <option value="0" selected="@(Model.Status == 0)">Inactive</option>
+            </select>
+        </div>
+    </div>
+    <button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> Lưu</button>
+</form>

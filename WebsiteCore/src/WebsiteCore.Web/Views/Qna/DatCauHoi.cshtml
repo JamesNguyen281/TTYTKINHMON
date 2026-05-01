@@ -1,0 +1,65 @@
+@using WebsiteCore.Business.ViewModels
+@{
+    ViewData["Title"] = "Đặt câu hỏi cho bác sĩ";
+    var loggedUser = ViewBag.CurrentUser as LoggedInUser;
+    var returnUrl = Uri.EscapeDataString(Context.Request.Path + Context.Request.QueryString);
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        @if (loggedUser == null)
+        {
+            <div class="alert alert-warning" style="border-left:4px solid #f9c74f;">
+                <h5 style="margin-top:0;"><i class="fa fa-info-circle"></i> Bạn cần đăng nhập để đặt câu hỏi</h5>
+                <p style="margin:8px 0;">Đặt câu hỏi cho bác sĩ yêu cầu tài khoản để chúng tôi có thể trả lời riêng cho bạn. Tạo tài khoản miễn phí để:</p>
+                <ul style="margin-bottom:8px;">
+                    <li>Nhận <strong>trả lời từ bác sĩ chuyên khoa</strong> — riêng tư, bảo mật</li>
+                    <li>Theo dõi <strong>tất cả câu hỏi</strong> của bạn tại trang "Câu hỏi của tôi"</li>
+                    <li>Tuỳ chọn công khai câu hỏi để giúp ích cho người khác cùng quan tâm</li>
+                </ul>
+                <a href="/dang-nhap?returnUrl=@returnUrl" class="btn btn-primary btn-sm">
+                    <i class="fa fa-sign-in"></i> Đăng nhập
+                </a>
+                <a href="/dang-ky?returnUrl=@returnUrl" class="btn btn-success btn-sm">
+                    <i class="fa fa-user-plus"></i> Tạo tài khoản mới
+                </a>
+            </div>
+        }
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <h3 style="color:#0a3d62;"><i class="fa fa-question-circle"></i> Đặt câu hỏi cho bác sĩ</h3>
+
+                @if (ViewBag.Error != null)
+                {
+                    <div class="alert alert-danger">@ViewBag.Error</div>
+                }
+
+                <form method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Tiêu đề <span class="text-danger">*</span></label>
+                        <input type="text" name="qa_title" id="qa_title" class="form-control" required maxlength="200" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Nội dung <span class="text-danger">*</span></label>
+                        <textarea name="qa_body" id="qa_body" class="form-control" rows="5" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Chủ đề (tuỳ chọn)</label>
+                        <input type="text" name="qa_topic" class="form-control" maxlength="100"
+                               placeholder="vd: Tim mạch, Tiêu hoá..." />
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" name="qa_public" value="1" id="qa_public" />
+                        <label class="form-check-label" for="qa_public">
+                            Công khai câu hỏi này (hiển thị tại /hoi-dap sau khi bác sĩ duyệt)
+                        </label>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa fa-paper-plane"></i> Gửi câu hỏi
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,41 @@
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpCtx
+@*
+    Toolbar pagination dùng chung — hiển thị: "Hiển thị [10|20|50|...] / 175 — Trang 1/9 < >"
+    ViewBag yêu cầu: Page, PageSize, Total, TotalPages, PageSizeOptions (int[])
+    ViewData tuỳ chọn: BaseUrl, ExtraQuery
+*@
+@{
+    int curPage  = (int)(ViewBag.Page ?? 1);
+    int pSize = (int)(ViewBag.PageSize ?? 20);
+    int total = (int)(ViewBag.Total ?? 0);
+    int pages = (int)(ViewBag.TotalPages ?? 1);
+    var sizes = (ViewBag.PageSizeOptions as int[]) ?? new[] { 10, 20, 50, 100, 200, 500, 1000 };
+    string baseUrl = (ViewData["BaseUrl"] as string) ?? (HttpCtx.HttpContext?.Request.Path.Value ?? "");
+    string extra = (ViewData["ExtraQuery"] as string) ?? "";
+    if (!string.IsNullOrEmpty(extra) && !extra.StartsWith("&")) extra = "&" + extra;
+    string Link(int p, int s) => string.Concat(baseUrl, "?", "page=", p, "&", "pageSize=", s, extra);
+    int from = total == 0 ? 0 : (curPage - 1) * pSize + 1;
+    int to   = Math.Min(total, curPage * pSize);
+}
+<div class="pagebar">
+    <div class="pagebar-left">
+        <span>Hiển thị</span>
+        <select class="form-control input-sm pagebar-size" onchange="window.location='@Html.Raw(baseUrl)?page=1&amp;pageSize=' + this.value + '@Html.Raw(extra)';">
+            @foreach (var s in sizes)
+            {
+                <option value="@s" selected="@(s == pSize)">@s</option>
+            }
+        </select>
+        <span>mục / trang &middot; <strong>@from-@to</strong> / @total</span>
+    </div>
+    <div class="pagebar-right">
+        @if (pages > 1)
+        {
+            <a href="@Link(1, pSize)" class="btn btn-default btn-xs @(curPage == 1 ? "disabled" : "")" title="Trang đầu"><i class="fa fa-angle-double-left"></i></a>
+            <a href="@Link(Math.Max(1, curPage - 1), pSize)" class="btn btn-default btn-xs @(curPage == 1 ? "disabled" : "")" title="Trước"><i class="fa fa-angle-left"></i></a>
+            <span class="pagebar-cur">Trang <strong>@curPage</strong> / @pages</span>
+            <a href="@Link(Math.Min(pages, curPage + 1), pSize)" class="btn btn-default btn-xs @(curPage == pages ? "disabled" : "")" title="Sau"><i class="fa fa-angle-right"></i></a>
+            <a href="@Link(pages, pSize)" class="btn btn-default btn-xs @(curPage == pages ? "disabled" : "")" title="Trang cuối"><i class="fa fa-angle-double-right"></i></a>
+        }
+    </div>
+</div>

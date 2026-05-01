@@ -1,0 +1,55 @@
+@model List<WebsiteCore.Business.ViewModels.AppointmentRow>
+@{
+    ViewData["Title"] = "Hàng đợi lịch hẹn";
+    var status = ViewBag.Status as string ?? "pending";
+}
+
+<div class="container" style="padding-top:24px;">
+    <h2 style="color:#0a3d62;"><i class="fa fa-list-alt"></i> Hàng đợi: <span class="label label-default">@status</span></h2>
+
+    <div style="margin: 12px 0;">
+        <a href="/le-tan/lich-hen?status=pending" class="btn btn-sm btn-@(status == "pending" ? "warning" : "default")">Chờ duyệt</a>
+        <a href="/le-tan/lich-hen?status=confirmed" class="btn btn-sm btn-@(status == "confirmed" ? "success" : "default")">Đã xác nhận</a>
+        <a href="/le-tan/lich-hen?status=rejected" class="btn btn-sm btn-@(status == "rejected" ? "danger" : "default")">Từ chối</a>
+        <a href="/le-tan" class="btn btn-sm btn-default pull-right">← Tổng quan</a>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">Không có lịch nào ở trạng thái <code>@status</code>.</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover table-bordered" style="background:white;">
+                <thead style="background:#0a3d62; color:white;">
+                    <tr>
+                        <th>Bệnh nhân</th>
+                        <th>SĐT</th>
+                        <th>Khoa</th>
+                        <th>Ngày</th>
+                        <th>Buổi</th>
+                        <th>Mã khám</th>
+                        <th>Lý do</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var a in Model)
+                {
+                    <tr>
+                        <td><strong>@a.PatientName</strong></td>
+                        <td><a href="tel:@a.PatientPhone">@a.PatientPhone</a></td>
+                        <td>@a.DepartmentName</td>
+                        <td>@(a.AppointmentDate?.ToString("dd/MM/yyyy") ?? "—")</td>
+                        <td>@(a.Session == "morning" ? "Sáng" : "Chiều")</td>
+                        <td>@if(a.BookingCode == null){<text>—</text>} else {<code>@a.BookingCode</code>}</td>
+                        <td><small>@a.Reason</small></td>
+                        <td><a href="/le-tan/lich-hen/@a.Id" class="btn btn-xs btn-primary">Chi tiết</a></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

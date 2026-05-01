@@ -1,0 +1,46 @@
+@using WebsiteCore.Data.Entities
+@using WebsiteCore.Business
+@{
+    ViewData["Title"] = "Bác sĩ trực hôm nay";
+    var schedules = ViewBag.Schedules as List<DoctorSchedule> ?? new();
+    var doctors = ViewBag.Doctors as List<Doctor> ?? new();
+    var docDict = doctors.ToDictionary(d => d.Id, d => d);
+}
+
+<div class="container" style="padding-top:24px;">
+    <h2 style="color:#0a3d62;"><i class="fa fa-stethoscope"></i> Bác sĩ trực hôm nay (@DateTime.Today.ToString("dd/MM/yyyy"))</h2>
+    <a href="/le-tan" class="btn btn-default" style="margin-bottom:12px;">← Tổng quan</a>
+
+    <div class="row">
+        @{ var sessions = new[] { (Constants.SessionMorning, "Buổi sáng"), (Constants.SessionAfternoon, "Buổi chiều") }; }
+        @foreach (var (key, label) in sessions)
+        {
+            var sess = schedules.Where(s => s.Session == key).ToList();
+            <div class="col-md-6">
+                <div class="panel panel-primary">
+                    <div class="panel-heading"><strong>@label</strong></div>
+                    <div class="panel-body">
+                        @if (!sess.Any()) { <p class="text-muted">Không có bác sĩ nào trực.</p> }
+                        @foreach (var s in sess)
+                        {
+                            docDict.TryGetValue(s.DoctorId, out var d);
+                            if (d == null) continue;
+                            <div style="border-bottom:1px solid #eee; padding:8px 0;">
+                                @if (!string.IsNullOrEmpty(d.ImagePath))
+                                {
+                                    <img src="/@d.ImagePath.TrimStart('/')" alt="@d.NameL"
+                                         style="height:48px; width:48px; object-fit:cover; border-radius:50%; float:left; margin-right:10px;"
+                                         onerror="this.onerror=null;this.src='/assets/client/images/doctor-default.svg';" />
+                                }
+                                <strong>@d.NameL</strong>
+                                <br /><small class="text-muted">@d.SpeciallyL</small>
+                                @if (!string.IsNullOrEmpty(s.Room)) { <br /><small>Phòng: <strong>@s.Room</strong></small> }
+                                <div style="clear:both;"></div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>

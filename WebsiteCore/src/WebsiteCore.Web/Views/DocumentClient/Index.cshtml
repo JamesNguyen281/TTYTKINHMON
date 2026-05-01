@@ -1,0 +1,65 @@
+@model List<WebsiteCore.Data.Entities.Document>
+@{
+    ViewData["Title"] = "Văn bản — Tài liệu";
+    int total = (int)(ViewBag.Total ?? 0);
+    int page = (int)(ViewBag.Page ?? 1);
+    int pageSize = (int)(ViewBag.PageSize ?? 10);
+    int pages = (int)Math.Ceiling((double)total / pageSize);
+    var q = ViewBag.QuerySearch as string;
+}
+
+<div class="container" style="padding-top:24px;">
+    <h2 style="color:#0a3d62;"><i class="fa fa-folder-open-o"></i> Văn bản — Tài liệu</h2>
+
+    <form method="get" class="form-inline" style="margin-bottom:16px;">
+        <input type="text" name="q" value="@q" class="form-control" placeholder="Tìm theo tên / mã văn bản..." />
+        <button type="submit" class="btn btn-primary"><i class="fa fa-search"></i> Tìm</button>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table table-hover table-bordered" style="background:white;">
+            <thead style="background:#0a3d62; color:white;">
+                <tr><th>#</th><th>Tên văn bản</th><th>Mã</th><th>Ngày BH</th><th>File</th></tr>
+            </thead>
+            <tbody>
+            @foreach (var (d, i) in Model.Select((d, i) => (d, (page - 1) * pageSize + i + 1)))
+            {
+                <tr>
+                    <td>@i</td>
+                    <td>
+                        <strong>@d.DocumentName</strong>
+                        @if (!string.IsNullOrEmpty(d.Description))
+                        {
+                            <br /><small class="text-muted">@d.Description</small>
+                        }
+                    </td>
+                    <td><code>@d.DocumentCode</code></td>
+                    <td>@(d.DocumentDate?.ToString("dd/MM/yyyy"))</td>
+                    <td>
+                        @if (!string.IsNullOrEmpty(d.AttachFilePath))
+                        {
+                            <a href="/@d.AttachFilePath.TrimStart('/')" target="_blank" class="btn btn-xs btn-success">
+                                <i class="fa fa-download"></i> Tải xuống
+                            </a>
+                        }
+                    </td>
+                </tr>
+            }
+            @if (!Model.Any())
+            {
+                <tr><td colspan="5" class="text-center text-muted">Không tìm thấy tài liệu nào.</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+
+    @if (pages > 1)
+    {
+        <ul class="pagination">
+            @for (int p = 1; p <= pages; p++)
+            {
+                <li class="@(p == page ? "active" : "")"><a href="?page=@p&q=@q">@p</a></li>
+            }
+        </ul>
+    }
+</div>

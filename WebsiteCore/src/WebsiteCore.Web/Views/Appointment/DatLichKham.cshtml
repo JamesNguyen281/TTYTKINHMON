@@ -1,0 +1,94 @@
+@using WebsiteCore.Data.Entities
+@using WebsiteCore.Business.ViewModels
+@model WebsiteCore.Business.ViewModels.BookingInputModel
+@{
+    ViewData["Title"] = "Đặt lịch khám";
+    var depts = ViewBag.Departments as List<Department> ?? new();
+    var maxDays = (int)(ViewBag.MaxDaysAhead ?? 30);
+    var loggedUser = ViewBag.CurrentUser as LoggedInUser;
+    var returnUrl = Uri.EscapeDataString(Context.Request.Path + Context.Request.QueryString);
+}
+
+<div class="container" style="padding: 24px 15px;">
+<div class="row">
+    <div class="col-md-8 col-md-offset-2 col-sm-10 col-sm-offset-1 col-xs-12">
+        @if (loggedUser == null)
+        {
+            <div class="alert alert-info" style="border-left:4px solid #0992e8; padding:10px 14px;">
+                <i class="fa fa-lightbulb-o"></i>
+                <a href="/dang-nhap?returnUrl=@returnUrl" style="font-weight:600;">Đăng nhập</a>
+                để đặt lịch nhanh hơn và theo dõi trạng thái lịch khám — hoặc tiếp tục bên dưới với tư cách khách.
+            </div>
+        }
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <h3 style="color:#0a3d62;"><i class="fa fa-calendar-plus-o"></i> Đặt lịch khám</h3>
+                <p class="text-muted small">
+                    Vui lòng điền thông tin bên dưới. Lễ tân sẽ liên hệ xác nhận trong vòng 24 giờ.
+                    Sau khi xác nhận, bạn sẽ nhận được mã khám.
+                </p>
+
+                <form asp-action="DatLichKham" method="post">
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="All" class="alert alert-danger" role="alert"
+                         style="@(ViewData.ModelState.IsValid ? "display:none;" : "")"></div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="PatientName" class="form-label fw-bold"></label>
+                            <input asp-for="PatientName" class="form-control" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="PatientPhone" class="form-label fw-bold"></label>
+                            <input asp-for="PatientPhone" type="tel" class="form-control" />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="PatientEmail" class="form-label">Email <small class="text-muted">(không bắt buộc)</small></label>
+                        <input asp-for="PatientEmail" type="email" class="form-control" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="DepartmentId" class="form-label fw-bold">Chuyên khoa</label>
+                        <select asp-for="DepartmentId" class="form-select">
+                            <option value="">-- Chọn chuyên khoa --</option>
+                            @foreach (var d in depts)
+                            {
+                                <option value="@d.Id">@d.NameL</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="AppointmentDate" class="form-label fw-bold">Ngày khám</label>
+                            <input asp-for="AppointmentDate" type="date" class="form-control"
+                                   min="@DateTime.Today.ToString("yyyy-MM-dd")"
+                                   max="@DateTime.Today.AddDays(maxDays).ToString("yyyy-MM-dd")" />
+                            <small class="text-muted">Đặt lịch trong vòng @maxDays ngày tới</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Session" class="form-label fw-bold">Buổi khám</label>
+                            <select asp-for="Session" class="form-select">
+                                <option value="morning">Buổi sáng (07:00–11:00)</option>
+                                <option value="afternoon">Buổi chiều (13:00–17:00)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Reason" class="form-label">Lý do đến khám</label>
+                        <textarea asp-for="Reason" class="form-control" rows="3" placeholder="Mô tả triệu chứng hoặc nhu cầu khám..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fa fa-calendar-check-o"></i> Gửi yêu cầu đặt lịch
+                    </button>
+                    <a href="/" class="btn btn-default">Huỷ</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+</div>

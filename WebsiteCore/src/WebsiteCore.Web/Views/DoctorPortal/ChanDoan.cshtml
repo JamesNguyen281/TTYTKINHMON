@@ -1,0 +1,161 @@
+@using WebsiteCore.Business.ViewModels
+@using WebsiteCore.Data.Entities
+@{
+    ViewData["Title"] = "Chẩn đoán bệnh nhân";
+    var appt = ViewBag.Appointment as AppointmentRow;
+    var nextRecordNo = ViewBag.NextRecordNo as string ?? "—";
+    var patient = ViewBag.Patient as User;
+    string genderTxt = patient?.Gender switch { 1 => "Nam", 2 => "Nữ", _ => "—" };
+    int? age = patient?.Dob.HasValue == true
+        ? (int)Math.Floor((DateTime.Today - patient.Dob.Value.ToDateTime(TimeOnly.MinValue)).TotalDays / 365.25)
+        : null;
+}
+
+<div class="container" style="padding-top:24px;">
+    <h2 style="color:#0a3d62;"><i class="fa fa-stethoscope"></i> Chẩn đoán cho <strong>@appt?.PatientName</strong></h2>
+    <a href="/bac-si-portal/benh-nhan-hom-nay" class="btn btn-default" style="margin-bottom:12px;">← Bệnh nhân hôm nay</a>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-heading"><strong><i class="fa fa-calendar-check-o"></i> Thông tin lịch khám</strong></div>
+                <div class="panel-body">
+                    <dl class="dl-horizontal" style="margin:0;">
+                        <dt>Mã khám</dt><dd><code>@appt?.BookingCode</code></dd>
+                        <dt>Bệnh nhân</dt><dd><strong>@appt?.PatientName</strong> (@appt?.PatientPhone)</dd>
+                        <dt>Khoa</dt><dd>@appt?.DepartmentName</dd>
+                        <dt>Ngày</dt><dd>@(appt?.AppointmentDate?.ToString("dd/MM/yyyy")) — @(appt?.Session == "morning" ? "Sáng" : "Chiều")</dd>
+                        <dt>Lý do BN ghi</dt><dd>@appt?.Reason</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="panel panel-info">
+                <div class="panel-heading"><strong><i class="fa fa-user"></i> Hồ sơ y tế bệnh nhân</strong></div>
+                <div class="panel-body">
+                    @if (patient != null)
+                    {
+                        <dl class="dl-horizontal" style="margin:0;">
+                            <dt>Giới tính / Tuổi</dt><dd>@genderTxt @(age.HasValue ? $"— {age} tuổi" : "")</dd>
+                            <dt>Ngày sinh</dt><dd>@(patient.Dob?.ToString("dd/MM/yyyy") ?? "—")</dd>
+                            <dt>CCCD</dt><dd>@(string.IsNullOrEmpty(patient.Cccd) ? "—" : patient.Cccd)</dd>
+                            <dt>BHYT</dt><dd>@(string.IsNullOrEmpty(patient.BhytCard) ? "—" : patient.BhytCard)</dd>
+                            <dt>Liên hệ KC</dt><dd>@(string.IsNullOrEmpty(patient.EmergencyContact) ? "—" : patient.EmergencyContact)</dd>
+                            <dt>Địa chỉ</dt><dd>@(string.IsNullOrEmpty(patient.Address) ? "—" : patient.Address)</dd>
+                        </dl>
+                    }
+                    else
+                    {
+                        <p class="text-muted"><i class="fa fa-warning"></i> Khách vãng lai — chưa có hồ sơ.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form asp-action="ChanDoan" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="apptId" value="@appt?.Id" />
+
+        <div class="panel panel-primary">
+            <div class="panel-heading"><strong>Hồ sơ khám — sẽ tạo mã <code>@nextRecordNo</code></strong></div>
+            <div class="panel-body">
+                <div class="form-group">
+                    <label>Lý do đến khám</label>
+                    <input name="chiefComplaint" class="form-control" value="@appt?.Reason" />
+                </div>
+                <div class="form-group">
+                    <label>Chẩn đoán <span class="text-danger">*</span></label>
+                    <textarea name="diagnosis" class="form-control" rows="3" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Phác đồ điều trị</label>
+                    <textarea name="treatmentPlan" class="form-control" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Ghi chú</label>
+                    <textarea name="notes" class="form-control" rows="2"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Ngày tái khám</label>
+                    <input name="followUpDate" type="date" class="form-control" />
+                </div>
+            </div>
+        </div>
+
+        <div class="panel panel-warning">
+            <div class="panel-heading"><strong><i class="fa fa-heartbeat"></i> Cập nhật hồ sơ y tế bệnh nhân</strong>
+                <span class="text-muted" style="font-size:12px; font-weight:normal;">— đồng bộ vào hồ sơ cá nhân, BN xem được trên /ho-so</span>
+            </div>
+            <div class="panel-body">
+                <div class="row">
+                    <div class="col-md-3 form-group">
+                        <label>Nhóm máu</label>
+                        <select name="bloodType" class="form-control">
+                            <option value="">— Giữ nguyên —</option>
+                            @foreach (var bt in new[]{ "A+","A-","B+","B-","AB+","AB-","O+","O-" })
+                            {
+                                <option value="@bt" selected="@(patient?.BloodType == bt)">@bt</option>
+                            }
+                        </select>
+                        @if (!string.IsNullOrEmpty(patient?.BloodType))
+                        {
+                            <small class="text-muted">Hiện tại: <strong>@patient.BloodType</strong></small>
+                        }
+                    </div>
+                    <div class="col-md-9 form-group">
+                        <label>Dị ứng <small class="text-muted">(thuốc, thực phẩm, môi trường — tối đa 500 ký tự)</small></label>
+                        <textarea name="allergies" class="form-control" rows="2" maxlength="500" placeholder="VD: Dị ứng penicillin, hải sản. Phản ứng nhẹ với aspirin.">@patient?.Allergies</textarea>
+                    </div>
+                    <div class="col-md-12 form-group">
+                        <label>Tiền sử bệnh / bệnh nền <small class="text-muted">(ghi chi tiết để lần khám sau tra cứu)</small></label>
+                        <textarea name="medicalHistory" class="form-control" rows="3" placeholder="VD: Tăng huyết áp 5 năm (đang dùng amlodipine 5mg/ngày). Đái tháo đường type 2 chẩn đoán 2022. Mổ ruột thừa 2018. Gia đình có bố bị đột quỵ.">@patient?.MedicalHistory</textarea>
+                    </div>
+                </div>
+                <p class="text-muted" style="font-size:12px; margin:0;">
+                    <i class="fa fa-info-circle"></i> Để trống các ô trên = giữ nguyên dữ liệu cũ. Nhập mới = ghi đè + lưu vào DB.
+                </p>
+            </div>
+        </div>
+
+        <div class="panel panel-success">
+            <div class="panel-heading"><strong><i class="fa fa-medkit"></i> Đơn thuốc</strong></div>
+            <div class="panel-body">
+                <table class="table table-bordered" id="prescriptionTable">
+                    <thead><tr><th>Thuốc</th><th>Liều</th><th>Tần suất</th><th>Thời gian</th><th>Ghi chú</th><th></th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><input name="drugName" class="form-control" placeholder="Paracetamol 500mg" /></td>
+                            <td><input name="dosage" class="form-control" placeholder="1 viên" /></td>
+                            <td><input name="frequency" class="form-control" placeholder="3 lần/ngày" /></td>
+                            <td><input name="duration" class="form-control" placeholder="5 ngày" /></td>
+                            <td><input name="prescriptionNote" class="form-control" /></td>
+                            <td><button type="button" class="btn btn-xs btn-danger remove-row"><i class="fa fa-trash"></i></button></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <button type="button" class="btn btn-default btn-sm" id="addRow"><i class="fa fa-plus"></i> Thêm thuốc</button>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg"><i class="fa fa-save"></i> Lưu hồ sơ</button>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        document.getElementById('addRow').addEventListener('click', function () {
+            var tbody = document.querySelector('#prescriptionTable tbody');
+            var row = tbody.children[0].cloneNode(true);
+            row.querySelectorAll('input').forEach(i => i.value = '');
+            tbody.appendChild(row);
+        });
+        document.querySelector('#prescriptionTable tbody').addEventListener('click', function (e) {
+            if (e.target.closest('.remove-row')) {
+                var tr = e.target.closest('tr');
+                if (tr.parentElement.children.length > 1) tr.remove();
+            }
+        });
+    </script>
+}

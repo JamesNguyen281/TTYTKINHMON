@@ -1,0 +1,90 @@
+﻿@model List<WebsiteCore.Data.Entities.Doctor>
+@using WebsiteCore.Data.Entities
+@{
+    ViewData["Title"] = "Quản lý bác sĩ";
+    var depts = ViewBag.Departments as List<Department> ?? new();
+    var deptDict = depts.ToDictionary(d => d.Id, d => d.NameL);
+    int total = (int)(ViewBag.Total ?? 0);
+    int page = (int)(ViewBag.Page ?? 1);
+    int pageSize = (int)(ViewBag.PageSize ?? 20);
+    int pages = (int)Math.Ceiling((double)total / pageSize);
+}
+
+<h2 class="admin-page-title"><i class="fa fa-user-md"></i> Bác sĩ <small class="text-muted">(@total)</small></h2>
+
+<div class="admin-toolbar">
+    <form method="get" class="form-inline">
+        <a href="/AdminCP/Doctors/Create" class="btn btn-success" style="margin-right:8px;"><i class="fa fa-plus-circle"></i> Thêm bác sĩ</a>
+        <input type="text" name="q" value="@ViewBag.Q" class="form-control" placeholder="Tìm theo tên..." style="min-width:240px;" />
+        <button type="submit" class="btn btn-primary"><i class="fa fa-search"></i> Tìm</button>
+    </form>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-hover table-bordered">
+        <thead>
+            <tr>
+                <th style="width:40px;">#</th>
+                <th style="width:60px;">Ảnh</th>
+                <th>Họ tên</th>
+                <th>Chuyên khoa</th>
+                <th>Chức vụ</th>
+                <th>Loại</th>
+                <th style="width:80px; text-align:center;">Active</th>
+                <th style="width:60px; text-align:center;">TC</th>
+                <th style="width:170px;">Hành động</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var (d, i) in Model.Select((d, i) => (d, (page - 1) * pageSize + i + 1)))
+        {
+            <tr>
+                <td>@i</td>
+                <td>
+                    @if (!string.IsNullOrEmpty(d.ImagePath))
+                    {
+                        <img src="/@d.ImagePath.TrimStart('/')" style="height:40px; border-radius:4px;" />
+                    }
+                </td>
+                <td><strong>@d.NameL</strong>@(string.IsNullOrEmpty(d.NameE) ? "" : Html.Raw($"<br/><small class='text-muted'>{d.NameE}</small>"))</td>
+                <td>@(d.DepartmentId.HasValue && deptDict.ContainsKey(d.DepartmentId.Value) ? deptDict[d.DepartmentId.Value] : "—")</td>
+                <td>@d.Position</td>
+                <td>@(d.IsPartner == true ? "Ban Giám đốc" : "BS chuyên khoa")</td>
+                <td style="text-align:center;">
+                    @if (d.ActiveFlag == 1) { <span class="label label-success">Active</span> }
+                    else { <span class="label label-default">Tắt</span> }
+                </td>
+                <td style="text-align:center;">
+                    @if (d.ShowOnHome == true) { <i class="fa fa-home text-success" title="Hiện trang chủ"></i> }
+                </td>
+                <td>
+                    <a href="/AdminCP/Doctors/Edit/@d.Id" class="btn btn-xs btn-warning" title="Sửa"><i class="fa fa-pencil"></i></a>
+                    <form action="/AdminCP/Doctors/ToggleStatus/@d.Id" method="post" style="display:inline;">
+                        @Html.AntiForgeryToken()
+                        <button class="btn btn-xs @(d.ActiveFlag == 1 ? "btn-default" : "btn-success")" title="@(d.ActiveFlag == 1 ? "Tắt" : "Bật")"><i class="fa @(d.ActiveFlag == 1 ? "fa-toggle-on" : "fa-toggle-off")"></i></button>
+                    </form>
+                    <form action="/AdminCP/Doctors/ToggleShowHome/@d.Id" method="post" style="display:inline;">
+                        @Html.AntiForgeryToken()
+                        <button class="btn btn-xs @(d.ShowOnHome == true ? "btn-success" : "btn-default")" title="@(d.ShowOnHome == true ? "Tắt trang chủ" : "Bật trang chủ")"><i class="fa fa-home"></i></button>
+                    </form>
+                    <form action="/AdminCP/Doctors/Delete/@d.Id" method="post" style="display:inline;" onsubmit="return confirm('Xoá bác sĩ này?');">
+                        @Html.AntiForgeryToken()
+                        <button class="btn btn-xs btn-danger" title="Xoá"><i class="fa fa-trash"></i></button>
+                    </form>
+                </td>
+            </tr>
+        }
+        @if (!Model.Any()) { <tr><td colspan="9" class="text-center text-muted" style="padding:30px;">Không có bác sĩ nào.</td></tr> }
+        </tbody>
+    </table>
+</div>
+
+@if (pages > 1)
+{
+    <ul class="pagination">
+        @for (int p = 1; p <= pages; p++)
+        {
+            <li class="@(p == page ? "active" : "")"><a href="?page=@p&q=@ViewBag.Q">@p</a></li>
+        }
+    </ul>
+}

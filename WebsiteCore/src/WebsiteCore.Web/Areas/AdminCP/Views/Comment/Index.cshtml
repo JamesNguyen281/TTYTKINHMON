@@ -1,0 +1,80 @@
+﻿@model List<WebsiteCore.Data.Entities.Comment>
+@{
+    ViewData["Title"] = "Hộp thư góp ý";
+    var q     = ViewBag.Q     as string;
+    int page  = (int)(ViewBag.Page  ?? 1);
+    int pages = (int)(ViewBag.Pages ?? 1);
+    int total = (int)(ViewBag.Total ?? 0);
+}
+
+<h2 class="admin-page-title"><i class="fa fa-envelope"></i> Hộp thư góp ý <small class="text-muted">(@total)</small></h2>
+
+<div class="admin-toolbar">
+    <form method="get" action="/AdminCP/Comment" class="form-inline">
+        <input type="text" name="q" value="@q" class="form-control" placeholder="Tìm theo họ tên / email / nội dung..." style="min-width:300px;" />
+        <button class="btn btn-primary" type="submit"><i class="fa fa-search"></i> Tìm</button>
+        @if (!string.IsNullOrEmpty(q))
+        {
+            <a href="/AdminCP/Comment" class="btn btn-default">Bỏ lọc</a>
+        }
+    </form>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-hover table-bordered">
+        <thead>
+            <tr>
+                <th style="width:40px;">#</th>
+                <th>Họ tên</th>
+                <th>Email</th>
+                <th>Nội dung</th>
+                <th style="width:130px;">Thời gian</th>
+                <th style="width:100px; text-align:center;">Trạng thái</th>
+                <th style="width:120px;">Hành động</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var (c, i) in Model.Select((c, i) => (c, (page - 1) * 30 + i + 1)))
+        {
+            <tr style="@(c.ActiveFlag == 1 ? "" : "background:#fffbe6;")">
+                <td>@i</td>
+                <td><strong>@c.UserName</strong></td>
+                <td><a href="mailto:@c.Email">@c.Email</a></td>
+                <td><small style="white-space:pre-wrap;">@c.Message</small></td>
+                <td><small>@(c.CreatedDate?.ToString("dd/MM/yyyy HH:mm"))</small></td>
+                <td style="text-align:center;">
+                    @if (c.ActiveFlag == 1) { <span class="label label-default">Đã đọc</span> }
+                    else { <span class="label label-warning">Mới</span> }
+                </td>
+                <td>
+                    <form action="/AdminCP/Comment/ToggleRead/@c.Id" method="post" style="display:inline;">
+                        @Html.AntiForgeryToken()
+                        <button class="btn btn-xs @(c.ActiveFlag == 1 ? "btn-default" : "btn-success")"
+                                title="@(c.ActiveFlag == 1 ? "Đánh dấu chưa đọc" : "Đánh dấu đã đọc")">
+                            <i class="fa @(c.ActiveFlag == 1 ? "fa-envelope-open-o" : "fa-envelope")"></i>
+                        </button>
+                    </form>
+                    <form action="/AdminCP/Comment/Delete/@c.Id" method="post" style="display:inline;" onsubmit="return confirm('Xoá góp ý này?');">
+                        @Html.AntiForgeryToken()
+                        <button class="btn btn-xs btn-danger" title="Xoá"><i class="fa fa-trash"></i></button>
+                    </form>
+                </td>
+            </tr>
+        }
+        @if (!Model.Any())
+        {
+            <tr><td colspan="7" class="text-center text-muted" style="padding:30px;">Chưa có góp ý nào.</td></tr>
+        }
+        </tbody>
+    </table>
+</div>
+
+@if (pages > 1)
+{
+    <ul class="pagination">
+        @for (int p = 1; p <= pages; p++)
+        {
+            <li class="@(p == page ? "active" : "")"><a href="?page=@p&q=@q">@p</a></li>
+        }
+    </ul>
+}

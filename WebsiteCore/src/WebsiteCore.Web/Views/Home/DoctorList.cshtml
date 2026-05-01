@@ -1,0 +1,308 @@
+@using WebsiteCore.Data.Entities
+@{
+    ViewData["Title"] = "Đội ngũ bác sĩ";
+    var dean    = ViewBag.DoctorDean    as List<Doctor> ?? new();
+    var manager = ViewBag.DoctorManager as List<Doctor> ?? new();
+    var depts   = ViewBag.AllDepartment as List<Department> ?? new();
+    var q = ViewBag.Q as string;
+    var d = ViewBag.D as string;
+    var deptDict = depts.ToDictionary(x => x.Id, x => x.NameL);
+    ViewData["MetaDescription"] = "Đội ngũ bác sĩ Trung tâm Y tế phường Kinh Môn — chuyên môn cao, kinh nghiệm lâm sàng dày dạn, tận tâm với người bệnh.";
+    ViewData["Breadcrumb"] = new List<(string, string?)> { ("Đội ngũ bác sĩ", null) };
+}
+
+@functions {
+    string ImgPath(string? p)
+    {
+        if (string.IsNullOrEmpty(p)) return "/assets/client/images/doctor-default.svg";
+        if (p.StartsWith("http://") || p.StartsWith("https://") || p.StartsWith("//")) return p;
+        return "/" + p.TrimStart('/');
+    }
+}
+
+<div class="container">
+    <div class="row">
+        <div class="doctor-page full-section st5 doctor-page-detail">
+            <div class="box-heading col-xs-12">
+                <h2 class="title-st3 title-st5"><span>ĐỘI NGŨ BÁC SĨ</span></h2>
+            </div>
+            <div class="box-content col-xs-12">
+                <div class="full-section">
+                    <div class="search-docter mgb-20">
+                        <span>Tìm thông tin bác sĩ</span>
+                        <form method="get" action="/bac-si">
+                            <input type="text" name="q" value="@q" placeholder="Tên bác sĩ..." class="form-control" />
+                            <button type="submit" class="form-control"><i class="fa fa-search"></i> Tìm</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="full-section link-khoa-doctor">
+                    <ul>
+                        <li class="@(string.IsNullOrEmpty(d) ? "active" : "")" id="all">
+                            <a href="/bac-si">Tất cả</a>
+                        </li>
+                        @foreach (var dept in depts)
+                        {
+                            <li class="@(d == dept.Alias ? "active" : "")">
+                                <a href="/bac-si?d=@dept.Alias@(string.IsNullOrEmpty(q) ? "" : "&q=" + Uri.EscapeDataString(q))">@dept.NameL</a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+
+                <div class="list-doctor full-section">
+                    <div class="full-section">
+                        <div class="tab-list full-section tab-js">
+                            <ul>
+                                <li class="active"><a href="#bangd4">Ban Giám đốc <span class="badge">@dean.Count</span></a></li>
+                                <li><a href="#bsi4">Bác sĩ chuyên khoa <span class="badge">@manager.Count</span></a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="full-section content-tab">
+                        <div class="tab-content">
+                            <div id="bangd4" class="active">
+                                @if (dean.Any())
+                                {
+                                    foreach (var doc in dean)
+                                    {
+                                        var deptName = doc.DepartmentId.HasValue && deptDict.ContainsKey(doc.DepartmentId.Value) ? deptDict[doc.DepartmentId.Value] : "";
+                                        <div class="item col-md-3 col-sm-6 col-xs-12">
+                                            <a href="javascript:;" data-id="@doc.Id" class="item-doctor btn-doctor-detail" data-toggle="modal" data-target="#detaildoctor1">
+                                                <img src="@ImgPath(doc.ImagePath)" alt="@doc.NameL"
+                                                     onerror="this.onerror=null;this.src='/assets/client/images/doctor-default.svg';" />
+                                                <h3>@doc.NameL</h3>
+                                                @if (!string.IsNullOrEmpty(doc.Position))
+                                                {
+                                                    <div class="doctor-position-wrap">
+                                                        <span class="doctor-position" title="@doc.Position"><i class="fa fa-id-badge"></i> @doc.Position</span>
+                                                    </div>
+                                                }
+                                                <div class="doctor-specialty-wrap">
+                                                    @if (!string.IsNullOrEmpty(doc.SpeciallyL))
+                                                    {
+                                                        <span class="doctor-specialty"><i class="fa fa-stethoscope"></i> @doc.SpeciallyL</span>
+                                                    }
+                                                    else if (!string.IsNullOrEmpty(deptName))
+                                                    {
+                                                        <span class="doctor-specialty"><i class="fa fa-hospital-o"></i> @deptName</span>
+                                                    }
+                                                </div>
+                                                <span class="view-info-btn">XEM THÔNG TIN</span>
+                                            </a>
+                                        </div>
+                                    }
+                                }
+                                else
+                                {
+                                    <div class="col-xs-12"><p class="text-muted text-center" style="padding:24px;">Chưa có dữ liệu Ban Giám đốc.</p></div>
+                                }
+                            </div>
+                            <div id="bsi4">
+                                @if (manager.Any())
+                                {
+                                    foreach (var doc in manager)
+                                    {
+                                        var deptName = doc.DepartmentId.HasValue && deptDict.ContainsKey(doc.DepartmentId.Value) ? deptDict[doc.DepartmentId.Value] : "";
+                                        <div class="item col-md-3 col-sm-6 col-xs-12">
+                                            <a href="javascript:;" data-id="@doc.Id" class="item-doctor btn-doctor-detail" data-toggle="modal" data-target="#detaildoctor1">
+                                                <img src="@ImgPath(doc.ImagePath)" alt="@doc.NameL"
+                                                     onerror="this.onerror=null;this.src='/assets/client/images/doctor-default.svg';" />
+                                                <h3>@doc.NameL</h3>
+                                                @if (!string.IsNullOrEmpty(doc.Position))
+                                                {
+                                                    <div class="doctor-position-wrap">
+                                                        <span class="doctor-position" title="@doc.Position"><i class="fa fa-id-badge"></i> @doc.Position</span>
+                                                    </div>
+                                                }
+                                                <div class="doctor-specialty-wrap">
+                                                    @if (!string.IsNullOrEmpty(doc.SpeciallyL))
+                                                    {
+                                                        <span class="doctor-specialty"><i class="fa fa-stethoscope"></i> @doc.SpeciallyL</span>
+                                                    }
+                                                    else if (!string.IsNullOrEmpty(deptName))
+                                                    {
+                                                        <span class="doctor-specialty"><i class="fa fa-hospital-o"></i> @deptName</span>
+                                                    }
+                                                </div>
+                                                <span class="view-info-btn">XEM THÔNG TIN</span>
+                                            </a>
+                                        </div>
+                                    }
+                                }
+                                else
+                                {
+                                    <div class="col-xs-12"><p class="text-muted text-center" style="padding:24px;">Chưa có bác sĩ chuyên khoa khớp tiêu chí.</p></div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center" style="margin:24px 0;">
+                    <a href="/dat-lich-kham" class="btn btn-primary btn-lg">
+                        <i class="fa fa-calendar-plus-o"></i> Đặt lịch khám với bác sĩ
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        /* Doctor grid — 5 col desktop, responsive 5/4/3/2/1 */
+        .doctor-page { padding: 12px 8px; }
+        .doctor-page .tab-content > div.active {
+            display: grid !important;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 18px;
+            max-width: 1320px; margin: 0 auto;
+            justify-items: stretch;
+        }
+        @@media (max-width: 1199px) {
+            .doctor-page .tab-content > div.active { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+        }
+        @@media (max-width: 991px) {
+            .doctor-page .tab-content > div.active { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+        }
+        @@media (max-width: 767px) {
+            .doctor-page .tab-content > div.active { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+        @@media (max-width: 480px) {
+            .doctor-page .tab-content > div.active { grid-template-columns: 1fr; }
+        }
+        /* When count ≤ 3 in current tab → center the row */
+        .doctor-page .tab-content > div.active.few-items {
+            grid-template-columns: repeat(3, minmax(220px, 280px));
+            justify-content: center;
+        }
+        @@media (max-width: 767px) {
+            .doctor-page .tab-content > div.active.few-items { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+
+        .doctor-page .col-md-3, .doctor-page .col-sm-6, .doctor-page .col-xs-12 { width: auto; padding: 0; float: none; }
+        .doctor-page .item { margin: 0; display: flex; }
+        .doctor-page .item-doctor {
+            display: flex; flex-direction: column; width: 100%;
+            background: #fff; border: 1px solid #e5e9ee; border-radius: 10px;
+            overflow: hidden; text-decoration: none; color: inherit;
+            transition: transform 0.25s, box-shadow 0.25s, border-color 0.2s;
+        }
+        .doctor-page .item-doctor:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 26px rgba(10,61,98,0.18);
+            border-color: #0a3d62;
+            text-decoration: none;
+        }
+        .doctor-page .item-doctor img {
+            width: 100%; height: 170px; object-fit: contain; padding: 14px;
+            background: linear-gradient(135deg,#eef5fb 0%,#dde6ef 100%); display: block;
+        }
+        .doctor-page .item-doctor h3 {
+            font-size: 14.5px; color: #0a3d62; margin: 12px 12px 6px; font-weight: 700;
+            min-height: 40px; line-height: 1.3; text-align: center;
+        }
+        /* Wrapper text-align center cho pill chức vụ — đảm bảo center 100% */
+        .doctor-page .item-doctor .doctor-position-wrap {
+            text-align: center; margin: 4px 12px 6px; padding: 0;
+        }
+        .doctor-page .item-doctor .doctor-position {
+            font-weight: 600; color: #0a3d62; font-size: 12px;
+            background: #eef5fb; padding: 5px 12px; border-radius: 14px;
+            display: inline-block; max-width: 100%;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .doctor-page .item-doctor .doctor-specialty-wrap {
+            text-align: center; margin: 0 12px 8px; min-height: 36px;
+        }
+        .doctor-page .item-doctor .doctor-specialty {
+            color: #6c757d; font-size: 12.5px; line-height: 1.5;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+        }
+        .doctor-page .item-doctor .doctor-specialty .fa { color: #0a3d62; margin-right: 4px; opacity: 0.75; }
+        .doctor-page .item-doctor .view-info-btn {
+            display: block; background: #0a3d62; color: white; text-align: center;
+            padding: 9px; font-weight: 600; font-size: 11.5px; letter-spacing: 0.4px; margin-top: auto;
+            transition: background 0.2s;
+        }
+        .doctor-page .item-doctor .view-info-btn:before { content: "→ "; }
+        .doctor-page .item-doctor:hover .view-info-btn { background: #1d5688; }
+
+        .link-khoa-doctor ul { list-style: none; padding: 0; margin: 12px 0; }
+        .link-khoa-doctor li { display: inline-block; margin: 0 4px 8px; }
+        .link-khoa-doctor li a {
+            display: inline-block; padding: 6px 14px; border: 1px solid #e0e6ed;
+            border-radius: 16px; color: #0a3d62; text-decoration: none; font-size: 13px;
+            background: white; transition: all 0.15s;
+        }
+        .link-khoa-doctor li a:hover, .link-khoa-doctor li.active a {
+            background: #0a3d62; color: white; border-color: #0a3d62;
+        }
+
+        .search-docter form { display: flex; gap: 8px; max-width: 480px; margin-top: 8px; }
+        .search-docter input { flex: 1; }
+        .search-docter button { white-space: nowrap; padding: 6px 14px; background: #0a3d62; color: white; border: 0; }
+
+        .tab-list ul { list-style: none; padding: 0; margin: 16px 0; border-bottom: 2px solid #e0e6ed; }
+        .tab-list li { display: inline-block; margin-right: 4px; }
+        .tab-list li a {
+            display: inline-block; padding: 10px 18px; color: #6c757d; text-decoration: none;
+            border-bottom: 3px solid transparent; margin-bottom: -2px; font-weight: 600;
+        }
+        .tab-list li a .badge { background: #6c757d; margin-left: 6px; }
+        .tab-list li.active a, .tab-list li a:hover {
+            color: #0a3d62; border-bottom-color: #0a3d62; background: white;
+        }
+        .tab-list li.active a .badge { background: #0a3d62; }
+        .tab-content > div { display: none; }
+        @@media (max-width: 991px) {
+            .doctor-page .tab-content > div.active { display: block !important; }
+        }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        // Tự thêm class .few-items khi tab có ≤ 3 cards để center align
+        function applyFewItemsClass() {
+            $('.doctor-page .tab-content > div').each(function () {
+                var cnt = $(this).find('.item').length;
+                $(this).toggleClass('few-items', cnt > 0 && cnt <= 3);
+            });
+        }
+        applyFewItemsClass();
+        $(document).on('click', '.tab-list a[href^="#"]', function (e) {
+            e.preventDefault();
+            var target = $(this).attr('href');
+            $('.tab-list li').removeClass('active');
+            $(this).parent().addClass('active');
+            $('.tab-content > div').removeClass('active');
+            $(target).addClass('active');
+            applyFewItemsClass();
+        });
+
+        function escHtml(s) { return (s || '').replace(/[&<>"]/g, function (c) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; }); }
+        $(document).on('click', '.btn-doctor-detail', function (e) {
+            e.preventDefault();
+            var id = $(this).data('id');
+            $.getJSON('/Home/DoctorDetail?id=' + id, function (d) {
+                var modal = $('#detaildoctor1');
+                modal.find('.name-doctor').text(d.name || '');
+                modal.find('.km-doc-avatar').attr('src',
+                    d.image_path ? '/' + d.image_path.replace(/^\//, '') : '/assets/client/images/doctor-default.svg');
+                modal.find('.km-doc-pos').text(d.position || '');
+                modal.find('.km-doc-specialty').text(d.department_name || '');
+
+                var html = '';
+                if (d.specially) html += '<div class="info-block"><div class="info-label"><i class="fa fa-stethoscope"></i> Chuyên môn</div><div class="info-content">' + escHtml(d.specially) + '</div></div>';
+                if (d.quantification) html += '<div class="info-block"><div class="info-label"><i class="fa fa-graduation-cap"></i> Bằng cấp / Học vị</div><div class="info-content">' + escHtml(d.quantification) + '</div></div>';
+                if (d.experiences) html += '<div class="info-block"><div class="info-label"><i class="fa fa-history"></i> Kinh nghiệm / Quá trình công tác</div><div class="info-content">' + escHtml(d.experiences) + '</div></div>';
+                if (!html) html = '<p class="text-muted text-center" style="padding:40px 0;"><em>Chưa có thông tin chi tiết.</em></p>';
+                modal.find('.linemodal').html(html);
+                modal.modal('show');
+            });
+        });
+    </script>
+}

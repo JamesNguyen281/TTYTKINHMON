@@ -1,0 +1,217 @@
+﻿@model List<WebsiteCore.Data.Entities.News>
+@using WebsiteCore.Data.Entities
+@{
+    var locate = (ViewBag.Locate as string) ?? "vi";
+    bool isEn  = locate == "en";
+    string L(string? l, string? e) => isEn ? (string.IsNullOrEmpty(e) ? (l ?? "") : e) : (l ?? "");
+
+    var alias = ViewBag.Alias as string ?? "";
+    var category = ViewBag.Category as Category;
+    var subCats = ViewBag.SubCategories as List<Category> ?? new();
+    var relatedDepts = ViewBag.RelatedDepartments as List<Department> ?? new();
+    var title = L(category?.NameL, category?.NameE);
+    if (string.IsNullOrEmpty(title)) title = alias;
+    ViewData["Title"] = title;
+
+    // Logo fallback đồng bộ với Site.LogoUrl từ AdminCP — admin đổi qua /AdminCP/Sites,
+    // tất cả card thiếu ảnh sẽ tự cập nhật. Fallback cuối cùng là file cứng trong wwwroot.
+    var siteLogoUrl = (ViewBag.Site as Site)?.LogoUrl;
+    if (string.IsNullOrEmpty(siteLogoUrl)) siteLogoUrl = "/assets/client/images/logo-kinhmon.png";
+}
+
+<div class="container" style="padding-top:24px;">
+    <h1 style="color:#0a3d62; border-bottom:3px solid #0a3d62; padding-bottom:8px;">@title</h1>
+
+    @{ var catDesc = L(category?.DescriptionL, category?.DescriptionE); }
+    @if (!string.IsNullOrEmpty(catDesc))
+    {
+        <div class="lead text-muted" style="margin:16px 0;">@catDesc</div>
+    }
+
+
+    @* Sub-category cards — flex grid, center align khi <3 items/row *@
+    @if (subCats.Any())
+    {
+        @functions {
+            // Map alias → Font Awesome icon + gradient color (style hiện đại,
+            // tránh lặp logo nhỏ trên mọi card khiến trang trông xấu)
+            (string ic, string g1, string g2) IconFor(string? aliasL)
+            {
+                aliasL = (aliasL ?? "").ToLowerInvariant();
+                if (aliasL.Contains("gioi-thieu") || aliasL.Contains("chung")) return ("fa fa-info-circle", "#0a3d62", "#1d5688");
+                if (aliasL.Contains("co-so-vat-chat") || aliasL.Contains("vat-chat")) return ("fa fa-building", "#43aa8b", "#2f7a5e");
+                if (aliasL.Contains("co-so-ha-tang") || aliasL.Contains("ha-tang")) return ("fa fa-cubes", "#4d96ff", "#3070cc");
+                if (aliasL.Contains("bac-si") || aliasL.Contains("doi-ngu")) return ("fa fa-user-md", "#9d4edd", "#6c2bb9");
+                if (aliasL.Contains("to-chuc") || aliasL.Contains("so-do")) return ("fa fa-sitemap", "#f39c12", "#c87f0e");
+                if (aliasL.Contains("chuc-nang") || aliasL.Contains("nhiem-vu")) return ("fa fa-tasks", "#e74c3c", "#a02329");
+                if (aliasL.Contains("lich-su")) return ("fa fa-clock-o", "#16a085", "#0e6655");
+                if (aliasL.Contains("dich-vu")) return ("fa fa-stethoscope", "#0a9396", "#005f5f");
+                if (aliasL.Contains("tin-tuc")) return ("fa fa-newspaper-o", "#1d5688", "#0a3d62");
+                return ("fa fa-folder-open-o", "#0a3d62", "#1d5688");
+            }
+        }
+        <div class="cat-grid">
+            @foreach (var c in subCats)
+            {
+                var nameX = L(c.NameL, c.NameE);
+                var descX = L(c.DescriptionL, c.DescriptionE);
+                var imgPath = c.ImagePath ?? string.Empty;
+                var hasRealImg = !string.IsNullOrEmpty(imgPath)
+                                 && !imgPath.StartsWith("fa:")
+                                 && !imgPath.Contains("logo-kinhmon")
+                                 && imgPath != siteLogoUrl;
+                var iconBundle = IconFor(c.AliasL);
+                var linkUrl = "/" + (string.IsNullOrEmpty(c.Link) ? "chuyen-muc/" + c.AliasL : c.Link);
+                <a href="@linkUrl" class="cat-card">
+                    @if (hasRealImg)
+                    {
+                        <div class="cat-card-img" style="background-image:url('/@imgPath.TrimStart('/')');"></div>
+                    }
+                    else
+                    {
+                        <div class="cat-card-banner" style="background:linear-gradient(135deg,@iconBundle.g1 0%,@iconBundle.g2 100%);">
+                            <i class="@iconBundle.ic"></i>
+                        </div>
+                    }
+                    <div class="cat-card-body">
+                        <h4>@nameX</h4>
+                        @if (!string.IsNullOrEmpty(descX))
+                        {
+                            <p class="cat-desc">@descX</p>
+                        }
+                        <span class="cat-cta">Xem chi tiết →</span>
+                    </div>
+                </a>
+            }
+        </div>
+
+        <style>
+            .cat-grid {
+                display: flex; flex-wrap: wrap; gap: 18px; justify-content: center;
+                margin: 24px 0;
+            }
+            .cat-card {
+                flex: 0 1 320px; max-width: 360px; min-width: 260px;
+                background: white; border: 1px solid #e5e9ee; border-radius: 10px;
+                overflow: hidden; text-decoration: none; color: inherit;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+                transition: transform 0.2s ease, box-shadow 0.25s ease, border-color 0.2s ease;
+                display: flex; flex-direction: column;
+            }
+            .cat-card:hover {
+                transform: translateY(-4px); text-decoration: none;
+                box-shadow: 0 12px 28px rgba(10,61,98,0.15); border-color: #0a3d62;
+            }
+            .cat-card .cat-card-img {
+                height: 160px; background-size: cover; background-position: center; background-color: #eef5fb;
+            }
+            .cat-card .cat-card-banner {
+                height: 160px; display: flex; align-items: center; justify-content: center; color: white;
+            }
+            .cat-card .cat-card-banner .fa { font-size: 64px; opacity: 0.95; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.2)); }
+            .cat-card .cat-card-body { padding: 16px 18px; flex: 1; display: flex; flex-direction: column; }
+            .cat-card .cat-card-body h4 { color: #0a3d62; font-weight: 700; font-size: 17px; margin: 0 0 8px; line-height: 1.35; }
+            .cat-card .cat-desc { color: #6c757d; font-size: 13px; line-height: 1.6; margin: 0 0 12px; flex: 1;
+                                  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+            .cat-card .cat-cta { color: #0a3d62; font-size: 13px; font-weight: 600; margin-top: auto; }
+            .cat-card:hover .cat-cta { color: #1d5688; }
+        </style>
+    }
+
+    @* News list *@
+    @if (Model != null && Model.Any())
+    {
+        <div class="row" style="margin-top:24px;">
+            @foreach (var n in Model)
+            {
+                var titleX = L(n.TitleL, n.TitleE);
+                var descX  = L(n.DescriptionL, n.DescriptionE);
+                var aliasX = isEn && !string.IsNullOrEmpty(n.AliasE) ? n.AliasE : n.AliasL;
+                <div class="col-md-6">
+                    <div class="panel panel-default" style="margin-bottom:16px;">
+                        <div class="row" style="margin:0;">
+                            @{ var nImg = !string.IsNullOrEmpty(n.ImagePath)
+                                    ? "/" + n.ImagePath.TrimStart('/')
+                                    : siteLogoUrl; }
+                            <div class="col-md-4" style="padding:0;">
+                                <img src="@nImg" class="img-responsive" alt="@titleX"
+                                     style="height:140px; width:100%; object-fit:cover; background:#f0f7fc;"
+                                     onerror="this.onerror=null;this.src='@siteLogoUrl';this.style.objectFit='contain';this.style.padding='12px';" />
+                            </div>
+                            <div class="col-md-8 panel-body">
+                                <h4><a href="/tin-tuc/@aliasX">@titleX</a></h4>
+                                <p class="text-muted">@descX</p>
+                                <small><i class="fa fa-calendar"></i> @(n.CreatedDate?.ToString("dd/MM/yyyy"))</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    @* Related departments fallback (when alias liên-quan chuyên khoa) *@
+    @if (relatedDepts.Any())
+    {
+        <h3 style="color:#0a3d62; margin-top:24px;">Chuyên khoa liên quan</h3>
+        <div class="row">
+            @foreach (var d in relatedDepts)
+            {
+                <div class="col-md-3 col-sm-6">
+                    <a href="/chuyen-khoa/@d.Alias" class="panel panel-primary" style="display:block; text-decoration:none; margin-bottom:12px;">
+                        <div class="panel-heading text-center">
+                            @if (!string.IsNullOrEmpty(d.ImagePath) && d.ImagePath.StartsWith("fa:"))
+                            {
+                                <i class="@d.ImagePath.Substring(3).Trim()" style="font-size:32px;"></i>
+                            }
+                            <br /><strong>@d.NameL</strong>
+                        </div>
+                    </a>
+                </div>
+            }
+        </div>
+    }
+
+    @* Empty fallback content if nothing of the above rendered *@
+    @if ((Model == null || !Model.Any()) && !subCats.Any() && !relatedDepts.Any() && (category == null || string.IsNullOrEmpty(category.DescriptionL)))
+    {
+        <div class="row" style="margin-top:24px;">
+            <div class="col-md-8">
+                <div class="panel panel-info">
+                    <div class="panel-heading"><strong><i class="fa fa-info-circle"></i> Thông tin chung</strong></div>
+                    <div class="panel-body">
+                        <p>
+                            Trung tâm Y tế phường Kinh Môn — đơn vị y tế cấp cơ sở thuộc Sở Y tế TP Hải Phòng,
+                            cung cấp dịch vụ chăm sóc sức khoẻ ban đầu, khám chữa bệnh ngoại trú, kiểm soát dịch bệnh,
+                            tiêm chủng, sức khoẻ sinh sản, y học dự phòng cho người dân trên địa bàn phường.
+                        </p>
+                        <p>
+                            <strong>Địa chỉ:</strong> Số 294 đường Trần Hưng Đạo, phường Kinh Môn, TP Hải Phòng<br />
+                            <strong>Hotline đặt khám:</strong> <a href="tel:0964801616">0964.801.616</a><br />
+                            <strong>Cấp cứu 24/7:</strong> <a href="tel:02203822205">02203.822.205</a>
+                        </p>
+                        <p>
+                            <a href="/chuyen-khoa" class="btn btn-default"><i class="fa fa-stethoscope"></i> Xem chuyên khoa</a>
+                            <a href="/bac-si" class="btn btn-default"><i class="fa fa-user-md"></i> Đội ngũ bác sĩ</a>
+                            <a href="/dat-lich-kham" class="btn btn-primary"><i class="fa fa-calendar-plus-o"></i> Đặt lịch khám</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="panel panel-default">
+                    <div class="panel-heading"><strong>Liên kết nhanh</strong></div>
+                    <div class="panel-body">
+                        <ul style="padding-left:20px;">
+                            <li><a href="/hoi-dap">Hỏi đáp với bác sĩ</a></li>
+                            <li><a href="/dat-cau-hoi">Đặt câu hỏi</a></li>
+                            <li><a href="/lich-truc">Lịch trực bác sĩ</a></li>
+                            <li><a href="/van-ban">Văn bản — Tài liệu</a></li>
+                            <li><a href="/chuyen-muc/tin-tuc">Tin tức mới</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>

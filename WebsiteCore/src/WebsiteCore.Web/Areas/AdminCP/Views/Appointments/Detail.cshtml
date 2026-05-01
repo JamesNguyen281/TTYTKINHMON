@@ -1,0 +1,102 @@
+@model WebsiteCore.Business.ViewModels.AppointmentRow
+@using WebsiteCore.Business
+@{ ViewData["Title"] = "Chi tiết lịch khám"; }
+
+<h2 style="color:#0a3d62;"><i class="fa fa-calendar-check-o"></i> Lịch của @Model.PatientName</h2>
+<a href="/AdminCP/Appointments?status=@Model.Status" class="btn btn-default" style="margin-bottom:12px;">← Quay lại</a>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success"><i class="fa fa-check-circle"></i> @TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> @TempData["Error"]</div>
+}
+
+<div class="panel panel-primary">
+    <div class="panel-heading"><strong>Thông tin lịch</strong></div>
+    <div class="panel-body">
+        <dl class="dl-horizontal">
+            <dt>Mã</dt><dd>@if(string.IsNullOrEmpty(Model.BookingCode)){<text>—</text>} else {<code>@Model.BookingCode</code>}</dd>
+            <dt>Bệnh nhân</dt><dd><strong>@Model.PatientName</strong></dd>
+            <dt>SĐT</dt><dd>@Model.PatientPhone</dd>
+            <dt>Email</dt><dd>@Model.PatientEmail</dd>
+            <dt>Chuyên khoa</dt><dd>@Model.DepartmentName</dd>
+            <dt>Ngày khám</dt><dd>@(Model.AppointmentDate?.ToString("dd/MM/yyyy"))</dd>
+            <dt>Buổi</dt><dd>@(Model.Session == Constants.SessionMorning ? "Sáng" : "Chiều")</dd>
+            <dt>Lý do</dt><dd>@Model.Reason</dd>
+            <dt>Trạng thái</dt><dd><span class="label label-info">@Constants.ApptStatusLabel(Model.Status)</span></dd>
+            <dt>Ghi chú</dt><dd>@Model.StaffNote</dd>
+            <dt>Check-in</dt><dd>@(Model.CheckedIn ? "✓ Đã check-in" : "—")</dd>
+            <dt>Tạo lúc</dt><dd>@(Model.CreatedDate?.ToString("HH:mm dd/MM/yyyy"))</dd>
+        </dl>
+    </div>
+</div>
+
+@{
+    // Whitelist transition — đồng bộ với AppointmentService.AllowedTransitions
+    var transitions = Model.Status switch
+    {
+        "pending"     => new[] { ("confirmed","Xác nhận (sinh mã khám)"), ("rescheduled","Đề nghị đổi lịch"), ("rejected","Từ chối"), ("cancelled","Huỷ") },
+        "confirmed"   => new[] { ("completed","Hoàn tất"), ("cancelled","Huỷ"), ("rescheduled","Đổi lịch") },
+        "rescheduled" => new[] { ("confirmed","Xác nhận"), ("rejected","Từ chối"), ("cancelled","Huỷ") },
+        _ => Array.Empty<(string, string)>()
+    };
+}
+@if (transitions.Length > 0)
+{
+    <div class="panel panel-default">
+        <div class="panel-heading"><strong>Cập nhật trạng thái</strong></div>
+        <div class="panel-body">
+            <form asp-action="UpdateStatus" method="post" id="frm-status">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.Id" />
+                <div class="form-group">
+                    <label>Trạng thái mới</label>
+                    <select name="newStatus" id="ns" class="form-control" required>
+                        @foreach (var (val, lbl) in transitions)
+                        {
+                            <option value="@val">@lbl</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label id="lblNote">Ghi chú <small class="text-muted">— bắt buộc khi từ chối</small></label>
+                    <textarea name="staffNote" id="staffNote" class="form-control" rows="3" maxlength="500"
+                              placeholder="Lý do từ chối/đổi lịch... (tối đa 500 ký tự)"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> Cập nhật</button>
+            </form>
+            <script>
+              (function(){
+                var ns = document.getElementById('ns'), note = document.getElementById('staffNote'), lbl = document.getElementById('lblNote');
+                function refresh(){
+                  var rejected = ns.value === 'rejected';
+                  note.required = rejected;
+                  lbl.innerHTML = rejected ? 'Lý do từ chối <span class="text-danger">*</span>' : 'Ghi chú <small class="text-muted">— bắt buộc khi từ chối</small>';
+                }
+                ns.addEventListener('change', refresh); refresh();
+                document.getElementById('frm-status').addEventListener('submit', function(e){
+                  if(ns.value === 'rejected' && !note.value.trim()){
+                    e.preventDefault(); alert('Vui lòng nhập lý do từ chối.'); note.focus();
+                  }
+                });
+              })();
+            </script>
+        </div>
+    </div>
+}
+else
+{
+    <div class="alert alert-info">Lịch ở trạng thái <code>@Constants.ApptStatusLabel(Model.Status)</code> — không thể thay đổi tiếp.</div>
+}
+
+@if (Model.Status == Constants.ApptConfirmed && !Model.CheckedIn && Model.AppointmentDate?.Date == DateTime.Today)
+{
+    <form asp-action="CheckIn" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="id" value="@Model.Id" />
+        <button type="submit" class="btn btn-success btn-lg"><i class="fa fa-check"></i> Check-in bệnh nhân</button>
+    </form>
+}

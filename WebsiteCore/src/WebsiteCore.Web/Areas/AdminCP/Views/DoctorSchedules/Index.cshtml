@@ -1,0 +1,181 @@
+@model List<WebsiteCore.Data.Entities.DoctorSchedule>
+@using WebsiteCore.Data.Entities
+@using WebsiteCore.Business
+@{
+    ViewData["Title"] = "Lịch trực bác sĩ";
+    var doctors = ViewBag.Doctors as List<Doctor> ?? new();
+    var depts   = ViewBag.Departments as List<Department> ?? new();
+    var docDict  = doctors.ToDictionary(d => d.Id, d => d.NameL ?? "—");
+    var deptDict = depts.ToDictionary(d => d.Id, d => d.NameL);
+
+    // DB convention: 1=CN, 2=T2, …, 7=T7 — đồng bộ với DoctorPortal + script seed
+    string WdLabel(byte wd) => wd switch {
+        1 => "Chủ Nhật", 2 => "Thứ Hai", 3 => "Thứ Ba", 4 => "Thứ Tư",
+        5 => "Thứ Năm", 6 => "Thứ Sáu", 7 => "Thứ Bảy", _ => $"WD{wd}"
+    };
+    string WdShort(byte wd) => wd switch {
+        1 => "CN", 2 => "T2", 3 => "T3", 4 => "T4",
+        5 => "T5", 6 => "T6", 7 => "T7", _ => $"{wd}"
+    };
+
+    Guid? selDocId  = ViewBag.SelectedDoctorId as Guid?;
+    Guid? selDeptId = ViewBag.SelectedDeptId as Guid?;
+    byte? selWd     = ViewBag.SelectedWeekday as byte?;
+    string? selSession = ViewBag.SelectedSession as string;
+
+    int totalCount = Model.Count;
+    bool filterActive = (selDocId.HasValue && selDocId.Value != Guid.Empty)
+                     || (selDeptId.HasValue && selDeptId.Value != Guid.Empty)
+                     || selWd.HasValue
+                     || !string.IsNullOrEmpty(selSession);
+}
+
+<style>
+    .ds-hero { background:linear-gradient(135deg,#0a3d62,#1d5688); color:white; padding:14px 20px; border-radius:8px; margin-bottom:14px; }
+    .ds-hero h2 { margin:0; font-size:20px; font-weight:600; }
+    .ds-hero .meta { font-size:13px; opacity:0.92; margin-top:3px; }
+    .ds-filter { background:white; border:1px solid #e5e9ee; border-radius:8px; padding:14px 16px; margin-bottom:14px; box-shadow:0 1px 3px rgba(0,0,0,0.04); }
+    .ds-filter .row-flex { display:flex; gap:10px; flex-wrap:wrap; align-items:end; }
+    .ds-filter label { font-weight:600; font-size:12px; color:#0a3d62; margin-bottom:3px; display:block; }
+    .ds-filter select, .ds-filter input { min-width:140px; }
+    .badge-morning { background:#fff5e0; color:#b87908; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:600; }
+    .badge-afternoon { background:#e3f2fd; color:#1d5688; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:600; }
+    .badge-cycle { background:#e8f5e9; color:#2f7a5e; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:600; }
+    .ds-table tr.dept-row { background:#f7f9fc; font-weight:600; color:#0a3d62; }
+</style>
+
+<div class="ds-hero">
+    <h2><i class="fa fa-calendar-o"></i> Lịch trực bác sĩ</h2>
+    <div class="meta">Tổng @totalCount ca trực active@(filterActive ? " (sau lọc)" : "")</div>
+</div>
+
+<div style="margin-bottom:12px;">
+    <a href="/AdminCP/DoctorSchedules/Create" class="btn btn-primary"><i class="fa fa-plus"></i> Thêm lịch</a>
+    <a href="/AdminCP" class="btn btn-default"><i class="fa fa-arrow-left"></i> Tổng quan</a>
+</div>
+
+<div class="ds-filter">
+    <form method="get" action="/AdminCP/DoctorSchedules" class="row-flex">
+        <div>
+            <label>Bác sĩ</label>
+            <select name="doctorId" class="form-control">
+                <option value="">— Tất cả —</option>
+                @foreach (var d in doctors.OrderBy(x => x.NameL))
+                {
+                    if (selDocId == d.Id) { <option value="@d.Id" selected>@d.NameL</option> }
+                    else                  { <option value="@d.Id">@d.NameL</option> }
+                }
+            </select>
+        </div>
+        <div>
+            <label>Khoa</label>
+            <select name="departmentId" class="form-control">
+                <option value="">— Tất cả —</option>
+                @foreach (var d in depts.OrderBy(x => x.NameL))
+                {
+                    if (selDeptId == d.Id) { <option value="@d.Id" selected>@d.NameL</option> }
+                    else                   { <option value="@d.Id">@d.NameL</option> }
+                }
+            </select>
+        </div>
+        <div>
+            <label>Ngày trong tuần</label>
+            <select name="weekday" class="form-control" style="min-width:120px;">
+                <option value="">Tất cả</option>
+                @for (byte w = 2; w <= 7; w++)
+                {
+                    if (selWd == w) { <option value="@w" selected>@WdLabel(w)</option> }
+                    else            { <option value="@w">@WdLabel(w)</option> }
+                }
+                @if (selWd == 1) { <option value="1" selected>Chủ Nhật</option> }
+                else             { <option value="1">Chủ Nhật</option> }
+            </select>
+        </div>
+        <div>
+            <label>Buổi</label>
+            <select name="session" class="form-control" style="min-width:110px;">
+                <option value="">Cả 2</option>
+                @if (selSession == Constants.SessionMorning)
+                { <option value="@Constants.SessionMorning" selected>Sáng</option> }
+                else
+                { <option value="@Constants.SessionMorning">Sáng</option> }
+                @if (selSession == Constants.SessionAfternoon)
+                { <option value="@Constants.SessionAfternoon" selected>Chiều</option> }
+                else
+                { <option value="@Constants.SessionAfternoon">Chiều</option> }
+            </select>
+        </div>
+        <div>
+            <button type="submit" class="btn btn-primary"><i class="fa fa-filter"></i> Lọc</button>
+            @if (filterActive)
+            {
+                <a href="/AdminCP/DoctorSchedules" class="btn btn-default"><i class="fa fa-times"></i> Xoá lọc</a>
+            }
+        </div>
+    </form>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-hover table-bordered ds-table" style="background:white;">
+        <thead style="background:#0a3d62; color:white;">
+            <tr>
+                <th>#</th><th>Bác sĩ</th><th>Khoa</th><th>Ngày</th><th>Buổi</th>
+                <th>Phòng</th><th>Quota</th><th>Chu kỳ hiệu lực</th><th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                Guid? lastDoc = null;
+                int idx = 1;
+                var sortedModel = Model
+                    .OrderBy(s => docDict.ContainsKey(s.DoctorId) ? docDict[s.DoctorId] : "zzz")
+                    .ThenBy(s => s.Weekday == 1 ? 8 : s.Weekday)
+                    .ThenBy(s => s.Session == Constants.SessionMorning ? 0 : 1)
+                    .ToList();
+            }
+            @foreach (var s in sortedModel)
+            {
+                var docName  = docDict.ContainsKey(s.DoctorId) ? docDict[s.DoctorId] : "—";
+                var deptName = s.DepartmentId.HasValue && deptDict.ContainsKey(s.DepartmentId.Value)
+                    ? deptDict[s.DepartmentId.Value] : "—";
+                if (lastDoc != s.DoctorId)
+                {
+                    <tr class="dept-row"><td colspan="9"><i class="fa fa-user-md"></i> @docName</td></tr>
+                    lastDoc = s.DoctorId;
+                }
+                <tr>
+                    <td>@idx</td>
+                    <td>@docName</td>
+                    <td><small>@deptName</small></td>
+                    <td><strong>@WdShort(s.Weekday)</strong> <small style="color:#6c757d;">— @WdLabel(s.Weekday)</small></td>
+                    <td>
+                        @if (s.Session == Constants.SessionMorning)
+                        { <span class="badge-morning">☀ Sáng</span> }
+                        else
+                        { <span class="badge-afternoon">🌙 Chiều</span> }
+                    </td>
+                    <td><i class="fa fa-door-open"></i> @(s.Room ?? "-")</td>
+                    <td><strong>@(s.MaxPatients ?? 0)</strong> BN</td>
+                    <td>
+                        <span class="badge-cycle">@s.ValidFrom.ToString("dd/MM/yyyy") → @(s.ValidTo?.ToString("dd/MM/yyyy") ?? "∞")</span>
+                    </td>
+                    <td style="white-space:nowrap;">
+                        <a href="/AdminCP/DoctorSchedules/Edit/@s.Id" class="btn btn-xs btn-warning" title="Sửa"><i class="fa fa-pencil"></i></a>
+                        <form action="/AdminCP/DoctorSchedules/Delete/@s.Id" method="post" style="display:inline;" onsubmit="return confirm('Xoá ca này (BS @docName, @WdLabel(s.Weekday) @(s.Session == Constants.SessionMorning ? "sáng" : "chiều"))?');">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-xs btn-danger" title="Xoá"><i class="fa fa-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                idx++;
+            }
+            @if (!Model.Any())
+            {
+                <tr><td colspan="9" class="text-center text-muted" style="padding:24px;">
+                    <i class="fa fa-info-circle" style="font-size:28px; color:#cfd5dc;"></i><br />
+                    Chưa có lịch trực nào @(filterActive ? "khớp bộ lọc" : ""). Bấm <strong>Thêm lịch</strong> ở trên để tạo mới.
+                </td></tr>
+            }
+        </tbody>
+    </table>
+</div>

@@ -1,0 +1,76 @@
+﻿@model List<WebsiteCore.Data.Entities.User>
+@{
+    ViewData["Title"] = "Quản lý người dùng";
+    var q = ViewBag.Q as string;
+    var group = ViewBag.Group as string;
+}
+
+<h2 class="admin-page-title"><i class="fa fa-users"></i> Quản lý người dùng</h2>
+
+<div class="admin-toolbar">
+    <form method="get" action="/AdminCP/Users" class="form-inline">
+        <div class="form-group" style="margin-right:8px;">
+            <input type="text" name="q" value="@q" class="form-control" placeholder="Tìm theo username / họ tên / SĐT" style="min-width:260px;" />
+        </div>
+        <div class="form-group" style="margin-right:8px;">
+            <select name="group" class="form-control">
+                <option value="">-- Tất cả nhóm --</option>
+                <option value="ADMIN" selected="@(group == "ADMIN")">Admin</option>
+                <option value="DOCTOR" selected="@(group == "DOCTOR")">Bác sĩ</option>
+                <option value="RECEPTION" selected="@(group == "RECEPTION")">Lễ tân</option>
+                <option value="POSTER" selected="@(group == "POSTER")">Poster</option>
+                <option value="MEMBER" selected="@(group == "MEMBER")">Bệnh nhân</option>
+            </select>
+        </div>
+        <button class="btn btn-primary" type="submit"><i class="fa fa-search"></i> Tìm</button>
+        <a href="/AdminCP/Users/Create" class="btn btn-success pull-right"><i class="fa fa-plus-circle"></i> Thêm user</a>
+    </form>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-hover table-bordered">
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Họ tên</th>
+                <th>Email</th>
+                <th>SĐT</th>
+                <th style="width:90px;">Nhóm</th>
+                <th style="width:90px;">Trạng thái</th>
+                <th style="width:110px;">Tạo lúc</th>
+                <th style="width:200px;">Hành động</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var u in Model)
+        {
+            <tr>
+                <td><code>@u.UserName</code></td>
+                <td>@u.FullName</td>
+                <td>@u.Email</td>
+                <td>@u.Phone</td>
+                <td><span class="label label-info">@u.GroupId</span></td>
+                <td>
+                    @if (u.ActiveFlag == 1) { <span class="label label-success">Active</span> }
+                    else { <span class="label label-default">Đã khoá</span> }
+                </td>
+                <td><small>@(u.CreatedDate?.ToString("dd/MM/yyyy") ?? "")</small></td>
+                <td>
+                    <a href="/AdminCP/Users/Edit/@u.Id" class="btn btn-xs btn-warning" title="Sửa"><i class="fa fa-pencil"></i></a>
+                    <a href="/AdminCP/Users/ChangePassword/@u.Id" class="btn btn-xs btn-info" title="Đổi mật khẩu"><i class="fa fa-key"></i></a>
+                    <form method="post" action="/AdminCP/Users/ToggleLock/@u.Id" style="display:inline;" onsubmit="return confirm('@(u.ActiveFlag == 1 ? "Khoá" : "Mở khoá") user @u.UserName?');">
+                        @Html.AntiForgeryToken()
+                        <button class="btn btn-xs @(u.ActiveFlag == 1 ? "btn-danger" : "btn-success")" title="@(u.ActiveFlag == 1 ? "Khoá" : "Mở khoá")">
+                            <i class="fa @(u.ActiveFlag == 1 ? "fa-lock" : "fa-unlock")"></i>
+                        </button>
+                    </form>
+                </td>
+            </tr>
+        }
+        @if (!Model.Any())
+        {
+            <tr><td colspan="8" class="text-center text-muted" style="padding:30px;">Không có user khớp tiêu chí.</td></tr>
+        }
+        </tbody>
+    </table>
+</div>

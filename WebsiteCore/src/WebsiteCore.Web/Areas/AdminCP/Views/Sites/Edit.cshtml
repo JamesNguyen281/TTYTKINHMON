@@ -1,0 +1,104 @@
+@model WebsiteCore.Data.Entities.Site
+@{ ViewData["Title"] = "Sửa site"; }
+
+<h2 style="color:#0a3d62;"><i class="fa fa-cog"></i> @ViewData["Title"]</h2>
+<a href="/AdminCP/Sites" class="btn btn-default" style="margin-bottom:12px;">← Quay lại</a>
+
+<form asp-action="Edit" method="post" enctype="multipart/form-data">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+    <div class="row">
+        <div class="col-md-6 form-group">
+            <label>Tên (vi) <span class="text-danger">*</span></label>
+            <input asp-for="NameCompanyL" class="form-control" required />
+        </div>
+        <div class="col-md-6 form-group">
+            <label>Tên (en)</label>
+            <input asp-for="NameCompanyE" class="form-control" />
+        </div>
+        <div class="col-md-12 form-group">
+            <label>Địa chỉ (vi)</label>
+            <input asp-for="AddressL" class="form-control" />
+        </div>
+        <div class="col-md-12 form-group">
+            <label>Địa chỉ (en)</label>
+            <input asp-for="AddressE" class="form-control" />
+        </div>
+        <div class="col-md-3 form-group">
+            <label>SĐT cố định</label>
+            <input asp-for="Phone" class="form-control" />
+        </div>
+        <div class="col-md-3 form-group">
+            <label>SĐT di động</label>
+            <input asp-for="MobilePhone" class="form-control" />
+        </div>
+        <div class="col-md-2 form-group">
+            <label>Hotline</label>
+            <input asp-for="Hotline" class="form-control" />
+        </div>
+        <div class="col-md-2 form-group">
+            <label>Cấp cứu</label>
+            <input asp-for="EmergencyNumber" class="form-control" />
+        </div>
+        <div class="col-md-2 form-group">
+            <label>Fax</label>
+            <input asp-for="Fax" class="form-control" />
+        </div>
+        <div class="col-md-6 form-group">
+            <label>Email</label>
+            <input asp-for="Email" class="form-control" type="email" />
+        </div>
+        <div class="col-md-6 form-group">
+            <label>Giờ làm việc</label>
+            <input asp-for="TimeOpen" class="form-control" placeholder="07:00 - 17:00" />
+        </div>
+        <div class="col-md-8 form-group">
+            <label>Map iframe URL</label>
+            <input asp-for="Map" class="form-control" />
+        </div>
+        <div class="col-md-2 form-group">
+            <label>Thứ tự</label>
+            <input asp-for="Ord" type="number" class="form-control" />
+        </div>
+        <div class="col-md-2 form-group">
+            <label>Trạng thái</label>
+            <select asp-for="ActiveFlag" class="form-control">
+                <option value="1" selected="@(Model.ActiveFlag == 1)">Active</option>
+                <option value="0" selected="@(Model.ActiveFlag == 0)">Inactive</option>
+            </select>
+        </div>
+        <div class="col-md-12 form-group">
+            <label>Meta description (SEO)</label>
+            <textarea asp-for="MetaDescription" class="form-control" rows="2"></textarea>
+        </div>
+        <div class="col-md-12 form-group">
+            <label>Meta keyword (SEO)</label>
+            <input asp-for="MetaKeyword" class="form-control" />
+        </div>
+        <div class="col-md-6 form-group">
+            <label>Logo (hiển thị trên header / fallback ảnh tin tức)</label>
+            @if (!string.IsNullOrEmpty(Model.LogoUrl))
+            {
+                <div style="margin:6px 0;">
+                    <img src="@Model.LogoUrl" alt="Logo" style="max-height:80px; background:#f0f7fc; padding:4px; border:1px solid #ddd; border-radius:4px;" />
+                </div>
+            }
+            <input type="file" name="logoFile" accept="image/png,image/jpeg,image/webp,image/gif" class="form-control" />
+            <small class="text-muted">Chọn file mới để thay; bỏ trống để giữ nguyên. URL hiện tại:</small>
+            <input asp-for="LogoUrl" class="form-control" />
+        </div>
+        <div class="col-md-6 form-group">
+            <label>Favicon (icon tab — admin có thể tuỳ chỉnh, mặc định lấy logo)</label>
+            @if (!string.IsNullOrEmpty(Model.Favicon))
+            {
+                <div style="margin:6px 0;">
+                    <img src="@Model.Favicon" alt="Favicon" style="max-height:48px; background:#f0f7fc; padding:4px; border:1px solid #ddd; border-radius:4px;" />
+                </div>
+            }
+            <input type="file" name="faviconFile" accept="image/png,image/jpeg,image/x-icon" class="form-control" />
+            <small class="text-muted">Chọn file mới để thay; bỏ trống để giữ nguyên. URL hiện tại:</small>
+            <input asp-for="Favicon" class="form-control" />
+        </div>
+    </div>
+    <button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> Lưu</button>
+</form>

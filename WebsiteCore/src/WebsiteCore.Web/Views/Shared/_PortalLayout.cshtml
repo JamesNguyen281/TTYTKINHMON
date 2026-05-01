@@ -1,0 +1,111 @@
+﻿@using WebsiteCore.Business.ViewModels
+@using WebsiteCore.Data.Entities
+@{
+    var site = ViewBag.Site as Site;
+    var u = ViewBag.CurrentUser as LoggedInUser;
+    var siteName = site?.NameCompanyL ?? "Trung tâm Y tế phường Kinh Môn";
+    var pageTitle = ViewData["Title"] as string ?? siteName;
+
+    string portalKind = u?.GroupId switch
+    {
+        "ADMIN"     => "admin",
+        "RECEPTION" => "letan",
+        "DOCTOR"    => "bacsi",
+        _           => "member"
+    };
+    string portalLabel = portalKind switch
+    {
+        "admin" => "Quản trị hệ thống",
+        "letan" => "Cổng Lễ tân",
+        "bacsi" => "Cổng Bác sĩ",
+        _       => "Trang cá nhân"
+    };
+    string portalHomeUrl = portalKind switch
+    {
+        "admin" => "/AdminCP/Default",
+        "letan" => "/le-tan",
+        "bacsi" => "/bac-si-portal",
+        _       => "/ho-so"
+    };
+    bool isStaff = portalKind == "admin" || portalKind == "letan" || portalKind == "bacsi";
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <title>@pageTitle — @siteName</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex,nofollow" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/client/images/logo-kinhmon-32.png" />
+    <link rel="icon" type="image/png" sizes="64x64" href="/assets/client/images/logo-kinhmon-64.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/client/images/logo-kinhmon-180.png" />
+    <link rel="shortcut icon" type="image/png" href="/assets/client/images/logo-kinhmon-64.png" />
+    <link href="~/assets/client/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="~/assets/client/css/font-awesome.min.css" rel="stylesheet" />
+    <link href="~/assets/client/css/custom-ux.css?v=5" rel="stylesheet" />
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body class="portal-body">
+    <nav class="portal-topbar">
+        <div class="container-fluid">
+            <a href="/" class="portal-brand">
+                <i class="fa fa-hospital-o"></i> @siteName
+            </a>
+            <span class="portal-kind portal-kind-@portalKind">@portalLabel</span>
+            <div class="portal-user">
+                @if (u != null)
+                {
+                    <a href="@portalHomeUrl" class="portal-link"><i class="fa fa-home"></i> Tổng quan</a>
+                    @if (isStaff)
+                    {
+                        <a href="/staff-profile" class="portal-link"><i class="fa fa-user"></i> Hồ sơ</a>
+                    }
+                    @if (portalKind == "bacsi")
+                    {
+                        <a href="/bac-si-portal/lich-truc" class="portal-link"><i class="fa fa-calendar-check-o"></i> Lịch trực</a>
+                    }
+                    <span class="portal-username"><i class="fa fa-user-circle"></i> @u.FullName <small>(@u.GroupId)</small></span>
+                    @if (portalKind == "member")
+                    {
+                        <a href="/dang-xuat" class="portal-link"><i class="fa fa-sign-out"></i> Đăng xuất</a>
+                    }
+                    else
+                    {
+                        <a href="/AdminCP/Login/Logout" class="portal-link"><i class="fa fa-sign-out"></i> Đăng xuất</a>
+                    }
+                }
+            </div>
+        </div>
+    </nav>
+
+    <partial name="_NotificationBanner" />
+
+    <main class="portal-main container-fluid">
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success">
+                <i class="fa fa-check-circle"></i> @TempData["Success"]
+            </div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger">
+                <i class="fa fa-exclamation-circle"></i> @TempData["Error"]
+            </div>
+        }
+        @RenderBody()
+    </main>
+
+    <footer class="portal-footer">
+        <div class="container-fluid">
+            <small>© @DateTime.Now.Year @siteName · @portalLabel</small>
+            <small class="pull-right">v.Core 8 — Powered by ASP.NET Core MVC</small>
+        </div>
+    </footer>
+
+    <script src="~/assets/client/js/jquery.min.js"></script>
+    <script src="~/assets/client/js/bootstrap.min.js"></script>
+    <script src="~/assets/client/js/password-eye.js?v=2"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,126 @@
+@using WebsiteCore.Business.ViewModels
+@{
+    ViewData["Title"] = "Check-in bệnh nhân";
+    var lookup = ViewBag.LookupResult as AppointmentRow;
+    var lookupCode = ViewBag.LookupCode as string;
+    var todays = ViewBag.TodaysList as List<AppointmentRow> ?? new List<AppointmentRow>();
+}
+
+<div class="container" style="padding-top:24px;">
+    <h2 style="color:#0a3d62;"><i class="fa fa-qrcode"></i> Check-in bệnh nhân</h2>
+
+    <a href="/le-tan" class="btn btn-sm btn-default" style="margin-bottom:12px;">← Tổng quan</a>
+
+    <div class="row">
+        <div class="col-md-7">
+            <div class="panel panel-primary">
+                <div class="panel-heading">Tra cứu mã khám</div>
+                <div class="panel-body">
+                    <form method="get" action="/le-tan/check-in">
+                        <div class="input-group input-group-lg">
+                            <input type="text" name="code" autofocus value="@lookupCode"
+                                   placeholder="VD: KM260427S6F94FF"
+                                   class="form-control"
+                                   style="text-transform: uppercase; font-family: 'Consolas', monospace;" />
+                            <span class="input-group-btn">
+                                <button type="submit" class="btn btn-primary"><i class="fa fa-search"></i> Tra cứu</button>
+                            </span>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            @if (lookup != null)
+            {
+                var matchToday = lookup.AppointmentDate?.Date == DateTime.Today.Date;
+                var statusOk = lookup.Status == "confirmed";
+                var canCheckIn = statusOk && matchToday && !lookup.CheckedIn;
+                var panelCls = canCheckIn ? "success" : (lookup.CheckedIn ? "info" : "warning");
+
+                <div class="panel panel-@panelCls">
+                    <div class="panel-heading">Thông tin lịch hẹn</div>
+                    <div class="panel-body">
+                        <dl class="dl-horizontal">
+                            <dt>Mã khám</dt> <dd><code>@lookup.BookingCode</code></dd>
+                            <dt>Bệnh nhân</dt> <dd><strong>@lookup.PatientName</strong> · @lookup.PatientPhone</dd>
+                            <dt>Khoa</dt> <dd>@lookup.DepartmentName</dd>
+                            <dt>Ngày/buổi</dt> <dd>@(lookup.AppointmentDate?.ToString("dd/MM/yyyy") ?? "") · @(lookup.Session == "morning" ? "Sáng" : "Chiều")</dd>
+                            <dt>Trạng thái</dt> <dd>
+                                <span class="label label-@(statusOk ? "success" : "default")">@lookup.Status</span>
+                                @if (lookup.CheckedIn) { <span class="label label-info">Đã check-in</span> }
+                            </dd>
+                        </dl>
+
+                        @if (!statusOk)
+                        {
+                            <div class="alert alert-warning"><i class="fa fa-exclamation-triangle"></i> Lịch chưa được xác nhận.</div>
+                        }
+                        else if (!matchToday)
+                        {
+                            <div class="alert alert-warning"><i class="fa fa-exclamation-triangle"></i> Lịch không phải hôm nay.</div>
+                        }
+                        else if (lookup.CheckedIn)
+                        {
+                            <div class="alert alert-info"><i class="fa fa-info-circle"></i> Đã check-in trước đó.</div>
+                        }
+                        else
+                        {
+                            <form method="post" action="/le-tan/xac-nhan-check-in">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@lookup.Id" />
+                                <input type="hidden" name="code" value="@lookup.BookingCode" />
+                                <button type="submit" class="btn btn-success btn-lg btn-block">
+                                    <i class="fa fa-check-circle"></i> Xác nhận check-in
+                                </button>
+                            </form>
+                        }
+                    </div>
+                </div>
+            }
+            else if (!string.IsNullOrEmpty(lookupCode))
+            {
+                <div class="alert alert-danger"><i class="fa fa-times-circle"></i> Không tìm thấy mã <code>@lookupCode</code>.</div>
+            }
+        </div>
+
+        <div class="col-md-5">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    Lịch hôm nay (@DateTime.Today.ToString("dd/MM/yyyy"))
+                    <span class="pull-right"><strong>@todays.Count</strong> lịch</span>
+                </div>
+                <div style="max-height:600px; overflow-y:auto;">
+                    @if (!todays.Any())
+                    {
+                        <p class="text-muted text-center" style="padding:20px;"><em>Chưa có lịch nào.</em></p>
+                    }
+                    else
+                    {
+                        <table class="table table-hover" style="margin-bottom:0;">
+                            <thead><tr><th>Mã</th><th>Bệnh nhân</th><th>Buổi</th><th>Đến</th></tr></thead>
+                            <tbody>
+                            @foreach (var a in todays)
+                            {
+                                <tr class="@(a.CheckedIn ? "info" : "")">
+                                    <td><a href="/le-tan/check-in?code=@a.BookingCode"><code>@a.BookingCode</code></a></td>
+                                    <td>@a.PatientName<br /><small>@a.DepartmentName</small></td>
+                                    <td>@(a.Session == "morning" ? "S" : "C")</td>
+                                    <td>@(a.CheckedIn ? "✓" : "—")</td>
+                                </tr>
+                            }
+                            </tbody>
+                        </table>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('input[name="code"]').forEach(function (i) {
+            i.addEventListener('input', function () { this.value = this.value.toUpperCase(); });
+        });
+    </script>
+}

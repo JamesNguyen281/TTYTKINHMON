@@ -1,0 +1,142 @@
+﻿@{
+    ViewData["Title"] = "Đổi mật khẩu";
+    bool forced = ViewBag.IsForced ?? false;
+    string hint = ViewBag.PolicyHint as string ?? "";
+}
+
+<div class="container" style="padding:32px 15px; max-width:560px;">
+    <div class="panel panel-primary" style="border:0;">
+        <div class="panel-heading" style="background:#0a3d62; color:white; padding:14px 18px; border-radius:6px 6px 0 0;">
+            <h3 style="margin:0; font-size:18px; font-weight:600;">
+                <i class="fa fa-lock"></i>
+                @(forced ? "Cần đổi mật khẩu để tiếp tục" : "Đổi mật khẩu")
+            </h3>
+        </div>
+        <div class="panel-body" style="background:white; padding:24px; border:1px solid #e0e6ed; border-top:0; border-radius:0 0 6px 6px;">
+            @if (forced)
+            {
+                <div class="alert alert-warning" style="margin-bottom:18px;">
+                    <i class="fa fa-exclamation-triangle"></i>
+                    <strong>Lưu ý bảo mật:</strong> Bạn đang dùng mật khẩu mặc định <code>123456</code>.
+                    Vui lòng đổi sang mật khẩu mới trước khi sử dụng hệ thống.
+                </div>
+            }
+            @if (TempData["Warning"] != null)
+            {
+                <div class="alert alert-warning"><i class="fa fa-exclamation-circle"></i> @TempData["Warning"]</div>
+            }
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger">
+                    <i class="fa fa-times-circle"></i>
+                    <ul style="margin:0; padding-left:20px;">
+                        @foreach (var err in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                        {
+                            <li>@err.ErrorMessage</li>
+                        }
+                    </ul>
+                </div>
+            }
+
+            <form method="post" action="/doi-mat-khau" autocomplete="off">
+                @Html.AntiForgeryToken()
+                <div class="form-group">
+                    <label for="currentPassword">
+                        Mật khẩu hiện tại <span class="text-danger">*</span>
+                    </label>
+                    <input type="password" id="currentPassword" name="currentPassword"
+                           class="form-control" required minlength="6"
+                           autocomplete="current-password" autofocus />
+                </div>
+
+                <div class="form-group">
+                    <label for="newPassword">
+                        Mật khẩu mới <span class="text-danger">*</span>
+                    </label>
+                    <input type="password" id="newPassword" name="newPassword"
+                           class="form-control" required
+                           minlength="8" maxlength="100"
+                           pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,100}$"
+                           title="Tối thiểu 8 ký tự, gồm chữ HOA, chữ thường, số và ký tự đặc biệt"
+                           autocomplete="new-password" />
+                    <small class="help-block" style="color:#6c757d; margin-top:6px; display:block;">
+                        <i class="fa fa-info-circle"></i> @hint
+                    </small>
+                    <div id="pwd-strength" style="margin-top:8px; height:6px; background:#e9ecef; border-radius:3px; overflow:hidden;">
+                        <div id="pwd-strength-bar" style="width:0%; height:100%; transition: width 0.2s, background 0.2s;"></div>
+                    </div>
+                    <small id="pwd-strength-text" style="color:#6c757d; font-size:12px;"></small>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmPassword">
+                        Xác nhận mật khẩu mới <span class="text-danger">*</span>
+                    </label>
+                    <input type="password" id="confirmPassword" name="confirmPassword"
+                           class="form-control" required minlength="8" maxlength="100"
+                           autocomplete="new-password" />
+                    <small id="pwd-match-text" style="font-size:12px;"></small>
+                </div>
+
+                <div style="margin-top:20px;">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fa fa-save"></i> Lưu mật khẩu mới
+                    </button>
+                    @if (!forced)
+                    {
+                        <a href="/" class="btn btn-default btn-lg">Huỷ</a>
+                    }
+                    else
+                    {
+                        <a href="/dang-xuat" class="btn btn-default">Đăng xuất</a>
+                    }
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            var newPwd = document.getElementById('newPassword');
+            var conf   = document.getElementById('confirmPassword');
+            var bar    = document.getElementById('pwd-strength-bar');
+            var txt    = document.getElementById('pwd-strength-text');
+            var match  = document.getElementById('pwd-match-text');
+
+            function score(p) {
+                if (!p) return 0;
+                var s = 0;
+                if (p.length >= 8) s++;
+                if (p.length >= 12) s++;
+                if (/[A-Z]/.test(p)) s++;
+                if (/[a-z]/.test(p)) s++;
+                if (/\d/.test(p)) s++;
+                if (/[^A-Za-z0-9]/.test(p)) s++;
+                return s;
+            }
+
+            function paint() {
+                var p = newPwd.value;
+                var s = score(p);
+                var pct = Math.min(100, s * 18);
+                bar.style.width = pct + '%';
+                if (s <= 2)      { bar.style.background = '#e63946'; txt.textContent = 'Mật khẩu yếu'; txt.style.color = '#e63946'; }
+                else if (s <= 4) { bar.style.background = '#f9c74f'; txt.textContent = 'Trung bình';  txt.style.color = '#a07c00'; }
+                else             { bar.style.background = '#43aa8b'; txt.textContent = 'Mạnh';        txt.style.color = '#43aa8b'; }
+                if (!p) { txt.textContent = ''; bar.style.width = '0%'; }
+            }
+            function checkMatch() {
+                if (!conf.value) { match.textContent = ''; return; }
+                if (conf.value === newPwd.value) {
+                    match.textContent = '✓ Mật khẩu khớp'; match.style.color = '#43aa8b';
+                } else {
+                    match.textContent = '✗ Không khớp'; match.style.color = '#e63946';
+                }
+            }
+            newPwd.addEventListener('input', function () { paint(); checkMatch(); });
+            conf.addEventListener('input', checkMatch);
+        })();
+    </script>
+}

@@ -1,0 +1,93 @@
+@model List<WebsiteCore.Data.Entities.Category>
+@{ ViewData["Title"] = "Quản lý danh mục"; ViewData["BaseUrl"] = "/AdminCP/Categories"; }
+
+<style>
+    .cat-tbl { font-size: 12.5px; table-layout: fixed; width: 100%; }
+    .cat-tbl > thead > tr > th { padding: 6px 6px; font-size: 12px; }
+    .cat-tbl > tbody > tr > td { padding: 5px 6px; vertical-align: middle; }
+    .cat-tbl .col-no       { width: 36px; text-align: center; }
+    .cat-tbl .col-name     { width: auto; }
+    .cat-tbl .col-type     { width: 110px; }
+    .cat-tbl .col-alias    { width: 160px; }
+    .cat-tbl .col-link     { width: 200px; }
+    .cat-tbl .col-ord      { width: 50px; text-align: center; }
+    .cat-tbl .col-active   { width: 64px; text-align: center; }
+    .cat-tbl .col-act      { width: 108px; white-space: nowrap; text-align: center; }
+    .cat-tbl .ellip { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+    .cat-tbl code  { font-size: 11px; padding: 1px 4px; }
+    .cat-tbl .label { font-size: 10.5px; padding: 2px 6px; }
+    .cat-tbl .btn-xs { padding: 2px 6px; font-size: 11px; }
+    .cat-tbl .btn-xs i { font-size: 11px; }
+    .cat-tbl .name-en { color: #94a3b8; font-size: 11px; }
+</style>
+
+<h2 class="admin-page-title"><i class="fa fa-list"></i> Danh mục</h2>
+
+<div class="admin-toolbar">
+    <a href="/AdminCP/Categories/Create" class="btn btn-success"><i class="fa fa-plus-circle"></i> Thêm danh mục</a>
+    <span class="pull-right text-muted" style="line-height:34px;">@ViewBag.Total danh mục</span>
+</div>
+
+<partial name="_PageSizeBar" />
+
+<div class="list-scroll">
+<table class="table table-hover table-bordered cat-tbl">
+    <thead>
+        <tr>
+            <th class="col-no">#</th>
+            <th class="col-name">Tên</th>
+            <th class="col-type">Loại</th>
+            <th class="col-alias">Alias</th>
+            <th class="col-link">Link</th>
+            <th class="col-ord">Ord</th>
+            <th class="col-active">Active</th>
+            <th class="col-act">Hành động</th>
+        </tr>
+    </thead>
+    <tbody>
+    @{
+        int startIdx = ((int)ViewBag.Page - 1) * (int)ViewBag.PageSize;
+    }
+    @foreach (var (c, i) in Model.Select((c, i) => (c, startIdx + i + 1)))
+    {
+        <tr>
+            <td class="col-no">@i</td>
+            <td class="col-name">
+                <span class="ellip" title="@c.NameL"><strong>@c.NameL</strong></span>
+                @if (!string.IsNullOrEmpty(c.NameE))
+                {
+                    <span class="ellip name-en" title="@c.NameE">@c.NameE</span>
+                }
+            </td>
+            <td class="col-type">
+                @if (!string.IsNullOrEmpty(c.Type))
+                {
+                    <span class="label label-info ellip" title="@c.Type">@c.Type</span>
+                }
+            </td>
+            <td class="col-alias"><code class="ellip" title="@c.AliasL">@c.AliasL</code></td>
+            <td class="col-link"><code class="ellip" title="@c.Link">@c.Link</code></td>
+            <td class="col-ord">@c.Ord</td>
+            <td class="col-active">
+                @if (c.ActiveFlag == 1) { <span class="label label-success">ON</span> }
+                else { <span class="label label-default">OFF</span> }
+            </td>
+            <td class="col-act">
+                <a href="/AdminCP/Categories/Edit/@c.Id" class="btn btn-xs btn-warning" title="Sửa"><i class="fa fa-pencil"></i></a>
+                <form action="/AdminCP/Categories/ToggleStatus/@c.Id" method="post" style="display:inline;">
+                    @Html.AntiForgeryToken()
+                    <button class="btn btn-xs @(c.ActiveFlag == 1 ? "btn-default" : "btn-success")" title="@(c.ActiveFlag == 1 ? "Tắt" : "Bật")"><i class="fa @(c.ActiveFlag == 1 ? "fa-toggle-on" : "fa-toggle-off")"></i></button>
+                </form>
+                <form action="/AdminCP/Categories/Delete/@c.Id" method="post" style="display:inline;" onsubmit="return confirm('Xoá danh mục này?');">
+                    @Html.AntiForgeryToken()
+                    <button class="btn btn-xs btn-danger" title="Xoá"><i class="fa fa-trash"></i></button>
+                </form>
+            </td>
+        </tr>
+    }
+    @if (!Model.Any()) { <tr><td colspan="8" class="text-center text-muted" style="padding:30px;">Chưa có danh mục.</td></tr> }
+    </tbody>
+</table>
+</div>
+
+<partial name="_PageSizeBar" />

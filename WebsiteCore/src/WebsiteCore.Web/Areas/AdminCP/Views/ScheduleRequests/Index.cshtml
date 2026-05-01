@@ -1,0 +1,149 @@
+@model List<WebsiteCore.Data.Entities.ScheduleChangeRequest>
+@using WebsiteCore.Data.Entities
+@{
+    ViewData["Title"] = "Yêu cầu đổi lịch trực";
+    var docNames = ViewBag.DoctorNames as Dictionary<Guid, string> ?? new();
+    string selStatus = ViewBag.SelectedStatus as string ?? "pending";
+    int pendingCount = (int)(ViewBag.PendingCount ?? 0);
+
+    string SessLabel(string? s) => s == "morning" ? "Sáng" : s == "afternoon" ? "Chiều" : (s ?? "—");
+    string ReqType(string t) => t switch {
+        "change" => "Đổi ca", "add" => "Thêm ca", "remove" => "Xoá/nghỉ ca", "swap" => "Đổi với BS khác", _ => t
+    };
+    string StatusLabel(string s) => s switch {
+        "pending" => "⏳ Chờ duyệt", "approved" => "✅ Đã duyệt", "rejected" => "❌ Từ chối", _ => s
+    };
+    string StatusClass(string s) => s switch {
+        "pending" => "warn", "approved" => "success", "rejected" => "danger", _ => ""
+    };
+}
+
+<style>
+    .sr-hero { background:linear-gradient(135deg,#0a3d62,#1d5688); color:white; padding:14px 20px; border-radius:8px; margin-bottom:14px; }
+    .sr-hero h2 { margin:0; font-size:20px; font-weight:600; }
+    .sr-hero .meta { font-size:13px; opacity:0.92; margin-top:3px; }
+    .sr-tab { display:inline-block; padding:8px 16px; border-radius:6px 6px 0 0; background:#e5e9ee; color:#0a3d62; text-decoration:none; font-weight:600; margin-right:4px; }
+    .sr-tab.active { background:#0a3d62; color:white; }
+    .sr-tab .badge { background:#e74c3c; color:white; padding:1px 7px; border-radius:8px; font-size:11px; margin-left:4px; }
+    .sr-tab.active .badge { background:white; color:#0a3d62; }
+    .sr-card { background:white; border:1px solid #e5e9ee; border-radius:0 6px 6px 6px; padding:16px; box-shadow:0 1px 3px rgba(0,0,0,.04); }
+    .sr-row { padding:14px 0; border-bottom:1px solid #f0f3f7; }
+    .sr-row:last-child { border-bottom:none; }
+    .sr-row .top { display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; }
+    .sr-row .doc-name { font-weight:700; color:#0a3d62; font-size:15px; }
+    .sr-row .meta-line { font-size:12px; color:#6c757d; margin-top:3px; }
+    .sr-row .reason-box { margin:10px 0; padding:10px 14px; background:#f7f9fc; border-left:3px solid #0a3d62; border-radius:4px; font-size:14px; line-height:1.6; white-space:pre-wrap; }
+    .status-tag { padding:3px 10px; border-radius:12px; font-size:11px; font-weight:600; display:inline-block; }
+    .status-tag.warn { background:#fff5e0; color:#b87908; }
+    .status-tag.success { background:#e8f5e9; color:#2f7a5e; }
+    .status-tag.danger { background:#fde7e9; color:#a02329; }
+    .sr-actions { margin-top:10px; display:flex; gap:10px; align-items:flex-start; flex-wrap:wrap; }
+    .sr-actions textarea { flex:1 1 240px; padding:7px 10px; border:1px solid #d0d7de; border-radius:5px; min-height:60px; font-size:13px; }
+    .sr-actions button { white-space:nowrap; }
+    .sr-resp { margin-top:8px; padding:8px 12px; background:#e8f5e9; border-radius:5px; font-size:13px; color:#2f7a5e; }
+    .sr-resp.rejected { background:#fde7e9; color:#a02329; }
+    .info-pill { display:inline-block; padding:3px 10px; background:#eef5fb; color:#0a3d62; border-radius:10px; font-size:12px; font-weight:600; margin-right:6px; }
+</style>
+
+<div class="sr-hero">
+    <h2><i class="fa fa-paper-plane"></i> Yêu cầu đổi lịch trực</h2>
+    <div class="meta">
+        Bác sĩ gửi yêu cầu đổi/thêm/xoá ca trực — Quản trị viên duyệt và cập nhật <a href="/AdminCP/DoctorSchedules" style="color:#fff; text-decoration:underline;">DoctorSchedules</a>.
+    </div>
+</div>
+
+<a href="/AdminCP" class="btn btn-default" style="margin-bottom:12px;"><i class="fa fa-arrow-left"></i> Tổng quan</a>
+
+<div>
+    <a href="/AdminCP/ScheduleRequests?status=pending" class="sr-tab @(selStatus == "pending" ? "active" : "")">
+        Đang chờ @(pendingCount > 0 ? Html.Raw($"<span class=\"badge\">{pendingCount}</span>") : null)
+    </a>
+    <a href="/AdminCP/ScheduleRequests?status=approved" class="sr-tab @(selStatus == "approved" ? "active" : "")">Đã duyệt</a>
+    <a href="/AdminCP/ScheduleRequests?status=rejected" class="sr-tab @(selStatus == "rejected" ? "active" : "")">Đã từ chối</a>
+    <a href="/AdminCP/ScheduleRequests?status=" class="sr-tab @(string.IsNullOrEmpty(selStatus) ? "active" : "")">Tất cả</a>
+</div>
+
+<div class="sr-card">
+    @if (Model.Count == 0)
+    {
+        <div style="padding:32px; text-align:center; color:#6c757d;">
+            <i class="fa fa-inbox" style="font-size:36px; color:#cfd5dc;"></i>
+            <p style="margin-top:10px;">Không có yêu cầu nào ở trạng thái <strong>@(string.IsNullOrEmpty(selStatus) ? "tất cả" : selStatus)</strong>.</p>
+        </div>
+    }
+    else
+    {
+        @foreach (var r in Model)
+        {
+            var docName = docNames.ContainsKey(r.DoctorId) ? docNames[r.DoctorId] : "—";
+            <div class="sr-row">
+                <div class="top">
+                    <div>
+                        <div class="doc-name"><i class="fa fa-user-md"></i> BS. @docName</div>
+                        <div class="meta-line">
+                            <i class="fa fa-clock-o"></i> @r.CreatedDate.ToString("HH:mm dd/MM/yyyy") ·
+                            <span class="info-pill">@ReqType(r.RequestType)</span>
+                            @if (r.RequestedDate.HasValue)
+                            {
+                                <span class="info-pill">📅 @r.RequestedDate.Value.ToString("dd/MM/yyyy")</span>
+                            }
+                            @if (!string.IsNullOrEmpty(r.RequestedSession))
+                            {
+                                <span class="info-pill">🕐 Buổi @SessLabel(r.RequestedSession)</span>
+                            }
+                            <span style="font-size:11px; color:#8898aa;">· #@r.Id.ToString().Substring(0, 8)</span>
+                        </div>
+                    </div>
+                    <div>
+                        <span class="status-tag @StatusClass(r.Status)">@StatusLabel(r.Status)</span>
+                    </div>
+                </div>
+
+                <div class="reason-box"><strong>Lý do:</strong> @r.Reason</div>
+
+                @if (r.Status == "pending")
+                {
+                    <form method="post" action="/AdminCP/ScheduleRequests/Process" class="sr-actions">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@r.Id" />
+                        <textarea name="response" placeholder="Phản hồi cho bác sĩ (tuỳ chọn)..." maxlength="2000"></textarea>
+                        <div style="display:flex; flex-direction:column; gap:6px;">
+                            <button type="submit" name="action" value="approve" class="btn btn-success" onclick="return confirm('Duyệt yêu cầu này? Sau đó cần vào DoctorSchedules để cập nhật ca thực tế.');">
+                                <i class="fa fa-check"></i> Duyệt
+                            </button>
+                            <button type="submit" name="action" value="reject" class="btn btn-danger" onclick="return confirm('Từ chối yêu cầu? Bs sẽ thấy phản hồi của bạn.');">
+                                <i class="fa fa-times"></i> Từ chối
+                            </button>
+                        </div>
+                    </form>
+                    @if (r.Status == "pending")
+                    {
+                        <div style="margin-top:8px;">
+                            <a href="/AdminCP/DoctorSchedules?doctorId=@r.DoctorId" class="btn btn-xs btn-default" target="_blank">
+                                <i class="fa fa-external-link"></i> Xem lịch hiện tại của BS @docName
+                            </a>
+                        </div>
+                    }
+                }
+                else if (!string.IsNullOrEmpty(r.AdminResponse))
+                {
+                    <div class="sr-resp @(r.Status == "rejected" ? "rejected" : "")">
+                        <strong>Phản hồi của Admin:</strong> @r.AdminResponse
+                        @if (r.ProcessedDate.HasValue)
+                        {
+                            <div style="font-size:11px; opacity:.7; margin-top:3px;">
+                                <i class="fa fa-clock-o"></i> Xử lý: @r.ProcessedDate.Value.ToString("HH:mm dd/MM/yyyy")
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div style="font-size:12px; color:#8898aa; margin-top:6px;">
+                        <i class="fa fa-clock-o"></i> Đã @(r.Status == "approved" ? "duyệt" : "từ chối") lúc @(r.ProcessedDate?.ToString("HH:mm dd/MM/yyyy") ?? "—") (không có phản hồi text).
+                    </div>
+                }
+            </div>
+        }
+    }
+</div>

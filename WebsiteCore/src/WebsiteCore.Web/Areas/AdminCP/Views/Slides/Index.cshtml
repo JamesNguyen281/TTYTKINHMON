@@ -1,0 +1,60 @@
+﻿@model List<WebsiteCore.Data.Entities.Slide>
+@{ ViewData["Title"] = "Slide / Banner"; }
+
+<h2 class="admin-page-title"><i class="fa fa-image"></i> Slide / Banner</h2>
+
+<div class="admin-toolbar">
+    <a href="/AdminCP/Slides/Create" class="btn btn-success"><i class="fa fa-plus-circle"></i> Thêm slide</a>
+    <span class="pull-right text-muted" style="line-height:34px;">@Model.Count slide</span>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-hover table-bordered">
+        <thead>
+            <tr>
+                <th style="width:40px;">#</th>
+                <th style="width:80px;">Ảnh</th>
+                <th>Tiêu đề</th>
+                <th style="width:120px;">Loại</th>
+                <th>Link</th>
+                <th style="width:60px;">Thứ tự</th>
+                <th style="width:80px; text-align:center;">Active</th>
+                <th style="width:140px;">Hành động</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var (s, i) in Model.Select((s, i) => (s, i + 1)))
+        {
+            <tr>
+                <td>@i</td>
+                <td>
+                    @if (!string.IsNullOrEmpty(s.ImagePath))
+                    {
+                        <img src="/@s.ImagePath.TrimStart('/')" style="height:40px;" />
+                    }
+                </td>
+                <td><strong>@s.TitleL</strong></td>
+                <td>@s.Type</td>
+                <td><code style="font-size:11px;">@s.Link</code></td>
+                <td>@s.Ord</td>
+                <td style="text-align:center;">
+                    @if (s.ActiveFlag == 1) { <span class="label label-success">Active</span> }
+                    else { <span class="label label-default">Tắt</span> }
+                </td>
+                <td>
+                    <a href="/AdminCP/Slides/Edit/@s.Id" class="btn btn-xs btn-warning" title="Sửa"><i class="fa fa-pencil"></i></a>
+                    <form action="/AdminCP/Slides/ToggleStatus/@s.Id" method="post" style="display:inline;">
+                        @Html.AntiForgeryToken()
+                        <button class="btn btn-xs @(s.ActiveFlag == 1 ? "btn-default" : "btn-success")" title="@(s.ActiveFlag == 1 ? "Tắt" : "Bật")"><i class="fa @(s.ActiveFlag == 1 ? "fa-toggle-on" : "fa-toggle-off")"></i></button>
+                    </form>
+                    <form action="/AdminCP/Slides/Delete/@s.Id" method="post" style="display:inline;" onsubmit="return confirm('Xoá slide này?');">
+                        @Html.AntiForgeryToken()
+                        <button class="btn btn-xs btn-danger" title="Xoá"><i class="fa fa-trash"></i></button>
+                    </form>
+                </td>
+            </tr>
+        }
+        @if (!Model.Any()) { <tr><td colspan="8" class="text-center text-muted" style="padding:30px;">Chưa có slide nào.</td></tr> }
+        </tbody>
+    </table>
+</div>

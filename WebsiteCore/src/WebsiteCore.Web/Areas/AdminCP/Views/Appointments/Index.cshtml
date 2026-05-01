@@ -1,0 +1,81 @@
+﻿@model List<WebsiteCore.Business.ViewModels.AppointmentRow>
+@using WebsiteCore.Business
+@{
+    ViewData["Title"] = "Quản lý lịch khám";
+    var status = ViewBag.Status as string ?? Constants.ApptPending;
+}
+
+<h2 class="admin-page-title"><i class="fa fa-calendar-check-o"></i> Quản lý lịch khám</h2>
+
+<ul class="nav nav-tabs" style="margin-bottom:14px;">
+    <li class="@(status == Constants.ApptPending   ? "active" : "")"><a href="?status=@Constants.ApptPending">Chờ duyệt</a></li>
+    <li class="@(status == Constants.ApptConfirmed ? "active" : "")"><a href="?status=@Constants.ApptConfirmed">Đã xác nhận</a></li>
+    <li class="@(status == Constants.ApptCompleted ? "active" : "")"><a href="?status=@Constants.ApptCompleted">Hoàn tất</a></li>
+    <li class="@(status == Constants.ApptRejected  ? "active" : "")"><a href="?status=@Constants.ApptRejected">Từ chối</a></li>
+    <li class="@(status == Constants.ApptCancelled ? "active" : "")"><a href="?status=@Constants.ApptCancelled">Đã huỷ</a></li>
+    <li style="float:right;"><a href="/AdminCP/Appointments/ExportCsv?status=@status" class="text-success" style="font-weight:600;"><i class="fa fa-file-excel-o"></i> Xuất CSV</a></li>
+</ul>
+
+<div class="admin-card">
+    <div class="admin-card-body" style="padding:0;">
+<div class="table-responsive">
+    <table class="table table-hover table-bordered" style="margin:0;">
+        <thead>
+            <tr>
+                <th style="width:40px;">#</th>
+                <th>Mã</th>
+                <th>Bệnh nhân</th>
+                <th>SĐT</th>
+                <th>Khoa</th>
+                <th>Ngày</th>
+                <th>Buổi</th>
+                <th>Lý do</th>
+                <th>Tạo lúc</th>
+                <th style="width:70px; text-align:center;">Check-in</th>
+                <th style="width:170px;">Hành động</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var (a, i) in Model.Select((a, i) => (a, i + 1)))
+        {
+            <tr>
+                <td>@i</td>
+                <td>@(string.IsNullOrEmpty(a.BookingCode) ? "—" : (object)Html.Raw($"<code>{a.BookingCode}</code>"))</td>
+                <td><strong>@a.PatientName</strong></td>
+                <td>@a.PatientPhone</td>
+                <td>@a.DepartmentName</td>
+                <td>@(a.AppointmentDate?.ToString("dd/MM/yyyy"))</td>
+                <td>@(a.Session == Constants.SessionMorning ? "Sáng" : "Chiều")</td>
+                <td><small>@a.Reason</small></td>
+                <td><small>@(a.CreatedDate?.ToString("HH:mm dd/MM"))</small></td>
+                <td style="text-align:center;">@(a.CheckedIn ? Html.Raw("<i class='fa fa-check text-success'></i>") : Html.Raw("<span class='text-muted'>—</span>"))</td>
+                <td>
+                    <a href="/AdminCP/Appointments/Detail/@a.Id" class="btn btn-xs btn-info" title="Chi tiết"><i class="fa fa-eye"></i></a>
+                    @if (status == Constants.ApptPending)
+                    {
+                        <form action="/AdminCP/Appointments/UpdateStatus" method="post" style="display:inline;" onsubmit="return confirm('Xác nhận duyệt lịch của @a.PatientName?');">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@a.Id" />
+                            <input type="hidden" name="newStatus" value="@Constants.ApptConfirmed" />
+                            <button class="btn btn-xs btn-success" title="Duyệt nhanh"><i class="fa fa-check"></i></button>
+                        </form>
+                        <a href="/AdminCP/Appointments/Detail/@a.Id#reject" class="btn btn-xs btn-warning" title="Từ chối (cần lý do)"><i class="fa fa-times"></i></a>
+                    }
+                    else if (status == Constants.ApptConfirmed)
+                    {
+                        <form action="/AdminCP/Appointments/UpdateStatus" method="post" style="display:inline;" onsubmit="return confirm('Đánh dấu hoàn tất lịch này?');">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@a.Id" />
+                            <input type="hidden" name="newStatus" value="@Constants.ApptCompleted" />
+                            <button class="btn btn-xs btn-primary" title="Hoàn tất"><i class="fa fa-flag-checkered"></i></button>
+                        </form>
+                    }
+                </td>
+            </tr>
+        }
+        @if (!Model.Any()) { <tr><td colspan="11" class="text-center text-muted" style="padding:30px;">Không có lịch nào ở trạng thái này.</td></tr> }
+        </tbody>
+    </table>
+</div>
+    </div>
+</div>

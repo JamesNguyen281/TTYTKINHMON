@@ -1,0 +1,212 @@
+﻿@{
+    ViewData["Title"] = "Tổng quan";
+    var u = ViewBag.CurrentUser as WebsiteCore.Business.ViewModels.LoggedInUser;
+    var siteName = (ViewBag.Site as WebsiteCore.Data.Entities.Site)?.NameCompanyL ?? "Trung tâm Y tế phường Kinh Môn";
+    bool notiOn = ViewBag.NotificationOn ?? false;
+    string notiText = ViewBag.NotificationText as string ?? "";
+    string dashImg = ViewBag.DashboardImage as string ?? "/assets/client/images/hero-kinhmon.jpg";
+    string dashImgFull = dashImg.StartsWith("/") ? dashImg : "/" + dashImg;
+    string dashVer = DateTime.UtcNow.Ticks.ToString();
+}
+
+<div class="row">
+    <div class="col-xs-12">
+        <h4>Chào mừng bạn đến với hệ thống quản trị website, @siteName</h4>
+
+        <form action="/AdminCP/Default/Turnon" method="post" style="margin-top:12px;">
+            @Html.AntiForgeryToken()
+            <div class="col-md-12" style="padding-left:0;">
+                <span style="margin-right:8px;">Thông báo</span>
+                @if (notiOn)
+                {
+                    <button type="submit" name="Command" value="Tắt" class="btn btn-xs btn-primary">Tắt</button>
+                }
+                else
+                {
+                    <button type="submit" name="Command" value="Bật" class="btn btn-xs btn-primary">Bật</button>
+                }
+                <br />
+                <textarea name="TextArea1" cols="100" rows="2" class="form-control" style="margin-top:6px;">@notiText</textarea>
+            </div>
+        </form>
+
+        <div style="margin-top:10px;">
+            <a class="btn btn-xs btn-primary" href="/AdminCP/Comment" target="_blank">
+                <span><i class="fa fa-envelope"></i> Quản trị hộp thư góp ý</span>
+            </a>
+            <a class="btn btn-xs btn-primary" href="/AdminCP/QrCode" target="_blank">
+                <span><i class="fa fa-qrcode"></i> Quản trị công cụ tạo mã QR code</span>
+            </a>
+        </div>
+
+        <img class="img-responsive center-block"
+             src="@dashImgFull?v=@dashVer"
+             alt="Dashboard banner"
+             style="max-height:380px; margin:16px auto; border-radius:6px; box-shadow:0 2px 12px rgba(0,0,0,0.1);" />
+
+        <div class="dashboard-upload" style="margin-top:16px; padding:14px; background:#f7f9fb; border:1px solid #e1e6ec; border-radius:4px; max-width:760px; margin-left:auto; margin-right:auto;">
+            <h5 style="margin-top:0; margin-bottom:10px; font-weight:600;">
+                <i class="fa fa-image text-primary"></i> Đổi ảnh dashboard
+            </h5>
+            @if (TempData["DashOk"] != null)
+            {
+                <div class="alert alert-success" style="margin-bottom:8px; padding:8px 12px;">@TempData["DashOk"]</div>
+            }
+            @if (TempData["DashErr"] != null)
+            {
+                <div class="alert alert-danger" style="margin-bottom:8px; padding:8px 12px;">@TempData["DashErr"]</div>
+            }
+            <form asp-action="UploadDashboardImage" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <div class="form-group" style="margin-bottom:8px;">
+                    <label style="font-weight:600;">Đường dẫn hiện tại (lưu trong DB):</label>
+                    <input type="text" id="dash-current-path" class="form-control input-sm"
+                           value="@dashImg" readonly
+                           style="background:#fff; font-family:monospace; font-size:12px;" />
+                </div>
+                <div class="form-group" style="margin-bottom:8px;">
+                    <label style="font-weight:600;">Chọn ảnh từ máy:</label>
+                    <input type="file" id="dash-file-input" name="file" accept="image/*" required
+                           class="form-control input-sm" style="padding:4px;" />
+                    <span id="dash-file-info" class="help-block" style="margin:4px 0 0; color:#5e9ed6; font-size:12px;"></span>
+                </div>
+                <button type="submit" class="btn btn-sm btn-primary">
+                    <i class="fa fa-upload"></i> Upload &amp; Lưu vào DB
+                </button>
+                <span class="help-block" style="display:inline-block; margin:0 0 0 12px; font-size:12px; color:#888;">
+                    jpg / png / gif / webp, &lt; 20 MB
+                </span>
+            </form>
+        </div>
+
+        <hr style="margin-top:24px;" />
+
+        @* ==== Lượt truy cập (file-backed counter) ==== *@
+        <h4 style="color:#0a3d62; font-weight:600; margin:8px 0 12px;"><i class="fa fa-line-chart"></i> Lượt truy cập</h4>
+        <div class="row">
+            <div class="col-sm-4 col-xs-6">
+                <div class="stat-card" style="border-left:4px solid #43aa8b;">
+                    <i class="fa fa-circle stat-icon" style="color:#43aa8b;"></i>
+                    <div class="stat-value">@ViewBag.OnlineCount</div>
+                    <div class="stat-label">Đang online</div>
+                </div>
+            </div>
+            <div class="col-sm-4 col-xs-6">
+                <div class="stat-card" style="border-left:4px solid #4d96ff;">
+                    <i class="fa fa-calendar-day stat-icon" style="color:#4d96ff;"></i>
+                    <div class="stat-value">@ViewBag.TodayCount</div>
+                    <div class="stat-label">Hôm nay</div>
+                </div>
+            </div>
+            <div class="col-sm-4 col-xs-12">
+                <div class="stat-card" style="border-left:4px solid #0a3d62;">
+                    <i class="fa fa-globe stat-icon" style="color:#0a3d62;"></i>
+                    <div class="stat-value">@ViewBag.TotalCount</div>
+                    <div class="stat-label">Tổng truy cập</div>
+                </div>
+            </div>
+        </div>
+        <div style="text-align:right; margin:-4px 0 12px;">
+            <form action="/AdminCP/Default/ResetCounter" method="post" style="display:inline;" onsubmit="return confirm('Reset toàn bộ counter về 0?');">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="which" value="all" />
+                <button class="btn btn-xs btn-default"><i class="fa fa-refresh"></i> Reset counter</button>
+            </form>
+        </div>
+
+        <hr />
+        <h4 style="color:#0a3d62; font-weight:600; margin:8px 0 12px;"><i class="fa fa-th-large"></i> Tổng hợp dữ liệu</h4>
+        <div class="row" style="margin-top:8px;">
+            <div class="col-sm-3 col-xs-6">
+                <a href="/AdminCP/Users" class="stat-card" style="display:block; text-decoration:none;">
+                    <i class="fa fa-users stat-icon" style="color:#0a3d62;"></i>
+                    <div class="stat-value">@ViewBag.UserCount</div>
+                    <div class="stat-label">Người dùng</div>
+                </a>
+            </div>
+            <div class="col-sm-3 col-xs-6">
+                <a href="/AdminCP/Departments" class="stat-card stat-success" style="display:block; text-decoration:none;">
+                    <i class="fa fa-stethoscope stat-icon"></i>
+                    <div class="stat-value">@ViewBag.DeptCount</div>
+                    <div class="stat-label">Chuyên khoa</div>
+                </a>
+            </div>
+            <div class="col-sm-3 col-xs-6">
+                <a href="/AdminCP/News" class="stat-card" style="display:block; text-decoration:none;">
+                    <i class="fa fa-newspaper-o stat-icon" style="color:#4d96ff;"></i>
+                    <div class="stat-value">@ViewBag.NewsCount</div>
+                    <div class="stat-label">Bài tin tức</div>
+                </a>
+            </div>
+            <div class="col-sm-3 col-xs-6">
+                <a href="/AdminCP/Appointments" class="stat-card stat-warning" style="display:block; text-decoration:none;">
+                    <i class="fa fa-calendar stat-icon"></i>
+                    <div class="stat-value">@ViewBag.ApptCount</div>
+                    <div class="stat-label">Lịch khám</div>
+                    @if (ViewBag.PendingAppt > 0)
+                    {
+                        <small class="text-muted">Chờ duyệt: <strong>@ViewBag.PendingAppt</strong></small>
+                    }
+                </a>
+            </div>
+        </div>
+        <div class="row" style="margin-top:12px;">
+            <div class="col-sm-3 col-xs-6">
+                <a href="/AdminCP/Comment" class="stat-card @(ViewBag.UnreadCommentCount > 0 ? "stat-danger" : "")" style="display:block; text-decoration:none;">
+                    <i class="fa fa-envelope stat-icon"></i>
+                    <div class="stat-value">@ViewBag.TotalCommentCount</div>
+                    <div class="stat-label">Góp ý</div>
+                    @if (ViewBag.UnreadCommentCount > 0)
+                    {
+                        <small class="text-muted">Chưa đọc: <strong>@ViewBag.UnreadCommentCount</strong></small>
+                    }
+                </a>
+            </div>
+            <div class="col-sm-3 col-xs-6">
+                <a href="/AdminCP/MedicalRecords" class="stat-card" style="display:block; text-decoration:none;">
+                    <i class="fa fa-medkit stat-icon" style="color:#1abc9c;"></i>
+                    <div class="stat-value">@ViewBag.MedicalRecordCount</div>
+                    <div class="stat-label">Hồ sơ khám</div>
+                </a>
+            </div>
+            <div class="col-sm-3 col-xs-6">
+                <a href="/AdminCP/Doctors" class="stat-card" style="display:block; text-decoration:none;">
+                    <i class="fa fa-user-md stat-icon" style="color:#9b59b6;"></i>
+                    <div class="stat-value">@ViewBag.DoctorCount</div>
+                    <div class="stat-label">Bác sĩ</div>
+                </a>
+            </div>
+            <div class="col-sm-3 col-xs-6">
+                <a href="/dat-cau-hoi" target="_blank" class="stat-card" style="display:block; text-decoration:none;">
+                    <i class="fa fa-question-circle stat-icon" style="color:#f39c12;"></i>
+                    <div class="stat-value">@ViewBag.QuestionCount</div>
+                    <div class="stat-label">Câu hỏi Q&amp;A</div>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            var fi = document.getElementById('dash-file-input');
+            var info = document.getElementById('dash-file-info');
+            var pathBox = document.getElementById('dash-current-path');
+            if (!fi) return;
+            fi.addEventListener('change', function () {
+                if (fi.files && fi.files[0]) {
+                    var f = fi.files[0];
+                    var size = (f.size / 1024).toFixed(0);
+                    if (f.size >= 1024 * 1024) size = (f.size / 1024 / 1024).toFixed(2) + ' MB';
+                    else size = size + ' KB';
+                    info.textContent = 'Đã chọn: ' + f.name + ' (' + size + '). Bấm "Upload & Lưu vào DB" để áp dụng.';
+                    pathBox.value = '(sẽ thay bằng đường dẫn server sau khi upload) ← ' + f.name;
+                    pathBox.style.color = '#999';
+                } else {
+                    info.textContent = '';
+                }
+            });
+        })();
+    </script>
+}

@@ -1,0 +1,250 @@
+@using WebsiteCore.Business.ViewModels
+@using WebsiteCore.Data.Entities
+@{
+    ViewData["Title"] = "Tổng quan Bác sĩ";
+    var pending = ViewBag.PendingQuestions as List<Question> ?? new();
+    var todayList = ViewBag.TodayList as List<AppointmentRow> ?? new();
+    var u = ViewBag.CurrentUser as LoggedInUser;
+    int todayCnt    = (int)(ViewBag.TodayCount ?? 0);
+    int checkedIn   = (int)(ViewBag.CheckedInCount ?? 0);
+    int completed   = (int)(ViewBag.CompletedCount ?? 0);
+    int pendingDx   = (int)(ViewBag.PendingDxCount ?? 0);
+    bool hasDoctorLink = ViewBag.LinkedDoctorId != null;
+}
+
+<style>
+    .doc-wrap { max-width:1280px; margin:0 auto; padding:18px 0 40px; }
+    .doc-hero { background:linear-gradient(135deg,#43aa8b 0%,#2f7a5e 100%); color:white; padding:18px 24px; border-radius:8px; margin-bottom:18px; box-shadow:0 4px 12px rgba(67,170,139,0.25); }
+    .doc-hero h1 { margin:0; font-size:20px; font-weight:600; }
+    .doc-hero .meta { font-size:13px; opacity:0.9; margin-top:4px; }
+
+    .kpi-row { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:14px; margin-bottom:18px; }
+    .kpi { background:white; border:1px solid #e5e9ee; border-radius:8px; padding:18px 20px; box-shadow:0 1px 3px rgba(0,0,0,0.04); display:flex; align-items:center; gap:14px; text-decoration:none; color:inherit; transition:all 0.2s; }
+    .kpi:hover { transform:translateY(-2px); box-shadow:0 6px 18px rgba(67,170,139,0.15); border-color:#43aa8b; text-decoration:none; }
+    .kpi .ico { width:48px; height:48px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; }
+    .kpi.today .ico { background:#e3f2fd; color:#4d96ff; }
+    .kpi.checkedin .ico { background:#fff5e0; color:#f39c12; }
+    .kpi.completed .ico { background:#e8f5e9; color:#43aa8b; }
+    .kpi.pending .ico { background:#fde7e9; color:#e74c3c; }
+    .kpi .num { font-size:28px; font-weight:700; line-height:1; color:#0a3d62; }
+    .kpi .lbl { font-size:13px; color:#6c757d; margin-top:4px; }
+    .kpi .sub { font-size:11px; color:#8898aa; margin-top:2px; }
+
+    .doc-grid { display:grid; grid-template-columns:1.7fr 1fr; gap:18px; }
+    @@media (max-width: 992px) { .doc-grid { grid-template-columns:1fr; } }
+
+    .doc-card { background:white; border:1px solid #e5e9ee; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,0.04); margin-bottom:16px; overflow:hidden; }
+    .doc-card .head { padding:12px 16px; background:#f7f9fc; border-bottom:1px solid #e5e9ee; font-weight:600; color:#0a3d62; display:flex; justify-content:space-between; align-items:center; }
+    .doc-card .body { padding:14px; }
+    .doc-card .head .badge { background:#43aa8b; color:white; padding:3px 10px; border-radius:12px; font-size:12px; font-weight:600; }
+
+    .patient-row { display:flex; align-items:center; gap:12px; padding:10px; border:1px solid #f0f3f7; border-radius:6px; margin-bottom:8px; transition:all 0.15s; }
+    .patient-row:hover { border-color:#43aa8b; background:#f7fdfa; }
+    .patient-row .avatar { width:38px; height:38px; border-radius:50%; background:#0a3d62; color:white; display:flex; align-items:center; justify-content:center; font-weight:600; flex-shrink:0; }
+    .patient-row .info { flex:1; min-width:0; }
+    .patient-row .info .name { font-weight:600; color:#0a3d62; }
+    .patient-row .info .meta { font-size:12px; color:#6c757d; }
+    .patient-row .status-tag { font-size:11px; padding:3px 8px; border-radius:10px; font-weight:600; flex-shrink:0; }
+    .status-tag.checkedin { background:#fff5e0; color:#b87908; }
+    .status-tag.completed { background:#e8f5e9; color:#2f7a5e; }
+    .status-tag.pending { background:#fde7e9; color:#a02329; }
+    .patient-row .btn-action { padding:5px 12px; font-size:12px; flex-shrink:0; }
+
+    .qn-list { padding:0; margin:0; list-style:none; }
+    .qn-list li { padding:10px 12px; border:1px solid #f0f3f7; border-radius:6px; margin-bottom:8px; }
+    .qn-list li a { color:#0a3d62; text-decoration:none; font-weight:600; }
+    .qn-list li a:hover { color:#43aa8b; }
+    .qn-list li .qbody { font-size:13px; color:#3c4858; margin-top:4px; line-height:1.5; }
+    .qn-list li .qmeta { font-size:11px; color:#8898aa; margin-top:4px; }
+
+    .quick-action { display:flex; align-items:center; gap:10px; padding:11px 14px; background:white; border:1px solid #e5e9ee; border-radius:6px; margin-bottom:8px; color:#0a3d62 !important; text-decoration:none; transition:all 0.15s; }
+    .quick-action:hover { background:#43aa8b; color:white !important; border-color:#43aa8b; transform:translateX(2px); }
+    .quick-action .fa { width:24px; font-size:16px; }
+    .quick-action.success { border-left:3px solid #43aa8b; }
+    .quick-action.warn { border-left:3px solid #f39c12; }
+    .quick-action.info { border-left:3px solid #4d96ff; }
+</style>
+
+<div class="doc-wrap">
+    <div class="doc-hero">
+        <h1><i class="fa fa-user-md"></i> Xin chào BS. @(u?.FullName)</h1>
+        <div class="meta">
+            <i class="fa fa-calendar"></i> @DateTime.Now.ToString("dddd, dd/MM/yyyy", new System.Globalization.CultureInfo("vi-VN"))
+            @if (!hasDoctorLink)
+            {
+                <span style="background:#fff5e0; color:#b87908; padding:2px 10px; border-radius:10px; margin-left:10px; font-weight:600;"><i class="fa fa-warning"></i> Tài khoản chưa liên kết Doctor — chưa thấy lịch nào</span>
+            }
+        </div>
+    </div>
+
+    <div class="kpi-row">
+        <a href="/bac-si-portal/benh-nhan-hom-nay" class="kpi today">
+            <div class="ico"><i class="fa fa-calendar-check-o"></i></div>
+            <div>
+                <div class="num">@todayCnt</div>
+                <div class="lbl">Bệnh nhân hôm nay</div>
+                <div class="sub">Đã được phân cho bạn</div>
+            </div>
+        </a>
+        <a href="/bac-si-portal/benh-nhan-hom-nay" class="kpi checkedin">
+            <div class="ico"><i class="fa fa-sign-in"></i></div>
+            <div>
+                <div class="num">@checkedIn</div>
+                <div class="lbl">Đã check-in</div>
+                <div class="sub">Sẵn sàng khám</div>
+            </div>
+        </a>
+        <a href="/bac-si-portal/benh-nhan-hom-nay" class="kpi pending">
+            <div class="ico"><i class="fa fa-stethoscope"></i></div>
+            <div>
+                <div class="num">@pendingDx</div>
+                <div class="lbl">Chờ chẩn đoán</div>
+                <div class="sub">Đã check-in, chưa khám</div>
+            </div>
+        </a>
+        <a href="/bac-si-portal/benh-nhan-hom-nay" class="kpi completed">
+            <div class="ico"><i class="fa fa-check-circle"></i></div>
+            <div>
+                <div class="num">@completed</div>
+                <div class="lbl">Đã hoàn tất</div>
+                <div class="sub">Hồ sơ đã lưu</div>
+            </div>
+        </a>
+    </div>
+
+    <div class="doc-grid">
+        <div>
+            <div class="doc-card">
+                <div class="head"><span><i class="fa fa-users"></i> Bệnh nhân hôm nay</span>
+                    @if (todayCnt > 0) { <span class="badge">@todayCnt BN</span> }
+                </div>
+                <div class="body">
+                    @if (!todayList.Any())
+                    {
+                        <p class="text-muted text-center" style="padding:24px 0;">
+                            <i class="fa fa-coffee" style="font-size:32px; color:#aaa;"></i><br />
+                            @if (hasDoctorLink)
+                            {
+                                <span>Chưa có bệnh nhân nào được phân cho bạn hôm nay.</span><br />
+                                <small>Lễ tân sẽ phân bệnh nhân khi duyệt lịch.</small>
+                            }
+                            else
+                            {
+                                <span>Tài khoản chưa liên kết với Doctor — không thể nhận bệnh nhân.</span><br />
+                                <small>Liên hệ Quản trị viên gán <code>doctor_id</code> trong AdminCP / Users.</small>
+                            }
+                        </p>
+                    }
+                    else
+                    {
+                        @foreach (var p in todayList.Take(8))
+                        {
+                            string status = p.CheckedIn
+                                ? (p.Status == "completed" ? "completed" : "checkedin")
+                                : "pending";
+                            string statusLbl = p.CheckedIn
+                                ? (p.Status == "completed" ? "✓ Đã khám" : "🟢 Sẵn sàng")
+                                : "⏳ Chưa đến";
+                            string actionUrl = (p.CheckedIn && p.Status != "completed")
+                                ? $"/bac-si-portal/chan-doan/{p.Id}"
+                                : "#";
+                            string initials = !string.IsNullOrEmpty(p.PatientName) && p.PatientName.Length > 0
+                                ? p.PatientName.Trim().Split(' ').Last().Substring(0, 1).ToUpper()
+                                : "?";
+                            <div class="patient-row">
+                                <div class="avatar">@initials</div>
+                                <div class="info">
+                                    <div class="name">@p.PatientName <small style="color:#6c757d; font-weight:400;">— @p.PatientPhone</small></div>
+                                    <div class="meta">
+                                        <i class="fa fa-ticket"></i> <code>@p.BookingCode</code>
+                                        · <i class="fa fa-clock-o"></i> @(p.Session == "morning" ? "Buổi sáng" : "Buổi chiều")
+                                        · @p.DepartmentName
+                                    </div>
+                                </div>
+                                <span class="status-tag @status">@statusLbl</span>
+                                @if (p.CheckedIn && p.Status != "completed")
+                                {
+                                    <a href="@actionUrl" class="btn btn-success btn-action"><i class="fa fa-stethoscope"></i> Chẩn đoán</a>
+                                }
+                            </div>
+                        }
+                        @if (todayList.Count > 8)
+                        {
+                            <div style="text-align:center; padding:8px;">
+                                <a href="/bac-si-portal/benh-nhan-hom-nay">Xem đầy đủ @todayList.Count BN →</a>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+
+            <div class="doc-card" id="pendingQuestions">
+                <div class="head"><span><i class="fa fa-question-circle"></i> Câu hỏi đang chờ trả lời</span>
+                    @if (pending.Any()) { <span class="badge" style="background:#f39c12;">@pending.Count câu</span> }
+                </div>
+                <div class="body">
+                    @if (!pending.Any())
+                    {
+                        <p class="text-muted text-center" style="padding:18px 0;">
+                            <i class="fa fa-check-circle" style="font-size:28px; color:#43aa8b;"></i><br />
+                            Không có câu hỏi nào đang chờ — bạn đã trả lời hết!
+                        </p>
+                    }
+                    else
+                    {
+                        <ul class="qn-list">
+                            @foreach (var q in pending.Take(5))
+                            {
+                                <li>
+                                    <a href="/bac-si-portal/duyet-cau-hoi/@q.Id">@q.Title</a>
+                                    <div class="qbody">@(q.Body.Length > 200 ? q.Body.Substring(0, 200) + "…" : q.Body)</div>
+                                    <div class="qmeta">
+                                        <i class="fa fa-clock-o"></i> @q.CreatedDate.ToString("HH:mm dd/MM/yyyy")
+                                        @if (!string.IsNullOrEmpty(q.Topic))
+                                        {
+                                            <span> · <span class="label label-default">@q.Topic</span></span>
+                                        }
+                                    </div>
+                                </li>
+                            }
+                        </ul>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div class="doc-card">
+                <div class="head"><i class="fa fa-bolt"></i> Tác vụ nhanh</div>
+                <div class="body" style="padding:12px;">
+                    <a href="/bac-si-portal/benh-nhan-hom-nay" class="quick-action success">
+                        <i class="fa fa-stethoscope"></i> Khám bệnh nhân hôm nay
+                        @if (pendingDx > 0) { <span style="margin-left:auto; background:#e74c3c; color:white; padding:1px 8px; border-radius:10px; font-size:11px;">@pendingDx</span> }
+                    </a>
+                    <a href="#pendingQuestions" class="quick-action warn">
+                        <i class="fa fa-comment"></i> Trả lời câu hỏi
+                        @if (pending.Any()) { <span style="margin-left:auto; background:#f39c12; color:white; padding:1px 8px; border-radius:10px; font-size:11px;">@pending.Count</span> }
+                    </a>
+                    <a href="/AdminCP/MedicalRecords" class="quick-action info">
+                        <i class="fa fa-folder-open-o"></i> Hồ sơ đã chẩn đoán
+                    </a>
+                    <a href="/bac-si-portal/lich-truc" class="quick-action">
+                        <i class="fa fa-calendar"></i> Lịch trực tháng này
+                    </a>
+                </div>
+            </div>
+
+            <div class="doc-card">
+                <div class="head"><i class="fa fa-info-circle"></i> Hướng dẫn</div>
+                <div class="body" style="font-size:13px; line-height:1.7;">
+                    <ul style="padding-left:18px; margin:0;">
+                        <li>Lễ tân duyệt lịch + <strong>phân bs</strong> + check-in BN. Sau đó BN xuất hiện ở "Bệnh nhân hôm nay".</li>
+                        <li>Bấm <strong>Chẩn đoán</strong> để nhập triệu chứng + chẩn đoán + đơn thuốc.</li>
+                        <li>Bạn có thể bổ sung <em>Nhóm máu / Dị ứng / Tiền sử bệnh</em> — đồng bộ vào hồ sơ BN.</li>
+                        <li>Câu trả lời câu hỏi gửi đi không thể sửa — vui lòng kiểm tra kỹ.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,107 @@
+@model WebsiteCore.Business.ViewModels.LoginViewModel
+@{
+    Layout = null;
+    ViewData["Title"] = "Đăng nhập quản trị";
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <title>@ViewData["Title"] — Trung tâm Y tế phường Kinh Môn</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="~/assets/client/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="~/assets/client/css/font-awesome.min.css" rel="stylesheet" />
+    <style>
+        body {
+            background: linear-gradient(135deg, #0a3d62 0%, #06547f 100%);
+            min-height: 100vh; display: flex; align-items: center;
+            font-family: 'Open Sans', sans-serif;
+        }
+        .login-card { background: #fff; border-radius: 8px; box-shadow: 0 8px 32px rgba(0,0,0,0.25); padding: 36px 32px; max-width: 420px; width: 100%; margin: 0 auto; }
+        .login-card h2 { color: #07bbf7; font-weight: bold; text-align: center; }
+        .login-card .btn-primary { background-color: #07bbf7; border-color: #07bbf7; }
+        .login-card .input-group-addon { background: #07bbf7; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="login-card">
+            <h2><i class="fa fa-hospital-o"></i> Trung tâm Y tế phường Kinh Môn</h2>
+            <p class="text-center text-muted" style="font-size: 13px;">Cổng đăng nhập cán bộ - nhân viên</p>
+            <hr />
+
+            <div asp-validation-summary="All" class="alert alert-danger" role="alert"
+                 style="@(ViewData.ModelState.IsValid ? "display:none;" : "")">
+                <i class="fa fa-exclamation-circle"></i>
+            </div>
+
+            <form asp-action="Login" method="post">
+                @Html.AntiForgeryToken()
+                <div class="form-group">
+                    <label><strong>Tên đăng nhập</strong></label>
+                    <div class="input-group">
+                        <span class="input-group-addon"><i class="fa fa-user"></i></span>
+                        <input asp-for="UserName" class="form-control" autofocus required />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label><strong>Mật khẩu</strong></label>
+                    <div class="input-group">
+                        <span class="input-group-addon"><i class="fa fa-lock"></i></span>
+                        <input asp-for="Password" type="password" class="form-control" required />
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block btn-lg" style="margin-top: 18px;">
+                    <i class="fa fa-sign-in"></i> Đăng nhập
+                </button>
+            </form>
+
+            <div style="text-align:center; margin-top:18px;">
+                <a href="#" id="staffAccountInfoBtn" style="color:#0a3d62; font-weight:600;">
+                    <i class="fa fa-info-circle"></i> Bạn chưa có tài khoản? Đăng ký ngay
+                </a>
+            </div>
+            <hr />
+            <div style="text-align:center; font-size:12px; color:#888;">
+                <a href="/" style="color:#888;"><i class="fa fa-home"></i> Về trang chủ</a> ·
+                <a href="/dang-nhap" style="color:#888;">Cổng bệnh nhân</a>
+            </div>
+        </div>
+    </div>
+
+    @* Modal hướng dẫn liên hệ admin để cấp tài khoản nội bộ *@
+    <div id="staffAccountInfoModal" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.55); align-items:center; justify-content:center;">
+        <div style="background:#fff; max-width:480px; width:92%; border-radius:8px; box-shadow:0 12px 40px rgba(0,0,0,0.3); overflow:hidden;">
+            <div style="background:#0a3d62; color:#fff; padding:14px 20px; display:flex; align-items:center; justify-content:space-between;">
+                <h4 style="margin:0; font-size:17px;"><i class="fa fa-info-circle"></i> Tài khoản cán bộ nội bộ</h4>
+                <a href="#" id="staffInfoClose" style="color:#fff; font-size:22px; text-decoration:none;">&times;</a>
+            </div>
+            <div style="padding:22px 24px;">
+                <p>Cổng <strong>AdminCP</strong> chỉ dành cho <strong>cán bộ - nhân viên y tế</strong> (Quản trị viên / Bác sĩ / Lễ tân).</p>
+                <p>Tài khoản nhân viên <strong>không cho phép tự đăng ký</strong>. Vui lòng liên hệ <strong>bộ phận quản lý</strong> để được cấp.</p>
+                <div style="background:#f4f6f8; border-left:3px solid #0a3d62; padding:10px 14px; margin:14px 0;">
+                    <div><i class="fa fa-phone"></i> Hotline: <a href="tel:0964801616">0964.801.616</a></div>
+                    <div><i class="fa fa-map-marker"></i> Số 294 Trần Hưng Đạo, phường Kinh Môn, TP. Hải Phòng</div>
+                </div>
+                <p style="color:#888; font-size:12px;">Bạn là <strong>bệnh nhân</strong>? <a href="/dang-ky">Đăng ký tại cổng bệnh nhân</a>.</p>
+            </div>
+            <div style="padding:12px 20px; border-top:1px solid #eee; text-align:right;">
+                <a href="#" id="staffInfoOk" class="btn btn-sm btn-primary" style="background-color:#07bbf7;">Đã hiểu</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="~/assets/client/js/jquery.min.js"></script>
+    <script src="~/assets/client/js/password-eye.js?v=2"></script>
+    <script>
+        var modal = document.getElementById('staffAccountInfoModal');
+        function show(e) { if (e) e.preventDefault(); modal.style.display = 'flex'; }
+        function hide(e) { if (e) e.preventDefault(); modal.style.display = 'none'; }
+        document.getElementById('staffAccountInfoBtn').addEventListener('click', show);
+        document.getElementById('staffInfoClose').addEventListener('click', hide);
+        document.getElementById('staffInfoOk').addEventListener('click', hide);
+        modal.addEventListener('click', function (e) { if (e.target === modal) hide(); });
+        document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && modal.style.display === 'flex') hide(); });
+    </script>
+</body>
+</html>

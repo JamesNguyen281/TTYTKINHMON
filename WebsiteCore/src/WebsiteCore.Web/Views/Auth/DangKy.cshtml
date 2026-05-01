@@ -1,0 +1,123 @@
+﻿@model WebsiteCore.Business.ViewModels.RegisterViewModel
+@{ ViewData["Title"] = "Đăng ký tài khoản bệnh nhân"; }
+
+<section class="full-section" style="padding: 40px 0; background: #f5f7fa;">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-7 col-md-offset-1 col-sm-10 col-sm-offset-1 col-xs-12">
+                <div style="background: #fff; padding: 32px 28px; border-radius: 6px; box-shadow: 0 2px 12px rgba(10,61,98,0.08);">
+                    <h1 style="font-size: 24px; color: #0a3d62; margin-top: 0;">
+                        <i class="fa fa-user-plus"></i> Đăng ký tài khoản bệnh nhân
+                    </h1>
+                    <p class="text-muted" style="font-size: 13px; margin-bottom: 20px;">
+                        Tạo tài khoản để đặt lịch khám online, theo dõi lịch hẹn và xem lịch sử khám bệnh tại Trung tâm Y tế phường Kinh Môn.
+                    </p>
+
+                    <div style="margin-bottom: 14px; padding: 10px 12px; background: #f4f6f8; border-left: 3px solid #0a3d62; font-size: 12px; color: #555;">
+                        <i class="fa fa-info-circle"></i>
+                        Trang này dành cho <strong>bệnh nhân</strong>. Bạn là cán bộ y tế? Tài khoản nhân viên do quản trị viên Trung tâm cấp tại
+                        <a href="/AdminCP/Login" style="color: #0a3d62; font-weight: 600;">Cổng quản trị →</a>.
+                    </div>
+
+                    <div asp-validation-summary="All" class="alert alert-danger" role="alert"
+                         style="@(ViewData.ModelState.IsValid ? "display:none;" : "")">
+                        <i class="fa fa-exclamation-circle"></i>
+                    </div>
+
+                    <form asp-action="DangKy" method="post" autocomplete="on">
+                        @Html.AntiForgeryToken()
+
+                        <h3 style="font-size: 15px; color: #0a3d62; border-bottom: 2px solid #eef2f6; padding-bottom: 6px;">Thông tin tài khoản</h3>
+                        <div class="row">
+                            <div class="form-group col-sm-6">
+                                <label asp-for="UserName"><strong>Tên đăng nhập</strong> <span style="color: #c0392b;">*</span></label>
+                                <input asp-for="UserName" class="form-control" required minlength="4" maxlength="50"
+                                       pattern="[a-z0-9_.]+" autocomplete="username"
+                                       title="4-50 ký tự, chỉ chữ thường, số, dấu chấm hoặc gạch dưới"
+                                       placeholder="vd: nguyenvanan" />
+                                <small class="text-muted"><i class="fa fa-info-circle"></i> 4-50 ký tự, chỉ chữ thường + số + . + _</small>
+                            </div>
+                            <div class="form-group col-sm-6">
+                                <label asp-for="Password"><strong>Mật khẩu</strong> <span style="color: #c0392b;">*</span></label>
+                                <input asp-for="Password" type="password" class="form-control" required
+                                       minlength="8" maxlength="100"
+                                       pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,100}$"
+                                       title="Tối thiểu 8 ký tự, có chữ HOA, chữ thường, số và ký tự đặc biệt"
+                                       autocomplete="new-password" />
+                                <small class="text-muted"><i class="fa fa-info-circle"></i> ≥8 ký tự, chữ HOA + thường + số + ký tự đặc biệt</small>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="ConfirmPassword"><strong>Nhập lại mật khẩu</strong> <span style="color: #c0392b;">*</span></label>
+                            <input asp-for="ConfirmPassword" type="password" class="form-control" required minlength="8" maxlength="100"
+                                   autocomplete="new-password" />
+                        </div>
+
+                        <h3 style="font-size: 15px; color: #0a3d62; border-bottom: 2px solid #eef2f6; padding-bottom: 6px; margin-top: 18px;">Thông tin cá nhân</h3>
+                        <div class="row">
+                            <div class="form-group col-sm-8">
+                                <label asp-for="FullName"><strong>Họ và tên</strong> <span style="color: #c0392b;">*</span></label>
+                                <input asp-for="FullName" class="form-control" required minlength="2" maxlength="100"
+                                       autocomplete="name" placeholder="Nguyễn Văn An" />
+                            </div>
+                            <div class="form-group col-sm-4">
+                                <label asp-for="Gender"><strong>Giới tính</strong></label>
+                                <select asp-for="Gender" class="form-control">
+                                    <option value="male">Nam</option>
+                                    <option value="female">Nữ</option>
+                                    <option value="other">Khác</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group col-sm-6">
+                                <label asp-for="Phone"><strong>Số điện thoại</strong> <span style="color: #c0392b;">*</span></label>
+                                <input asp-for="Phone" type="tel" class="form-control" required minlength="9" maxlength="20"
+                                       autocomplete="tel" placeholder="0964 801 616" />
+                            </div>
+                            <div class="form-group col-sm-6">
+                                <label asp-for="Email"><strong>Email</strong></label>
+                                <input asp-for="Email" type="email" class="form-control" maxlength="100"
+                                       autocomplete="email" placeholder="optional - dùng để nhận thông báo" />
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info" style="font-size: 13px; margin: 12px 0;">
+                            <i class="fa fa-info-circle"></i>
+                            Sau khi đăng ký, bạn có thể bổ sung CCCD, BHYT, ngày sinh, nhóm máu... ở trang <strong>Hồ sơ cá nhân</strong>.
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-6">
+                                <button type="submit" class="btn btn-primary btn-block btn-lg">
+                                    <i class="fa fa-user-plus"></i> Tạo tài khoản
+                                </button>
+                            </div>
+                            <div class="col-sm-6">
+                                <a href="/dang-nhap" class="btn btn-default btn-block btn-lg">
+                                    <i class="fa fa-sign-in"></i> Đã có tài khoản — đăng nhập
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="col-md-3 col-sm-12 hidden-xs">
+                <div style="padding: 16px; margin-top: 0;">
+                    <h2 style="color: #0a3d62; font-size: 16px;">Có thể đặt lịch không cần đăng ký</h2>
+                    <p style="color: #555; font-size: 13px; line-height: 1.6;">
+                        Bạn có thể <a href="/dat-lich-kham"><strong>đặt lịch khám</strong></a> ngay không cần tài khoản — chỉ cần Họ tên + SĐT.
+                    </p>
+                    <p style="color: #555; font-size: 13px; line-height: 1.6;">Tuy nhiên, có tài khoản giúp bạn:</p>
+                    <ul style="color: #555; font-size: 13px; padding-left: 18px; line-height: 1.7;">
+                        <li>Theo dõi trạng thái lịch hẹn realtime</li>
+                        <li>Không phải nhập lại thông tin mỗi lần đặt</li>
+                        <li>Xem lịch sử khám &amp; đơn thuốc</li>
+                        <li>Đặt câu hỏi cho bác sĩ</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

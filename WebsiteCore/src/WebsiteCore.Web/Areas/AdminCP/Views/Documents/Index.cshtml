@@ -1,0 +1,58 @@
+﻿@model List<WebsiteCore.Data.Entities.Document>
+@{ ViewData["Title"] = "Tài liệu"; }
+
+<h2 class="admin-page-title"><i class="fa fa-folder-open-o"></i> Tài liệu</h2>
+
+<div class="admin-toolbar">
+    <a href="/AdminCP/Documents/Create" class="btn btn-success"><i class="fa fa-plus-circle"></i> Thêm tài liệu</a>
+    <span class="pull-right text-muted" style="line-height:34px;">@Model.Count tài liệu</span>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-hover table-bordered">
+        <thead>
+            <tr>
+                <th style="width:40px;">#</th>
+                <th>Tên</th>
+                <th>Mã</th>
+                <th>Ngày ban hành</th>
+                <th style="width:80px;">File</th>
+                <th style="width:80px; text-align:center;">Active</th>
+                <th style="width:140px;">Hành động</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var (d, i) in Model.Select((d, i) => (d, i + 1)))
+        {
+            <tr>
+                <td>@i</td>
+                <td><strong>@d.DocumentName</strong></td>
+                <td><code style="font-size:11px;">@d.DocumentCode</code></td>
+                <td>@(d.DocumentDate?.ToString("dd/MM/yyyy"))</td>
+                <td>
+                    @if (!string.IsNullOrEmpty(d.AttachFilePath))
+                    {
+                        <a href="/@d.AttachFilePath.TrimStart('/')" target="_blank" class="btn btn-xs btn-default"><i class="fa fa-download"></i></a>
+                    }
+                </td>
+                <td style="text-align:center;">
+                    @if (d.ActiveFlag == 1) { <span class="label label-success">Active</span> }
+                    else { <span class="label label-default">Tắt</span> }
+                </td>
+                <td>
+                    <a href="/AdminCP/Documents/Edit/@d.Id" class="btn btn-xs btn-warning" title="Sửa"><i class="fa fa-pencil"></i></a>
+                    <form action="/AdminCP/Documents/ToggleStatus/@d.Id" method="post" style="display:inline;">
+                        @Html.AntiForgeryToken()
+                        <button class="btn btn-xs @(d.ActiveFlag == 1 ? "btn-default" : "btn-success")" title="@(d.ActiveFlag == 1 ? "Tắt" : "Bật")"><i class="fa @(d.ActiveFlag == 1 ? "fa-toggle-on" : "fa-toggle-off")"></i></button>
+                    </form>
+                    <form action="/AdminCP/Documents/Delete/@d.Id" method="post" style="display:inline;" onsubmit="return confirm('Xoá tài liệu này?');">
+                        @Html.AntiForgeryToken()
+                        <button class="btn btn-xs btn-danger" title="Xoá"><i class="fa fa-trash"></i></button>
+                    </form>
+                </td>
+            </tr>
+        }
+        @if (!Model.Any()) { <tr><td colspan="7" class="text-center text-muted" style="padding:30px;">Chưa có tài liệu.</td></tr> }
+        </tbody>
+    </table>
+</div>

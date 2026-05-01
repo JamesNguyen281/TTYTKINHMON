@@ -1,0 +1,200 @@
+@model List<WebsiteCore.Data.Entities.AppointmentQuotum>
+@using WebsiteCore.Data.Entities
+@using WebsiteCore.Business
+@{
+    ViewData["Title"] = "Suất khám";
+    var depts = ViewBag.Departments as List<Department> ?? new();
+    var deptDict = depts.ToDictionary(d => d.Id, d => d.NameL);
+    var from = (DateOnly)ViewBag.From;
+    var to   = (DateOnly)ViewBag.To;
+    Guid? selectedDeptId = ViewBag.SelectedDeptId as Guid?;
+    string? selectedSession = ViewBag.SelectedSession as string;
+    bool filterActive = (selectedDeptId.HasValue && selectedDeptId.Value != Guid.Empty)
+                     || !string.IsNullOrEmpty(selectedSession);
+
+    // Tổng hợp KPI sau khi lọc
+    int totalQuotas = Model.Count;
+    int totalMax    = Model.Sum(q => q.MaxCount);
+    int totalBooked = Model.Sum(q => q.BookedCount);
+    int totalRemain = totalMax - totalBooked;
+    int fullCount   = Model.Count(q => q.MaxCount - q.BookedCount <= 0);
+}
+
+<style>
+    .qt-wrap { padding-top:18px; padding-bottom:32px; }
+    .qt-hero { background:linear-gradient(135deg,#0a3d62 0%,#1d5688 100%); color:white; padding:16px 22px; border-radius:8px; margin-bottom:14px; }
+    .qt-hero h2 { margin:0; font-size:20px; font-weight:600; }
+    .qt-hero .meta { font-size:13px; opacity:0.92; margin-top:4px; }
+
+    .qt-filter { background:white; border:1px solid #e5e9ee; border-radius:8px; padding:14px 16px; margin-bottom:14px; box-shadow:0 1px 3px rgba(0,0,0,.04); }
+    .qt-filter .row-flex { display:flex; gap:10px; flex-wrap:wrap; align-items:end; }
+    .qt-filter label { font-weight:600; font-size:12px; color:#0a3d62; margin-bottom:3px; display:block; }
+    .qt-filter .form-control { min-width:140px; }
+    .qt-filter .btn-go { background:#0a3d62; color:white; border:none; padding:7px 16px; border-radius:4px; font-weight:600; cursor:pointer; }
+    .qt-filter .btn-go:hover { background:#1d5688; }
+    .qt-filter .btn-clear { background:#e5e9ee; color:#0a3d62; padding:7px 14px; border-radius:4px; text-decoration:none; font-weight:500; }
+    .qt-filter .badge-active { background:#43aa8b; color:white; padding:3px 10px; border-radius:10px; font-size:11px; font-weight:600; margin-left:6px; }
+
+    .qt-kpi { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:10px; margin-bottom:14px; }
+    .qt-kpi .k { background:white; border:1px solid #e5e9ee; border-radius:8px; padding:11px 14px; box-shadow:0 1px 3px rgba(0,0,0,.04); }
+    .qt-kpi .num { font-size:22px; font-weight:700; color:#0a3d62; line-height:1; }
+    .qt-kpi .lbl { font-size:11px; color:#6c757d; margin-top:4px; }
+    .qt-kpi.success .num { color:#43aa8b; }
+    .qt-kpi.danger .num { color:#e74c3c; }
+    .qt-kpi.warn .num { color:#f39c12; }
+
+    .qt-table { background:white; }
+    .qt-table thead { background:#0a3d62; color:white; }
+    .qt-table tbody tr.dept-row { background:#f7f9fc; font-weight:600; color:#0a3d62; }
+    .qt-table .badge-morning { background:#fff5e0; color:#b87908; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:600; }
+    .qt-table .badge-afternoon { background:#e3f2fd; color:#1d5688; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:600; }
+    .qt-table tr.danger { background:#fde7e9 !important; }
+    .qt-table tr.warning { background:#fff9e0 !important; }
+</style>
+
+<div class="container qt-wrap">
+    <div class="qt-hero">
+        <h2><i class="fa fa-ticket"></i> Suất khám</h2>
+        <div class="meta">
+            <i class="fa fa-calendar"></i> @from.ToString("dd/MM/yyyy") → @to.ToString("dd/MM/yyyy")
+            @if (filterActive)
+            {
+                <span class="badge" style="background:#43aa8b; color:white; margin-left:8px;">Đang lọc</span>
+            }
+        </div>
+    </div>
+
+    <a href="/le-tan" class="btn btn-default" style="margin-bottom:12px;"><i class="fa fa-arrow-left"></i> Tổng quan</a>
+
+    <div class="qt-filter">
+        <form method="get" action="/le-tan/quotas" class="row-flex">
+            <div>
+                <label>Từ ngày</label>
+                <input type="date" name="from" value="@from.ToString("yyyy-MM-dd")" class="form-control" />
+            </div>
+            <div>
+                <label>Đến ngày</label>
+                <input type="date" name="to" value="@to.ToString("yyyy-MM-dd")" class="form-control" />
+            </div>
+            <div>
+                <label>Khoa @(selectedDeptId.HasValue && selectedDeptId.Value != Guid.Empty ? "•" : "")</label>
+                <select name="departmentId" class="form-control">
+                    <option value="">— Tất cả khoa —</option>
+                    @foreach (var d in depts.OrderBy(x => x.NameL))
+                    {
+                        if (selectedDeptId == d.Id)
+                        {
+                            <option value="@d.Id" selected>@d.NameL</option>
+                        }
+                        else
+                        {
+                            <option value="@d.Id">@d.NameL</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div>
+                <label>Buổi @(string.IsNullOrEmpty(selectedSession) ? "" : "•")</label>
+                <select name="session" class="form-control" style="min-width:120px;">
+                    <option value="">Cả 2 buổi</option>
+                    <option value="@Constants.SessionMorning" selected="@(selectedSession == Constants.SessionMorning)">Sáng</option>
+                    <option value="@Constants.SessionAfternoon" selected="@(selectedSession == Constants.SessionAfternoon)">Chiều</option>
+                </select>
+            </div>
+            <div>
+                <button type="submit" class="btn-go"><i class="fa fa-filter"></i> Lọc</button>
+                @if (filterActive)
+                {
+                    <a href="/le-tan/quotas?from=@from.ToString("yyyy-MM-dd")&to=@to.ToString("yyyy-MM-dd")" class="btn-clear"><i class="fa fa-times"></i> Xoá lọc</a>
+                }
+            </div>
+        </form>
+    </div>
+
+    <div class="qt-kpi">
+        <div class="k"><div class="num">@totalQuotas</div><div class="lbl">Tổng số suất khám</div></div>
+        <div class="k success"><div class="num">@totalMax</div><div class="lbl">Tổng quota tối đa</div></div>
+        <div class="k warn"><div class="num">@totalBooked</div><div class="lbl">Đã đặt</div></div>
+        <div class="k success"><div class="num">@totalRemain</div><div class="lbl">Còn trống</div></div>
+        <div class="k danger"><div class="num">@fullCount</div><div class="lbl">Đã đầy</div></div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover table-bordered qt-table">
+            <thead>
+                <tr><th style="width:110px;">Ngày</th><th>Khoa</th><th style="width:90px;">Buổi</th><th style="width:80px;" class="text-center">Tối đa</th><th style="width:80px;" class="text-center">Đã đặt</th><th style="width:80px;" class="text-center">Còn</th><th style="width:140px;">Đặt lại</th></tr>
+            </thead>
+            <tbody>
+            @{
+                DateOnly? lastDate = null;
+            }
+            @foreach (var q in Model)
+            {
+                var deptName = q.DepartmentId.HasValue && deptDict.ContainsKey(q.DepartmentId.Value) ? deptDict[q.DepartmentId.Value] : "—";
+                var remain = q.MaxCount - q.BookedCount;
+                var rowClass = remain <= 0 ? "danger" : (remain <= 3 ? "warning" : "");
+                var pct = q.MaxCount > 0 ? (q.BookedCount * 100 / q.MaxCount) : 0;
+                if (lastDate != q.ApptDate)
+                {
+                    <tr class="dept-row"><td colspan="7"><i class="fa fa-calendar"></i> @q.ApptDate.ToString("dddd, dd/MM/yyyy", new System.Globalization.CultureInfo("vi-VN"))</td></tr>
+                    lastDate = q.ApptDate;
+                }
+                <tr class="@rowClass">
+                    <td>@q.ApptDate.ToString("dd/MM/yyyy")</td>
+                    <td><i class="fa fa-hospital-o" style="color:#43aa8b;"></i> @deptName</td>
+                    <td>
+                        @if (q.Session == Constants.SessionMorning)
+                        {
+                            <span class="badge-morning">☀ Sáng</span>
+                        }
+                        else
+                        {
+                            <span class="badge-afternoon">🌙 Chiều</span>
+                        }
+                    </td>
+                    <td class="text-center"><strong>@q.MaxCount</strong></td>
+                    <td class="text-center">@q.BookedCount <small style="color:#6c757d;">(@pct%)</small></td>
+                    <td class="text-center"><strong style="color:@(remain <= 0 ? "#e74c3c" : (remain <= 3 ? "#f39c12" : "#43aa8b"));">@remain</strong></td>
+                    <td>
+                        <form asp-action="SetQuotaMax" method="post" class="form-inline">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="departmentId" value="@q.DepartmentId" />
+                            <input type="hidden" name="date" value="@q.ApptDate.ToString("yyyy-MM-dd")" />
+                            <input type="hidden" name="session" value="@q.Session" />
+                            <input type="number" name="max" value="@q.MaxCount" class="form-control input-sm" style="width:65px" min="0" max="500" />
+                            <button type="submit" class="btn btn-xs btn-primary" title="Lưu"><i class="fa fa-save"></i></button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            @if (!Model.Any())
+            {
+                <tr><td colspan="7" class="text-center text-muted" style="padding:24px;">
+                    <i class="fa fa-info-circle" style="font-size:28px; color:#cfd5dc;"></i><br />
+                    Chưa có quota nào khớp bộ lọc trong khoảng @from.ToString("dd/MM/yyyy") → @to.ToString("dd/MM/yyyy").
+                </td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="panel panel-default">
+        <div class="panel-heading"><strong><i class="fa fa-plus-circle"></i> Đặt suất mới</strong></div>
+        <div class="panel-body">
+            <form asp-action="SetQuotaMax" method="post" class="form-inline">
+                @Html.AntiForgeryToken()
+                <select name="departmentId" class="form-control" required>
+                    <option value="">— Chuyên khoa —</option>
+                    @foreach (var d in depts.OrderBy(x => x.NameL)) { <option value="@d.Id">@d.NameL</option> }
+                </select>
+                <input type="date" name="date" class="form-control" required min="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                <select name="session" class="form-control">
+                    <option value="@Constants.SessionMorning">Sáng</option>
+                    <option value="@Constants.SessionAfternoon">Chiều</option>
+                </select>
+                <input type="number" name="max" value="30" min="1" max="500" class="form-control" style="width:80px" />
+                <button type="submit" class="btn btn-primary"><i class="fa fa-plus"></i> Đặt</button>
+            </form>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,294 @@
+@using WebsiteCore.Business.ViewModels
+@using WebsiteCore.Data.Entities
+@{
+    ViewData["Title"] = "Lịch trực của tôi";
+    var schedules    = ViewBag.Schedules    as List<DoctorSchedule> ?? new();
+    var apptList     = ViewBag.ApptList     as List<AppointmentRow> ?? new();
+    var firstDay     = (DateOnly)ViewBag.CycleFirstDay;
+    var lastDay      = (DateOnly)ViewBag.CycleLastDay;
+    var cycleLabel   = ViewBag.CycleLabel as string ?? firstDay.ToString("MM/yyyy");
+    var prevYm       = ViewBag.PrevYm as string ?? "";
+    var nextYm       = ViewBag.NextYm as string ?? "";
+    var doctorName   = ViewBag.DoctorName as string ?? "";
+    var deptName     = ViewBag.DepartmentName as string;
+    bool hasDocLink  = ViewBag.LinkedDoctorId != null;
+    int apptTotal    = (int)(ViewBag.ApptCountTotal ?? 0);
+    int apptDone     = (int)(ViewBag.ApptCountCompleted ?? 0);
+    int apptPending  = (int)(ViewBag.ApptCountPending ?? 0);
+
+    // Map weekday → label
+    string WdLabel(byte wd) => wd switch {
+        1 => "Chủ Nhật", 2 => "Thứ Hai", 3 => "Thứ Ba", 4 => "Thứ Tư",
+        5 => "Thứ Năm", 6 => "Thứ Sáu", 7 => "Thứ Bảy", _ => $"WD{wd}"
+    };
+    string WdShort(byte wd) => wd switch {
+        1 => "CN", 2 => "T2", 3 => "T3", 4 => "T4",
+        5 => "T5", 6 => "T6", 7 => "T7", _ => $"{wd}"
+    };
+    string SessionLabel(string s) => s == "morning" ? "Buổi sáng" : s == "afternoon" ? "Buổi chiều" : s;
+
+    // Group by weekday để render bảng tuần
+    var byWeekday = schedules.GroupBy(s => s.Weekday).ToDictionary(g => g.Key, g => g.ToList());
+
+    // Tổng số ca/tuần (mỗi entry là 1 ca/tuần lặp lại — bs làm 5-6 ca/tuần)
+    int caWeek = schedules.Count;
+
+    // Tính số ca thực tế trong tháng = caWeek × số tuần phủ trong tháng
+    // Đơn giản hoá: count số ngày trong tháng matching weekday × #ca/weekday
+    int totalCaThang = 0;
+    for (var d = firstDay; d <= lastDay; d = d.AddDays(1))
+    {
+        // DayOfWeek: Sunday=0, Monday=1,... → ánh xạ về DB convention 1=CN..7=T7
+        byte dbWd = (byte)((int)d.DayOfWeek == 0 ? 1 : (int)d.DayOfWeek + 1);
+        if (byWeekday.ContainsKey(dbWd)) totalCaThang += byWeekday[dbWd].Count;
+    }
+}
+
+<style>
+    .lt-wrap { max-width:1280px; margin:0 auto; padding:18px 0 40px; }
+    .lt-hero { background:linear-gradient(135deg,#0a3d62 0%,#1d5688 100%); color:white; padding:18px 24px; border-radius:8px; margin-bottom:18px; box-shadow:0 4px 12px rgba(10,61,98,0.25); }
+    .lt-hero h1 { margin:0; font-size:20px; font-weight:600; }
+    .lt-hero .meta { font-size:13px; opacity:0.92; margin-top:4px; }
+
+    .lt-month-nav { display:flex; align-items:center; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
+    .lt-month-nav .btn-month { background:white; border:1px solid #d0d7de; color:#0a3d62; padding:8px 14px; border-radius:6px; text-decoration:none; font-weight:500; transition:all .15s; }
+    .lt-month-nav .btn-month:hover { background:#0a3d62; color:white; border-color:#0a3d62; }
+    .lt-month-nav .btn-month.disabled { opacity:.4; cursor:not-allowed; pointer-events:none; }
+    .lt-month-nav .month-label { font-weight:700; color:#0a3d62; font-size:18px; padding:0 8px; }
+    .lt-month-nav input[type=month] { border:1px solid #d0d7de; border-radius:6px; padding:6px 10px; }
+    .lt-month-nav .btn-go { background:#43aa8b; color:white; border:none; padding:8px 14px; border-radius:6px; font-weight:600; cursor:pointer; }
+    .lt-month-nav .btn-go:hover { background:#2f7a5e; }
+
+    .kpi-row { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:12px; margin-bottom:18px; }
+    .kpi-mini { background:white; border:1px solid #e5e9ee; border-radius:8px; padding:14px 16px; box-shadow:0 1px 3px rgba(0,0,0,.04); }
+    .kpi-mini .num { font-size:24px; font-weight:700; color:#0a3d62; }
+    .kpi-mini .lbl { font-size:12px; color:#6c757d; margin-top:2px; }
+    .kpi-mini.success .num { color:#43aa8b; }
+    .kpi-mini.warn .num { color:#f39c12; }
+    .kpi-mini.info .num { color:#4d96ff; }
+
+    .week-grid { display:grid; grid-template-columns:90px repeat(7, 1fr); gap:1px; background:#e5e9ee; border:1px solid #e5e9ee; border-radius:8px; overflow:hidden; }
+    .week-grid .cell { background:white; padding:10px; min-height:64px; }
+    .week-grid .h-day { background:#0a3d62; color:white; text-align:center; font-weight:600; padding:10px 6px; }
+    .week-grid .h-day .day-short { font-size:14px; }
+    .week-grid .h-day .day-full { font-size:11px; opacity:.85; }
+    .week-grid .h-session { background:#f7f9fc; font-weight:600; color:#0a3d62; display:flex; align-items:center; justify-content:center; }
+    .week-grid .ca-block { background:linear-gradient(135deg,#43aa8b 0%,#2f7a5e 100%); color:white; border-radius:6px; padding:10px; text-align:center; box-shadow:0 2px 6px rgba(67,170,139,.25); }
+    .week-grid .ca-block .room { font-weight:700; font-size:14px; }
+    .week-grid .ca-block .quota { font-size:11px; opacity:.92; margin-top:2px; }
+    .week-grid .ca-block.afternoon { background:linear-gradient(135deg,#4d96ff 0%,#3673c9 100%); box-shadow:0 2px 6px rgba(77,150,255,.25); }
+    .week-grid .ca-empty { color:#cfd5dc; text-align:center; font-size:12px; padding-top:14px; }
+
+    .ds-card { background:white; border:1px solid #e5e9ee; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,.04); margin-bottom:16px; overflow:hidden; }
+    .ds-card .head { padding:12px 16px; background:#f7f9fc; border-bottom:1px solid #e5e9ee; font-weight:600; color:#0a3d62; }
+    .ds-card .body { padding:14px; }
+
+    .ds-table { width:100%; border-collapse:collapse; }
+    .ds-table th, .ds-table td { padding:9px 10px; border-bottom:1px solid #f0f3f7; text-align:left; font-size:13px; }
+    .ds-table th { background:#f7f9fc; color:#0a3d62; font-weight:600; }
+    .ds-table tbody tr:hover { background:#f9fbfd; }
+    .ds-table .badge-morning { background:#fff5e0; color:#b87908; padding:2px 8px; border-radius:10px; font-weight:600; font-size:11px; }
+    .ds-table .badge-afternoon { background:#e3f2fd; color:#1d5688; padding:2px 8px; border-radius:10px; font-weight:600; font-size:11px; }
+
+    .alert-warn { background:#fff5e0; color:#b87908; padding:12px 16px; border-radius:6px; border-left:4px solid #f39c12; margin-bottom:14px; }
+
+    @@media print {
+        .lt-month-nav, .ds-card.print-hide { display:none; }
+        .week-grid .ca-block { background:#0a3d62 !important; color:white !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+        .week-grid .ca-block.afternoon { background:#4d96ff !important; }
+    }
+</style>
+
+<div class="lt-wrap">
+    <div class="lt-hero">
+        <h1><i class="fa fa-calendar-check-o"></i> Lịch trực của BS. @doctorName</h1>
+        <div class="meta">
+            <i class="fa fa-calendar"></i> Chu kỳ tháng @cycleLabel — từ @firstDay.ToString("dd/MM/yyyy") đến @lastDay.ToString("dd/MM/yyyy")
+            @if (!string.IsNullOrEmpty(deptName))
+            {
+                <span> · <i class="fa fa-hospital-o"></i> @deptName</span>
+            }
+        </div>
+    </div>
+
+    @if (!hasDocLink)
+    {
+        <div class="alert-warn">
+            <i class="fa fa-warning"></i> Tài khoản chưa được liên kết với Doctor — không có lịch trực để hiển thị.
+            Liên hệ Quản trị viên gán <code>doctor_id</code> trong <strong>AdminCP / Users</strong>.
+        </div>
+    }
+
+    <div class="lt-month-nav">
+        <a href="/bac-si-portal/lich-truc?ym=@prevYm" class="btn-month"><i class="fa fa-chevron-left"></i> @prevYm</a>
+        <span class="month-label">Tháng @cycleLabel</span>
+        <a href="/bac-si-portal/lich-truc?ym=@nextYm" class="btn-month">@nextYm <i class="fa fa-chevron-right"></i></a>
+        <span style="flex:1;"></span>
+        <form method="get" action="/bac-si-portal/lich-truc" style="display:flex; gap:6px; align-items:center;">
+            <label style="font-size:13px; color:#6c757d;">Chọn tháng:</label>
+            <input type="month" name="ym" value="@firstDay.ToString("yyyy-MM")" min="2024-01" max="2030-12" />
+            <button type="submit" class="btn-go"><i class="fa fa-search"></i> Xem</button>
+        </form>
+        <button type="button" class="btn-month" onclick="window.print()"><i class="fa fa-print"></i> In</button>
+    </div>
+
+    <div class="kpi-row">
+        <div class="kpi-mini">
+            <div class="num">@schedules.Count</div>
+            <div class="lbl">Ca cố định / tuần</div>
+        </div>
+        <div class="kpi-mini info">
+            <div class="num">@totalCaThang</div>
+            <div class="lbl">Tổng ca trong tháng</div>
+        </div>
+        <div class="kpi-mini">
+            <div class="num">@apptTotal</div>
+            <div class="lbl">Bệnh nhân tháng này</div>
+        </div>
+        <div class="kpi-mini success">
+            <div class="num">@apptDone</div>
+            <div class="lbl">Đã hoàn tất</div>
+        </div>
+        <div class="kpi-mini warn">
+            <div class="num">@apptPending</div>
+            <div class="lbl">Chờ duyệt</div>
+        </div>
+    </div>
+
+    @if (schedules.Count == 0)
+    {
+        <div class="ds-card">
+            <div class="head"><i class="fa fa-info-circle"></i> Chưa có lịch trực cho tháng @cycleLabel</div>
+            <div class="body" style="text-align:center; padding:36px;">
+                <i class="fa fa-calendar-times-o" style="font-size:48px; color:#cfd5dc;"></i>
+                <p style="margin-top:14px; color:#6c757d;">Bạn chưa được phân ca cho chu kỳ này.<br />
+                Liên hệ Quản trị viên hoặc Trưởng khoa để được phân lịch.</p>
+            </div>
+        </div>
+    }
+    else
+    {
+        @* === LƯỚI TUẦN === *@
+        <div class="ds-card">
+            <div class="head"><i class="fa fa-th"></i> Lịch trực theo tuần (lặp lại trong tháng)</div>
+            <div class="body">
+                <div class="week-grid">
+                    @* Header: Buổi | T2 T3 T4 T5 T6 T7 CN *@
+                    <div class="cell h-session">Buổi</div>
+                    @{
+                        byte[] orderedWd = new byte[] { 2, 3, 4, 5, 6, 7, 1 };
+                    }
+                    @foreach (byte wd in orderedWd)
+                    {
+                        <div class="cell h-day">
+                            <div class="day-short">@WdShort(wd)</div>
+                            <div class="day-full">@WdLabel(wd)</div>
+                        </div>
+                    }
+
+                    @* Hàng sáng *@
+                    <div class="cell h-session">Sáng</div>
+                    @foreach (byte wd in orderedWd)
+                    {
+                        var slot = byWeekday.ContainsKey(wd)
+                            ? byWeekday[wd].FirstOrDefault(s => s.Session == "morning")
+                            : null;
+                        if (slot != null)
+                        {
+                            <div class="cell">
+                                <div class="ca-block">
+                                    <div class="room"><i class="fa fa-door-open"></i> @(slot.Room ?? "-")</div>
+                                    <div class="quota">tối đa @(slot.MaxPatients ?? 0) BN</div>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="cell"><div class="ca-empty">—</div></div>
+                        }
+                    }
+
+                    @* Hàng chiều *@
+                    <div class="cell h-session">Chiều</div>
+                    @foreach (byte wd in orderedWd)
+                    {
+                        var slot = byWeekday.ContainsKey(wd)
+                            ? byWeekday[wd].FirstOrDefault(s => s.Session == "afternoon")
+                            : null;
+                        if (slot != null)
+                        {
+                            <div class="cell">
+                                <div class="ca-block afternoon">
+                                    <div class="room"><i class="fa fa-door-open"></i> @(slot.Room ?? "-")</div>
+                                    <div class="quota">tối đa @(slot.MaxPatients ?? 0) BN</div>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="cell"><div class="ca-empty">—</div></div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+
+        @* === BẢNG CHI TIẾT === *@
+        <div class="ds-card print-hide">
+            <div class="head"><i class="fa fa-list"></i> Chi tiết @schedules.Count ca cố định / tuần</div>
+            <div class="body" style="padding:0;">
+                <table class="ds-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Ngày</th>
+                            <th>Buổi</th>
+                            <th>Phòng</th>
+                            <th>Quota</th>
+                            <th>Hiệu lực</th>
+                            <th>Ghi chú</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{ int idx = 1; }
+                        @foreach (var s in schedules)
+                        {
+                            <tr>
+                                <td>@idx</td>
+                                <td><strong>@WdLabel(s.Weekday)</strong></td>
+                                <td>
+                                    @if (s.Session == "morning")
+                                    {
+                                        <span class="badge-morning">☀ @SessionLabel(s.Session)</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge-afternoon">🌙 @SessionLabel(s.Session)</span>
+                                    }
+                                </td>
+                                <td><i class="fa fa-door-open"></i> @(s.Room ?? "-")</td>
+                                <td>@(s.MaxPatients ?? 0) BN</td>
+                                <td>@s.ValidFrom.ToString("dd/MM/yyyy") → @(s.ValidTo?.ToString("dd/MM/yyyy") ?? "—")</td>
+                                <td><small style="color:#6c757d;">@(s.Note ?? "")</small></td>
+                            </tr>
+                            idx++;
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+
+    <div class="ds-card print-hide">
+        <div class="head"><i class="fa fa-info-circle"></i> Hướng dẫn</div>
+        <div class="body" style="font-size:13px; line-height:1.7;">
+            <ul style="padding-left:18px; margin:0;">
+                <li>Lịch trực được phân theo <strong>chu kỳ 1 tháng</strong> bởi Quản trị viên / Trưởng khoa.</li>
+                <li>Lưới ở trên là lịch <em>cố định lặp lại</em> trong tuần — áp dụng cho tất cả các tuần của tháng.</li>
+                <li>Bấm <strong>← →</strong> hoặc chọn tháng từ ô <em>Chọn tháng</em> để xem chu kỳ khác.</li>
+                <li>Bấm <strong>In</strong> để in trực tiếp lịch tháng này (chỉ hiển thị lưới tuần).</li>
+                <li>Nếu thiếu ca hoặc cần đổi lịch, <a href="/bac-si-portal/yeu-cau-doi-lich"><strong>liên hệ Quản trị viên</strong></a> để gửi yêu cầu.</li>
+            </ul>
+        </div>
+    </div>
+</div>

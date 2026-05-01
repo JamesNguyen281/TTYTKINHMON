@@ -1,0 +1,37 @@
+@model List<WebsiteCore.Data.Entities.AuditSystem>
+@{
+    ViewData["Title"] = "Nhật ký hệ thống";
+    var q = ViewBag.Q as string;
+}
+
+<h2 style="color:#0a3d62;"><i class="fa fa-history"></i> Nhật ký hệ thống</h2>
+
+<form method="get" action="/AdminCP/AuditSystems" style="margin: 12px 0;">
+    <div class="row">
+        <div class="col-md-6">
+            <input type="text" name="q" value="@q" class="form-control" placeholder="Tìm theo action description / detail (vd: 'SAI CỔNG')" />
+        </div>
+        <div class="col-md-2">
+            <button class="btn btn-primary" type="submit"><i class="fa fa-search"></i> Tìm</button>
+        </div>
+    </div>
+</form>
+
+<div class="table-responsive">
+    <table class="table table-hover table-bordered table-condensed" style="background:white; font-size:13px;">
+        <thead style="background:#0a3d62; color:white;">
+            <tr><th>Thời gian</th><th>Action</th><th>Detail</th></tr>
+        </thead>
+        <tbody>
+        @foreach (var a in Model)
+        {
+            <tr class="@(a.ActionDescription?.Contains("SAI CỔNG") == true ? "danger" : "")">
+                <td><small>@a.ActionDate?.ToString("dd/MM HH:mm:ss")</small></td>
+                <td><strong>@a.ActionDescription</strong></td>
+                <td>@a.ActionDetail</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+<p class="text-muted">Hiển thị @Model.Count dòng gần nhất.</p>

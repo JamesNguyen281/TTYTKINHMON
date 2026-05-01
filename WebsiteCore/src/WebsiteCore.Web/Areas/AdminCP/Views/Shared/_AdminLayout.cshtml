@@ -1,0 +1,227 @@
+﻿@{
+    var u = ViewBag.CurrentUser as WebsiteCore.Business.ViewModels.LoggedInUser;
+    var pageTitle = ViewData["Title"] as string ?? "AdminCP";
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <title>@pageTitle — AdminCP — TTYT Kinh Môn</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex,nofollow" />
+    <meta name="theme-color" content="#0a3d62" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/client/images/logo-kinhmon-32.png" />
+    <link rel="icon" type="image/png" sizes="64x64" href="/assets/client/images/logo-kinhmon-64.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/client/images/logo-kinhmon-180.png" />
+    <link rel="shortcut icon" type="image/png" href="/assets/client/images/logo-kinhmon-64.png" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+    @* ACE Admin theme — match old web look *@
+    <link href="~/assets/admin/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="~/assets/client/css/font-awesome.min.css" rel="stylesheet" />
+    <link href="~/assets/admin/css/ace.min.css" rel="stylesheet" />
+    <link href="~/assets/admin/css/ace-custom.css" rel="stylesheet" />
+    <link href="~/assets/admin/css/ace-part2.min.css" rel="stylesheet" />
+    <link href="~/assets/admin/css/ace-skins.min.css" rel="stylesheet" />
+    <link href="~/assets/admin/css/custom.css" rel="stylesheet" />
+    <link href="~/assets/client/css/custom-ux.css?v=5" rel="stylesheet" />
+    <style>
+        :root {
+            --admin-primary: #0a3d62;
+            --admin-primary-dark: #06283d;
+            --admin-primary-soft: #e3eaf3;
+            --admin-bg: #f0f4f8;
+            --admin-side-bg: #f5f7fa;
+            --admin-border: #e0e6ed;
+            --admin-text: #2c3e50;
+            --admin-muted: #6c757d;
+        }
+        html, body { margin: 0; padding: 0; }
+        body { font-family: 'Be Vietnam Pro', 'Open Sans', sans-serif; color: var(--admin-text); background: var(--admin-bg); padding-top: 56px; }
+        a { color: var(--admin-primary); }
+        a:hover, a:focus { color: var(--admin-primary-dark); }
+
+        /* ==== NAVBAR (fixed top) ==== */
+        #navbar.navbar { position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+            background: linear-gradient(135deg, var(--admin-primary) 0%, var(--admin-primary-dark) 100%) !important;
+            border-bottom: 0; height: 56px; min-height: 56px; margin: 0; }
+        .navbar .navbar-brand { color: white !important; font-weight: 700; padding: 14px 16px; }
+        .navbar .nav-user-photo { width: 38px; height: 38px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.4); }
+        .navbar .user-info { color: rgba(255,255,255,0.95); }
+        .navbar .user-info small { color: rgba(255,255,255,0.7); }
+        /* Top-right buttons: transparent overlay đồng bộ navy theme — KHÔNG dùng .light-blue (bright cyan của ACE) */
+        .navbar .ace-nav > li.km-nav-item { background: transparent !important; border-left: 1px solid rgba(255,255,255,0.08); }
+        .navbar .ace-nav > li.km-nav-item:hover,
+        .navbar .ace-nav > li.km-nav-item.open { background: rgba(255,255,255,0.08) !important; }
+        .navbar .ace-nav > li.km-nav-item > a { color: white !important; padding: 0 16px !important; height: 56px; line-height: 56px; }
+        .navbar .ace-nav > li.km-nav-item > a > .ace-icon { color: rgba(255,255,255,0.85) !important; font-size: 16px; }
+
+        /* ==== MAIN CONTAINER ==== */
+        .main-container { position: relative; min-height: calc(100vh - 56px); }
+
+        /* ==== SIDEBAR (absolute on desktop) — override ACE skin tối ==== */
+        #sidebar, #sidebar.sidebar, body.no-skin #sidebar, body.no-skin #sidebar.sidebar,
+        .no-skin .sidebar, .sidebar.responsive {
+            background: #f5f7fa !important; color: #2c3e50 !important;
+        }
+        /* ==== SIDEBAR — chỉ override màu, mọi behavior + size + transitions để ACE Admin lo ====
+           font-weight giữ ACE default để tránh layout shift / text flash khi toggle. */
+        .sidebar .nav-list > li > a { color: var(--admin-primary); }
+        .sidebar .nav-list > li > a > .menu-icon { color: var(--admin-primary); }
+        .sidebar .nav-list > li.active > a { color: var(--admin-primary-dark); }
+        /* Đảm bảo MỌI icon (kể cả active item Tạo mã QR) visible + căn giữa trong .menu-min */
+        .sidebar.menu-min .nav-list > li > a > .menu-icon {
+            display: inline-block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            color: var(--admin-primary) !important;
+            width: 44px !important;
+            text-align: center !important;
+            font-size: 18px !important;
+        }
+        /* Badge "30" trên Hộp thư góp ý: float:right phá icon center khi .menu-min — ẩn badge collapsed mode */
+        .sidebar.menu-min .nav-list > li > a > .badge { display: none !important; }
+        /* Main-content + footer: ACE responsive đã tự handle margin-left khi collapse */
+        .main-content { background: var(--admin-bg); min-height: calc(100vh - 56px); padding-bottom: 60px; }
+        .footer { background: white; border-top: 1px solid var(--admin-border); text-align: center; padding: 14px; }
+
+        @@media (max-width: 768px) {
+            #sidebar.sidebar { position: fixed; left: -220px; top: 56px; bottom: 0; transition: left 0.2s; z-index: 1000; }
+            #sidebar.sidebar.open { left: 0; box-shadow: 4px 0 16px rgba(0,0,0,0.2); }
+            .main-content, .footer { margin-left: 0 !important; }
+        }
+
+        /* ==== CONTENT ==== */
+        .breadcrumbs { background: white; padding: 10px 18px; border-bottom: 1px solid var(--admin-border); box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+        .breadcrumbs .breadcrumb { background: transparent; margin: 0; padding: 0; }
+        .breadcrumbs .breadcrumb > li + li:before { content: "›"; color: #adb5bd; padding: 0 6px; }
+        .breadcrumbs .breadcrumb a { color: var(--admin-primary); text-decoration: none; }
+        .breadcrumbs .breadcrumb .active { color: var(--admin-muted); }
+        .page-header { border-bottom: 2px solid var(--admin-primary); margin: 0 0 18px; padding: 12px 0; }
+        .page-header h1, .page-header h2 { color: var(--admin-primary); margin: 0; font-size: 22px; font-weight: 600; }
+
+        /* ==== UNIFIED PAGE-LEVEL STYLES ==== */
+        .admin-page-title { color: var(--admin-primary); margin: 0 0 14px; font-size: 22px; font-weight: 600; }
+        .admin-page-title .fa { margin-right: 8px; }
+        .admin-toolbar { background: white; border: 1px solid var(--admin-border); border-radius: 4px; padding: 12px 14px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.03); }
+        .admin-card { background: white; border: 1px solid var(--admin-border); border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.03); margin-bottom: 14px; }
+        .admin-card-body { padding: 14px; }
+        .table { background: white; }
+        .table > thead > tr > th { background: var(--admin-primary); color: white; border-bottom: 0; font-weight: 600; vertical-align: middle; }
+        .table-bordered { border-color: var(--admin-border); }
+        .table-bordered > thead > tr > th, .table-bordered > tbody > tr > td { border-color: var(--admin-border); }
+        .table-hover > tbody > tr:hover { background: #f5f9fc; }
+        .label-success { background: #1abc9c; }
+        .label-default { background: #95a5a6; }
+        .label-info { background: #3498db; }
+        .label-warning { background: #f39c12; }
+        .label-danger { background: #e74c3c; }
+        .btn-primary { background: var(--admin-primary); border-color: var(--admin-primary); }
+        .btn-primary:hover, .btn-primary:focus, .btn-primary:active { background: var(--admin-primary-dark) !important; border-color: var(--admin-primary-dark) !important; }
+        .alert { border-radius: 4px; border: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .alert .fa { margin-right: 6px; }
+        .form-control:focus { border-color: var(--admin-primary); box-shadow: 0 0 0 2px rgba(10,61,98,0.15); }
+
+        /* Stat cards */
+        .stat-card { background: white; border: 1px solid var(--admin-border); border-radius: 6px; padding: 18px; text-align: center; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.04); margin-bottom: 14px; }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(10,61,98,0.12); border-color: var(--admin-primary); }
+        .stat-card .stat-icon { font-size: 32px; color: var(--admin-primary); margin-bottom: 8px; display: block; }
+        .stat-card.stat-success .stat-icon { color: #1abc9c; }
+        .stat-card.stat-warning .stat-icon { color: #f39c12; }
+        .stat-card.stat-danger .stat-icon { color: #e74c3c; }
+        .stat-card .stat-value { font-size: 28px; font-weight: 700; color: var(--admin-primary); line-height: 1.2; }
+        .stat-card .stat-label { color: var(--admin-muted); font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* ==== Page-size bar (dùng cho mọi list page) ==== */
+        .pagebar { display: flex; justify-content: space-between; align-items: center; gap: 12px;
+            background: white; border: 1px solid var(--admin-border); border-radius: 4px; padding: 8px 12px; margin: 10px 0;
+            font-size: 13px; flex-wrap: wrap; }
+        .pagebar-left { display: flex; align-items: center; gap: 8px; }
+        .pagebar-left .pagebar-size { width: 80px; display: inline-block; height: 28px; padding: 2px 6px; }
+        .pagebar-right { display: flex; align-items: center; gap: 4px; }
+        .pagebar-cur { padding: 0 8px; color: var(--admin-text); }
+        .pagebar .btn.disabled { pointer-events: none; opacity: 0.4; }
+
+        /* ==== Scroll-area cho table list — giữ footer luôn visible ==== */
+        .list-scroll { max-height: calc(100vh - 290px); overflow-y: auto; overflow-x: auto;
+            background: white; border: 1px solid var(--admin-border); border-radius: 4px; }
+        .list-scroll table { margin: 0; }
+        .list-scroll thead th { position: sticky; top: 0; z-index: 5;
+            background: var(--admin-primary) !important; color: white !important; }
+    </style>
+    <script src="~/assets/admin/js/ace-extra.min.js"></script>
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body class="no-skin">
+    <div id="navbar" class="navbar navbar-default">
+        <script type="text/javascript">try { ace.settings.check('navbar', 'fixed') } catch (e) { }</script>
+        <partial name="_AdminHeader" />
+    </div>
+    <partial name="_NotificationBanner" />
+
+    <div class="main-container" id="main-container">
+        <script type="text/javascript">try { ace.settings.check('main-container', 'fixed') } catch (e) { }</script>
+        <div id="sidebar" class="sidebar responsive">
+            <partial name="_AdminSideBar" />
+        </div>
+
+        <div class="main-content">
+            <div class="main-content-inner">
+                <div class="breadcrumbs" id="breadcrumbs">
+                    <ul class="breadcrumb">
+                        <li><i class="ace-icon fa fa-home home-icon"></i><a href="/AdminCP/Default">Dashboard</a></li>
+                        <li class="active">@pageTitle</li>
+                    </ul>
+                </div>
+
+                <div class="page-content" style="padding:16px;">
+                    @if (TempData["Success"] != null)
+                    {
+                        <div class="alert alert-success">
+                            <i class="fa fa-check-circle"></i> @TempData["Success"]
+                        </div>
+                    }
+                    @if (TempData["Error"] != null)
+                    {
+                        <div class="alert alert-danger">
+                            <i class="fa fa-exclamation-circle"></i> @TempData["Error"]
+                        </div>
+                    }
+                    @RenderBody()
+                </div>
+            </div>
+        </div>
+
+        <div class="footer" style="background:white; border-top:1px solid #e0e6ed; text-align:center; padding:14px;">
+            <div class="footer-inner">
+                <div class="footer-content">
+                    <span class="bigger-120">
+                        <span style="color:#0a3d62; font-weight:700;">Copyright: Nguyễn Trường Anh</span>
+                        @DateTime.Now.Year
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="~/assets/admin/js/jquery.min.2.1.0.js"></script>
+    <script src="~/assets/admin/js/bootstrap.min.js"></script>
+    <script src="~/assets/admin/js/ace-elements.min.js"></script>
+    <script src="~/assets/admin/js/ace.min.js"></script>
+    <script src="~/assets/client/js/password-eye.js?v=2"></script>
+    @* ACE Admin (ace.min.js) tự handle 100%:
+       - Toggle #sidebar-collapse: bind tự động qua ace.click_event trên ".sidebar-collapse" → toggle .menu-min
+       - Submenu open/close: ace.min.js bind li.hsub > a.dropdown-toggle
+       - Hover popout khi .menu-min: ACE CSS xử lý qua :hover selector
+       - Persist state: ACE dùng localStorage qua ace.settings.set/.get
+       ACE Admin theme tự bind — không cần custom JS. *@
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
