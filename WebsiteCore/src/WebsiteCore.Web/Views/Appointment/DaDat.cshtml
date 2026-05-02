@@ -1,3 +1,4 @@
+@using WebsiteCore.Business
 @using WebsiteCore.Business.ViewModels
 @using WebsiteCore.Data.Entities
 @model AppointmentRow
@@ -102,8 +103,13 @@
                         <strong>2.</strong> Sau khi được duyệt, bạn sẽ nhận được <strong>Mã khám</strong>
                         — vui lòng đọc cho lễ tân tại quầy đăng ký khi đến khám.
                     </p>
+                    <p>
+                        <strong>3.</strong> Vui lòng đến phòng khám
+                        <strong>trước @Constants.ArrivalLeadTimeMinutes phút</strong>
+                        để làm thủ tục check-in và lấy số chờ.
+                    </p>
                     <p style="margin-bottom:0;">
-                        <strong>3.</strong> Cần tra cứu lại lịch hoặc thay đổi thông tin? Gọi số
+                        <strong>4.</strong> Cần tra cứu lại lịch hoặc thay đổi thông tin? Gọi số
                         <a href="tel:@phoneOff" style="font-weight:600;">@phoneOff</a>
                         (giờ hành chính) hoặc hotline 24/7
                         <a href="tel:@hotline" style="font-weight:600;">@hotline</a>

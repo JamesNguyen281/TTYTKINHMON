@@ -45,6 +45,12 @@ public static class Constants
     // Max ngày đặt lịch trước (block lịch quá xa)
     public const int MaxDaysAhead = 30;
 
+    /// <summary>
+    /// Số phút BN cần đến phòng khám TRƯỚC giờ hẹn để làm thủ tục check-in.
+    /// Hiển thị trên trang xác nhận đặt lịch + lịch của tôi.
+    /// </summary>
+    public const int ArrivalLeadTimeMinutes = 15;
+
     /// <summary>Label tiếng Việt cho trạng thái lịch khám — dùng đồng bộ ở list/detail/portal.</summary>
     public static string ApptStatusLabel(string? status) => status switch
     {

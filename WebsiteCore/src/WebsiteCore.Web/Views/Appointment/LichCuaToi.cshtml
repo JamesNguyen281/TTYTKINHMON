@@ -1,8 +1,19 @@
+@using WebsiteCore.Business
 @model List<WebsiteCore.Business.ViewModels.AppointmentRow>
 @{ ViewData["Title"] = "Lịch khám của tôi"; }
 
 <div class="container" style="padding-top:20px;">
     <h2 style="color:#0a3d62;"><i class="fa fa-calendar"></i> Lịch khám của tôi</h2>
+
+    @if (Model.Any(a => a.Status == Constants.ApptConfirmed && !a.CheckedIn))
+    {
+        <div class="alert alert-warning" style="margin-top:8px;">
+            <i class="fa fa-info-circle"></i>
+            Lịch đã xác nhận: vui lòng đến phòng khám
+            <strong>trước @Constants.ArrivalLeadTimeMinutes phút</strong>
+            so với giờ hẹn để làm thủ tục check-in.
+        </div>
+    }
 
     @if (TempData["Success"] != null)
     {
