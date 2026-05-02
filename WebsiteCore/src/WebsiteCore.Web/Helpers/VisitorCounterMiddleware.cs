@@ -2,9 +2,8 @@ namespace WebsiteCore.Web.Helpers;
 
 /// <summary>
 /// Middleware đếm lượt truy cập theo session.
-/// Mỗi session mới (không có flag VisitedFlag) = 1 lượt; tăng Visited + Today + Online.
-/// Khi session expire, ASP.NET không có hook chính thức nên giảm Online qua periodic check
-/// hoặc dùng IHostedService — tạm thời chỉ tăng (như nhiều site CMS đời cũ).
+/// Mỗi request page (không phải static asset) sẽ Touch session vào sliding window 15'.
+/// Session mới (chưa có VisitedFlag) thêm 1 vào Today + Total file-backed.
 /// </summary>
 public class VisitorCounterMiddleware
 {
@@ -13,7 +12,6 @@ public class VisitorCounterMiddleware
 
     public async Task InvokeAsync(HttpContext context, VisitorCounter counter)
     {
-        // Bỏ qua các request static + admin
         var path = context.Request.Path.Value ?? "";
         var isAsset = path.StartsWith("/assets/", StringComparison.OrdinalIgnoreCase)
                    || path.StartsWith("/lib/",    StringComparison.OrdinalIgnoreCase)
@@ -25,10 +23,12 @@ public class VisitorCounterMiddleware
 
         if (!isAsset && context.Session.IsAvailable)
         {
+            counter.Touch(context.Session.Id);
+
             var seen = context.Session.GetString("VisitedFlag");
             if (string.IsNullOrEmpty(seen))
             {
-                counter.OnSessionStart();
+                counter.OnNewSession();
                 context.Session.SetString("VisitedFlag", "1");
             }
         }

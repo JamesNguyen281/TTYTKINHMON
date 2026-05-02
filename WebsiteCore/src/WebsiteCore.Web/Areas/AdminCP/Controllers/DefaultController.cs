@@ -77,12 +77,12 @@ public class DefaultController : BaseController
                     System.IO.File.WriteAllText(Path.Combine(dir, "Count_Visited.txt"), "0");
                     break;
                 case "online":
-                    System.IO.File.WriteAllText(Path.Combine(dir, "Count_Access.txt"), "0");
+                    _counter.ResetOnline();
                     break;
                 case "all":
                     System.IO.File.WriteAllText(Path.Combine(dir, "Count_Vstoday.txt"), DateTime.Now.ToString("dd/MM/yyyy") + "0");
                     System.IO.File.WriteAllText(Path.Combine(dir, "Count_Visited.txt"), "0");
-                    System.IO.File.WriteAllText(Path.Combine(dir, "Count_Access.txt"), "0");
+                    _counter.ResetOnline();
                     break;
             }
             TempData["Success"] = "Đã reset counter.";

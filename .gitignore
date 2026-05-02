@@ -15,6 +15,10 @@ docs/04_TestPlan.md
 docs/05_TestCases.md
 docs/06_TestReport.md
 docs/07_HuongDanChayTest.md
+docs/08_SlideOutline.md
+docs/09_Abstract.md
+docs/10_HuongDanCloudflare.md
+docs/11_DemoVideoScript.md
 
 bin/
 obj/
@@ -97,3 +101,5 @@ WebsiteCore/src/WebsiteCore.Web/wwwroot/upload/
 *.swo
 *~
 .history/
+
+.fake
