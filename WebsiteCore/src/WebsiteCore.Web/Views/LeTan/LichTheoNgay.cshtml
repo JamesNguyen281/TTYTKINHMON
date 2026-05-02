@@ -1,0 +1,141 @@
+@model List<WebsiteCore.Business.ViewModels.AppointmentRow>
+@{
+    ViewData["Title"] = ViewBag.Title as string ?? "Lịch theo ngày";
+    var picked = (DateTime)ViewBag.PickedDate;
+    var minDate = (DateTime)ViewBag.MinDate;
+    var maxDate = (DateTime)ViewBag.MaxDate;
+    var isToday = (bool)ViewBag.IsToday;
+    int total      = ViewBag.TotalCount      ?? 0;
+    int pending    = ViewBag.PendingCount    ?? 0;
+    int confirmed  = ViewBag.ConfirmedCount  ?? 0;
+    int checkedIn  = ViewBag.CheckedInCount  ?? 0;
+    int completed  = ViewBag.CompletedCount  ?? 0;
+    int cancelled  = ViewBag.CancelledCount  ?? 0;
+}
+
+<div class="container" style="padding-top:24px;">
+    <h2 style="color:#0a3d62;">
+        <i class="fa fa-calendar"></i> Lịch ngày
+        <strong>@picked.ToString("dd/MM/yyyy")</strong>
+        @if (isToday) { <span class="label label-info">Hôm nay</span> }
+    </h2>
+    <p class="text-muted">
+        Hiển thị mọi lịch của ngày được chọn (mọi trạng thái) — kèm chỉ báo check-in.
+        Có thể xem trong khoảng <strong>@minDate.ToString("dd/MM/yyyy")</strong> đến <strong>@maxDate.ToString("dd/MM/yyyy")</strong>.
+    </p>
+
+    <div class="card shadow-sm" style="background:white; padding:16px; margin:16px 0; border:1px solid #e2e8f0; border-radius:6px;">
+        <form method="get" action="/le-tan/lich-theo-ngay" class="form-inline">
+            <div class="form-group" style="margin-right:8px;">
+                <label for="date" style="margin-right:8px;">Chọn ngày:</label>
+                <input type="date" id="date" name="date"
+                       value="@picked.ToString("yyyy-MM-dd")"
+                       min="@minDate.ToString("yyyy-MM-dd")"
+                       max="@maxDate.ToString("yyyy-MM-dd")"
+                       class="form-control" style="width:200px;" />
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="fa fa-eye"></i> Xem</button>
+            <a href="/le-tan/lich-theo-ngay" class="btn btn-default">
+                <i class="fa fa-calendar-check-o"></i> Hôm nay
+            </a>
+            <a href="/le-tan" class="btn btn-default pull-right">← Tổng quan</a>
+        </form>
+    </div>
+
+    <div class="row" style="margin-bottom:16px;">
+        <div class="col-md-2 col-sm-4 col-xs-6"><div class="stat-card stat-total"     style="background:#fff; border:1px solid #e2e8f0; border-radius:6px; padding:14px; text-align:center;">      <div style="font-size:24px; font-weight:700; color:#0a3d62;">@total</div>     <div class="text-muted small">Tổng lịch</div></div></div>
+        <div class="col-md-2 col-sm-4 col-xs-6"><div class="stat-card stat-pending"   style="background:#fff8e1; border:1px solid #ffe082; border-radius:6px; padding:14px; text-align:center;"><div style="font-size:24px; font-weight:700; color:#f57c00;">@pending</div>   <div class="text-muted small">Chờ duyệt</div></div></div>
+        <div class="col-md-2 col-sm-4 col-xs-6"><div class="stat-card stat-confirmed" style="background:#e3f2fd; border:1px solid #90caf9; border-radius:6px; padding:14px; text-align:center;"><div style="font-size:24px; font-weight:700; color:#1976d2;">@confirmed</div> <div class="text-muted small">Đã duyệt</div></div></div>
+        <div class="col-md-2 col-sm-4 col-xs-6"><div class="stat-card stat-checkin"   style="background:#e8f5e9; border:1px solid #a5d6a7; border-radius:6px; padding:14px; text-align:center;"><div style="font-size:24px; font-weight:700; color:#2e7d32;">@checkedIn</div> <div class="text-muted small">Đã check-in</div></div></div>
+        <div class="col-md-2 col-sm-4 col-xs-6"><div class="stat-card stat-completed" style="background:#ede7f6; border:1px solid #b39ddb; border-radius:6px; padding:14px; text-align:center;"><div style="font-size:24px; font-weight:700; color:#5e35b1;">@completed</div> <div class="text-muted small">Đã khám</div></div></div>
+        <div class="col-md-2 col-sm-4 col-xs-6"><div class="stat-card stat-cancelled" style="background:#fafafa; border:1px solid #cfd8dc; border-radius:6px; padding:14px; text-align:center;"><div style="font-size:24px; font-weight:700; color:#757575;">@cancelled</div> <div class="text-muted small">Huỷ/Từ chối</div></div></div>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">
+            <i class="fa fa-info-circle"></i>
+            Ngày <strong>@picked.ToString("dd/MM/yyyy")</strong> không có lịch khám nào.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover table-bordered" style="background:white;">
+                <thead style="background:#0a3d62; color:white;">
+                    <tr>
+                        <th>Buổi</th>
+                        <th>Bệnh nhân</th>
+                        <th>SĐT</th>
+                        <th>Khoa</th>
+                        <th>Trạng thái</th>
+                        <th>Mã khám</th>
+                        <th>Check-in</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var a in Model)
+                {
+                    var statusBadge = a.Status switch
+                    {
+                        "pending"     => ("warning", "fa-clock-o",        "Chờ duyệt"),
+                        "confirmed"   => ("success", "fa-check",          "Đã duyệt"),
+                        "rescheduled" => ("info",    "fa-refresh",        "Đề nghị đổi"),
+                        "rejected"    => ("danger",  "fa-times",          "Từ chối"),
+                        "cancelled"   => ("default", "fa-ban",            "Đã huỷ"),
+                        "completed"   => ("primary", "fa-stethoscope",    "Đã khám"),
+                        _             => ("default", "fa-question",       a.Status ?? "?")
+                    };
+                    var rowStyle = a.Status switch
+                    {
+                        "cancelled" => "opacity:0.55;",
+                        "rejected"  => "opacity:0.55;",
+                        _           => ""
+                    };
+                    <tr style="@rowStyle">
+                        <td><strong>@(a.Session == "morning" ? "Sáng" : "Chiều")</strong></td>
+                        <td>@a.PatientName</td>
+                        <td><a href="tel:@a.PatientPhone">@a.PatientPhone</a></td>
+                        <td>@a.DepartmentName</td>
+                        <td>
+                            <span class="label label-@statusBadge.Item1">
+                                <i class="fa @statusBadge.Item2"></i> @statusBadge.Item3
+                            </span>
+                        </td>
+                        <td>
+                            @if (string.IsNullOrEmpty(a.BookingCode))
+                            {
+                                <span class="text-muted">—</span>
+                            }
+                            else
+                            {
+                                <code style="background:#fff3cd; padding:2px 6px; color:#856404;">@a.BookingCode</code>
+                            }
+                        </td>
+                        <td>
+                            @if (a.CheckedIn)
+                            {
+                                <span class="label label-success" style="font-size:13px;"><i class="fa fa-check-circle"></i> Đã đến</span>
+                            }
+                            else if (a.Status == "confirmed")
+                            {
+                                <span class="label label-default" style="font-size:13px;"><i class="fa fa-hourglass-half"></i> Chưa đến</span>
+                            }
+                            else if (a.Status == "completed")
+                            {
+                                <span class="label label-primary" style="font-size:13px;"><i class="fa fa-check"></i> Đã xong</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">—</span>
+                            }
+                        </td>
+                        <td><a href="/le-tan/lich-hen/@a.Id" class="btn btn-xs btn-primary">Chi tiết</a></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

@@ -73,6 +73,52 @@ public class LeTanController : BaseController
         return View(list);
     }
 
+    /// <summary>
+    /// Tra cứu lịch theo SĐT — giúp khách vãng lai (không có account) khi gọi đến hỏi lại.
+    /// Site scoping qua CurrentSiteId chống lễ tân site A xem được lịch site B.
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> TimTheoSdt(string? phone)
+    {
+        ViewBag.Title = "Tra cứu lịch theo số điện thoại";
+        ViewBag.Phone = phone;
+        ViewBag.Results = !string.IsNullOrWhiteSpace(phone)
+            ? await _apptService.GetByPhoneAsync(phone.Trim(), CurrentSiteId)
+            : null;
+        return View();
+    }
+
+    /// <summary>
+    /// Lịch theo ngày — hiển thị tất cả lịch của 1 ngày (mọi status), kèm indicator check-in.
+    /// Cho phép xem lùi 30 ngày (follow-up no-show) và tới 30 ngày (theo MaxDaysAhead booking).
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> LichTheoNgay(DateTime? date)
+    {
+        var picked = (date ?? DateTime.Today).Date;
+        var minDate = DateTime.Today.AddDays(-30);
+        var maxDate = DateTime.Today.AddDays(Constants.MaxDaysAhead);
+        // Clamp ngày được chọn vào range cho phép — chống lễ tân điều hướng tay vào ngày quá xa.
+        if (picked < minDate) picked = minDate;
+        if (picked > maxDate) picked = maxDate;
+
+        var d = DateOnly.FromDateTime(picked);
+        var list = await _apptService.GetByDateAsync(d, CurrentSiteId);
+
+        ViewBag.Title           = $"Lịch ngày {picked:dd/MM/yyyy}";
+        ViewBag.PickedDate      = picked;
+        ViewBag.MinDate         = minDate;
+        ViewBag.MaxDate         = maxDate;
+        ViewBag.IsToday         = picked == DateTime.Today;
+        ViewBag.TotalCount      = list.Count;
+        ViewBag.PendingCount    = list.Count(a => a.Status == Constants.ApptPending);
+        ViewBag.ConfirmedCount  = list.Count(a => a.Status == Constants.ApptConfirmed);
+        ViewBag.CheckedInCount  = list.Count(a => a.CheckedIn && a.Status != Constants.ApptCancelled && a.Status != Constants.ApptRejected);
+        ViewBag.CompletedCount  = list.Count(a => a.Status == Constants.ApptCompleted);
+        ViewBag.CancelledCount  = list.Count(a => a.Status == Constants.ApptCancelled || a.Status == Constants.ApptRejected);
+        return View(list);
+    }
+
     public async Task<IActionResult> Detail(Guid id)
     {
         var a = await _apptService.GetByIdAsync(id);

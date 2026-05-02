@@ -94,6 +94,7 @@ app.MapControllerRoute("DangKy",    "dang-ky",            new { controller = "Au
 app.MapControllerRoute("DangXuat",  "dang-xuat",          new { controller = "Auth",  action = "DangXuat" });
 app.MapControllerRoute("HoSo",      "ho-so",              new { controller = "MyAccount", action = "Index" });
 app.MapControllerRoute("DatLich",   "dat-lich-kham",      new { controller = "Appointment", action = "DatLichKham" });
+app.MapControllerRoute("DaDat",     "dat-lich-kham/da-dat", new { controller = "Appointment", action = "DaDat" });
 app.MapControllerRoute("LichToi",   "lich-cua-toi",       new { controller = "Appointment", action = "LichCuaToi" });
 app.MapControllerRoute("LichSu",    "lich-su-kham",       new { controller = "MyAccount", action = "LichSuKham" });
 app.MapControllerRoute("DatCH",     "dat-cau-hoi",        new { controller = "Qna",   action = "DatCauHoi" });
@@ -116,6 +117,8 @@ app.MapControllerRoute("LeTanDuty",        "le-tan/bac-si-truc",      new { cont
 app.MapControllerRoute("LeTanQuotas",      "le-tan/suat-kham",        new { controller = "LeTan", action = "Quotas" });
 app.MapControllerRoute("LeTanQuotaSet",    "le-tan/dat-suat",         new { controller = "LeTan", action = "SetQuotaMax" });
 app.MapControllerRoute("LeTanCounts",      "le-tan/counts",           new { controller = "LeTan", action = "Counts" });
+app.MapControllerRoute("LeTanTimSdt",      "le-tan/tim-theo-sdt",     new { controller = "LeTan", action = "TimTheoSdt" });
+app.MapControllerRoute("LeTanLichNgay",    "le-tan/lich-theo-ngay",   new { controller = "LeTan", action = "LichTheoNgay" });
 
 // === Cổng Bác sĩ (DOCTOR) ===
 app.MapControllerRoute("DocPortal",       "bac-si-portal",                     new { controller = "DoctorPortal", action = "Index" });

@@ -1,0 +1,126 @@
+@using WebsiteCore.Business.ViewModels
+@using WebsiteCore.Data.Entities
+@model AppointmentRow
+@{
+    ViewData["Title"] = "Đã ghi nhận lịch khám";
+    var siteFt = ViewBag.Site as Site;
+    var hotline = !string.IsNullOrEmpty(siteFt?.Hotline) ? siteFt.Hotline : "0964.801.616";
+    var phoneOff = !string.IsNullOrEmpty(siteFt?.Phone)  ? siteFt.Phone   : "02203.822.205";
+    var sessionLabel = Model.Session == "morning" ? "Buổi sáng (07:00 – 11:00)"
+                     : Model.Session == "afternoon" ? "Buổi chiều (13:00 – 17:00)"
+                     : Model.Session;
+    var statusLabel = Model.Status switch
+    {
+        "pending"     => "Chờ lễ tân duyệt",
+        "confirmed"   => "Đã được duyệt",
+        "rescheduled" => "Lễ tân đề nghị đổi lịch",
+        "rejected"    => "Đã bị từ chối",
+        "cancelled"   => "Đã huỷ",
+        "completed"   => "Đã khám xong",
+        _             => Model.Status
+    };
+}
+
+<section class="full-section" style="padding:32px 0;">
+<div class="container">
+    <div class="row">
+        <div class="col-md-8 col-md-offset-2 col-sm-10 col-sm-offset-1 col-xs-12">
+            <div class="card shadow-sm" style="background:#fff; border-radius:8px; padding:24px; border:1px solid #e2e8f0;">
+                <div style="text-align:center; margin-bottom:16px;">
+                    <i class="fa fa-check-circle" style="font-size:64px; color:#2ecc71;"></i>
+                    <h2 style="color:#0a3d62; margin-top:12px;">Đã ghi nhận yêu cầu đặt lịch</h2>
+                    <p class="text-muted">Nhân viên Trung tâm sẽ liên hệ xác nhận trong vòng 24 giờ.</p>
+                </div>
+
+                <table class="table table-bordered" style="margin-bottom:16px;">
+                    <tbody>
+                        <tr>
+                            <th style="width:35%; background:#f8f9fa;">Họ và tên</th>
+                            <td>@Model.PatientName</td>
+                        </tr>
+                        <tr>
+                            <th style="background:#f8f9fa;">Số điện thoại</th>
+                            <td><strong>@Model.PatientPhone</strong></td>
+                        </tr>
+                        @if (!string.IsNullOrEmpty(Model.PatientEmail))
+                        {
+                            <tr>
+                                <th style="background:#f8f9fa;">Email</th>
+                                <td>@Model.PatientEmail</td>
+                            </tr>
+                        }
+                        <tr>
+                            <th style="background:#f8f9fa;">Chuyên khoa</th>
+                            <td>@Model.DepartmentName</td>
+                        </tr>
+                        <tr>
+                            <th style="background:#f8f9fa;">Ngày khám</th>
+                            <td>@(Model.AppointmentDate?.ToString("dd/MM/yyyy"))</td>
+                        </tr>
+                        <tr>
+                            <th style="background:#f8f9fa;">Buổi khám</th>
+                            <td>@sessionLabel</td>
+                        </tr>
+                        @if (!string.IsNullOrEmpty(Model.Reason))
+                        {
+                            <tr>
+                                <th style="background:#f8f9fa;">Lý do đến khám</th>
+                                <td>@Model.Reason</td>
+                            </tr>
+                        }
+                        <tr>
+                            <th style="background:#f8f9fa;">Trạng thái</th>
+                            <td>
+                                <span class="label label-warning" style="font-size:14px; padding:6px 12px;">
+                                    <i class="fa fa-clock-o"></i> @statusLabel
+                                </span>
+                            </td>
+                        </tr>
+                        @if (!string.IsNullOrEmpty(Model.BookingCode))
+                        {
+                            <tr>
+                                <th style="background:#f8f9fa;">Mã khám</th>
+                                <td>
+                                    <code style="font-size:18px; background:#fff3cd; padding:4px 10px; border-radius:4px; color:#856404;">
+                                        @Model.BookingCode
+                                    </code>
+                                    <small class="text-muted d-block">Mang theo mã này khi đến khám.</small>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+
+                <div class="alert alert-info" style="margin-top:16px;">
+                    <h4 style="margin-top:0;"><i class="fa fa-info-circle"></i> Hướng dẫn tiếp theo</h4>
+                    <p>
+                        <strong>1.</strong> Vui lòng giữ máy điện thoại
+                        <strong style="color:#0a3d62;">@Model.PatientPhone</strong>
+                        — lễ tân sẽ gọi xác nhận trong 24 giờ.
+                    </p>
+                    <p>
+                        <strong>2.</strong> Sau khi được duyệt, bạn sẽ nhận được <strong>Mã khám</strong>
+                        — vui lòng đọc cho lễ tân tại quầy đăng ký khi đến khám.
+                    </p>
+                    <p style="margin-bottom:0;">
+                        <strong>3.</strong> Cần tra cứu lại lịch hoặc thay đổi thông tin? Gọi số
+                        <a href="tel:@phoneOff" style="font-weight:600;">@phoneOff</a>
+                        (giờ hành chính) hoặc hotline 24/7
+                        <a href="tel:@hotline" style="font-weight:600;">@hotline</a>
+                        — đọc số điện thoại bạn đã đăng ký để được hỗ trợ.
+                    </p>
+                </div>
+
+                <div style="text-align:center; margin-top:20px;">
+                    <a href="/" class="btn btn-default"><i class="fa fa-home"></i> Về trang chủ</a>
+                    <a href="/dat-lich-kham" class="btn btn-primary"><i class="fa fa-calendar-plus-o"></i> Đặt thêm lịch khác</a>
+                </div>
+
+                <p class="text-muted small" style="text-align:center; margin-top:16px;">
+                    Đăng ký tài khoản tại <a href="/dang-ky">/dang-ky</a> để theo dõi lịch khám realtime trong tương lai.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+</section>

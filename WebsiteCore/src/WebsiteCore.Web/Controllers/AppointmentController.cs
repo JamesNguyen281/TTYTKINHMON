@@ -60,7 +60,32 @@ public class AppointmentController : BaseController
         }
 
         TempData["Success"] = "Đã ghi nhận yêu cầu đặt lịch. Nhân viên Trung tâm sẽ liên hệ xác nhận trong 24 giờ.";
-        return Redirect(u != null ? "~/lich-cua-toi" : "~/dat-lich-kham");
+        // Member → /lich-cua-toi (theo dõi realtime). Khách vãng lai → trang xác nhận DaDat đọc
+        // apptId từ Session (không truyền qua URL/query) — chống IDOR/guess.
+        if (u == null && result.AppointmentId.HasValue)
+        {
+            HttpContext.Session.SetString("LastAnonBookingId", result.AppointmentId.Value.ToString());
+        }
+        return u != null
+            ? Redirect("~/lich-cua-toi")
+            : RedirectToAction(nameof(DaDat));
+    }
+
+    /// <summary>
+    /// Trang xác nhận đặt lịch cho khách vãng lai. Đọc apptId từ Session (set bởi POST DatLichKham)
+    /// — không nhận id từ URL để tránh IDOR. Session expire 30' → khách phải gọi lễ tân tra theo SĐT.
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> DaDat()
+    {
+        var idStr = HttpContext.Session.GetString("LastAnonBookingId");
+        if (string.IsNullOrEmpty(idStr) || !Guid.TryParse(idStr, out var id))
+            return Redirect("~/");
+        var a = await _apptService.GetByIdAsync(id);
+        if (a == null || a.SiteId != CurrentSiteId) return NotFound();
+        ViewBag.Title = "Đã ghi nhận lịch khám";
+        ViewBag.HideHero = true;
+        return View(a);
     }
 
     [HttpGet]

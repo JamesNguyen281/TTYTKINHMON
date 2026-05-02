@@ -14,6 +14,10 @@ public interface IAppointmentService
     Task<AppointmentRow?> GetByBookingCodeAsync(string code);
     Task<List<AppointmentRow>> GetTodayConfirmedAsync(Guid siteId);
     Task<List<AppointmentRow>> GetByDoctorAsync(Guid doctorId, DateTime fromDate, DateTime toDate);
+    /// <summary>Tra cứu mọi lịch theo SĐT bệnh nhân — dùng cho lễ tân giúp khách vãng lai (không có account).</summary>
+    Task<List<AppointmentRow>> GetByPhoneAsync(string phone, Guid siteId);
+    /// <summary>Lấy mọi lịch của một ngày bất kỳ — bao gồm tất cả status, dùng cho dashboard "lịch theo ngày".</summary>
+    Task<List<AppointmentRow>> GetByDateAsync(DateOnly date, Guid siteId);
     Task<UpdateStatusResult> UpdateStatusAsync(Guid id, string newStatus, string? staffNote, Guid staffUserId);
     Task<bool> MarkCheckedInAsync(Guid id, Guid staffUserId);
     Task<int> CountUpdatesForPatientSinceAsync(Guid patientUserId, DateTime since);
@@ -140,6 +144,27 @@ public class AppointmentService : IAppointmentService
         var list = await _db.Appointments
             .Where(a => a.SiteId == siteId && a.Status == Constants.ApptConfirmed && a.AppointmentDate == today)
             .OrderBy(a => a.Session).ThenBy(a => a.BookingCode)
+            .ToListAsync();
+        return list.Select(MapRow).ToList();
+    }
+
+    public async Task<List<AppointmentRow>> GetByPhoneAsync(string phone, Guid siteId)
+    {
+        if (string.IsNullOrWhiteSpace(phone)) return new List<AppointmentRow>();
+        var p = phone.Trim();
+        var list = await _db.Appointments
+            .Where(a => a.SiteId == siteId && a.PatientPhone == p)
+            .OrderByDescending(a => a.AppointmentDate)
+            .ThenByDescending(a => a.CreatedDate)
+            .ToListAsync();
+        return list.Select(MapRow).ToList();
+    }
+
+    public async Task<List<AppointmentRow>> GetByDateAsync(DateOnly date, Guid siteId)
+    {
+        var list = await _db.Appointments
+            .Where(a => a.SiteId == siteId && a.AppointmentDate == date)
+            .OrderBy(a => a.Session).ThenBy(a => a.Status).ThenBy(a => a.CreatedDate)
             .ToListAsync();
         return list.Select(MapRow).ToList();
     }

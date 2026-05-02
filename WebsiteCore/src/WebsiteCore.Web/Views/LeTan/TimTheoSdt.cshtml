@@ -1,0 +1,116 @@
+@model object
+@using WebsiteCore.Business.ViewModels
+@{
+    ViewData["Title"] = "Tra cứu lịch theo SĐT";
+    var phone = ViewBag.Phone as string ?? "";
+    var results = ViewBag.Results as List<AppointmentRow>;
+}
+
+<div class="container" style="padding-top:24px;">
+    <h2 style="color:#0a3d62;">
+        <i class="fa fa-search"></i> Tra cứu lịch theo số điện thoại
+    </h2>
+    <p class="text-muted">
+        Dùng khi khách vãng lai gọi đến quên mã khám — nhập SĐT họ đã đăng ký để xem mọi lịch của số đó.
+    </p>
+
+    <div class="card shadow-sm" style="background:white; padding:16px; margin:16px 0; border:1px solid #e2e8f0; border-radius:6px;">
+        <form method="get" action="/le-tan/tim-theo-sdt" class="form-inline">
+            <div class="form-group" style="margin-right:8px;">
+                <label for="phone" style="margin-right:8px;">Số điện thoại bệnh nhân:</label>
+                <input type="tel" id="phone" name="phone" value="@phone" class="form-control"
+                       placeholder="vd. 0987654321" style="width:240px;" autofocus />
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <i class="fa fa-search"></i> Tra cứu
+            </button>
+            <a href="/le-tan" class="btn btn-default pull-right">← Tổng quan</a>
+        </form>
+    </div>
+
+    @if (results != null)
+    {
+        if (!results.Any())
+        {
+            <div class="alert alert-warning">
+                <i class="fa fa-exclamation-triangle"></i>
+                Không có lịch nào với SĐT <strong>@phone</strong>.
+                Vui lòng kiểm tra lại số hoặc hỏi thêm họ đã đặt từ kênh nào.
+            </div>
+        }
+        else
+        {
+            <p>
+                Tìm thấy <strong>@results.Count</strong> lịch với SĐT
+                <a href="tel:@phone" style="font-weight:600;">@phone</a>:
+            </p>
+            <div class="table-responsive">
+                <table class="table table-hover table-bordered" style="background:white;">
+                    <thead style="background:#0a3d62; color:white;">
+                        <tr>
+                            <th>Ngày</th>
+                            <th>Buổi</th>
+                            <th>Khoa</th>
+                            <th>Bệnh nhân</th>
+                            <th>Trạng thái</th>
+                            <th>Mã khám</th>
+                            <th>Check-in</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var a in results)
+                    {
+                        var statusBadge = a.Status switch
+                        {
+                            "pending"     => ("warning", "fa-clock-o",        "Chờ duyệt"),
+                            "confirmed"   => ("success", "fa-check",          "Đã duyệt"),
+                            "rescheduled" => ("info",    "fa-refresh",        "Đề nghị đổi"),
+                            "rejected"    => ("danger",  "fa-times",          "Từ chối"),
+                            "cancelled"   => ("default", "fa-ban",            "Đã huỷ"),
+                            "completed"   => ("primary", "fa-stethoscope",    "Đã khám"),
+                            _             => ("default", "fa-question",       a.Status ?? "?")
+                        };
+                        <tr>
+                            <td><strong>@(a.AppointmentDate?.ToString("dd/MM/yyyy"))</strong></td>
+                            <td>@(a.Session == "morning" ? "Sáng" : "Chiều")</td>
+                            <td>@a.DepartmentName</td>
+                            <td>@a.PatientName</td>
+                            <td>
+                                <span class="label label-@statusBadge.Item1">
+                                    <i class="fa @statusBadge.Item2"></i> @statusBadge.Item3
+                                </span>
+                            </td>
+                            <td>
+                                @if (string.IsNullOrEmpty(a.BookingCode))
+                                {
+                                    <span class="text-muted">—</span>
+                                }
+                                else
+                                {
+                                    <code style="background:#fff3cd; padding:2px 6px; color:#856404;">@a.BookingCode</code>
+                                }
+                            </td>
+                            <td>
+                                @if (a.CheckedIn)
+                                {
+                                    <span class="label label-success"><i class="fa fa-check-circle"></i> Đã đến</span>
+                                }
+                                else if (a.Status == "confirmed")
+                                {
+                                    <span class="label label-default"><i class="fa fa-hourglass-half"></i> Chưa đến</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">—</span>
+                                }
+                            </td>
+                            <td><a href="/le-tan/lich-hen/@a.Id" class="btn btn-xs btn-primary">Chi tiết</a></td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+    }
+</div>
