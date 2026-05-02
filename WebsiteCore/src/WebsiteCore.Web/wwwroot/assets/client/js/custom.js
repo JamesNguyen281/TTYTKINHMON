@@ -162,4 +162,28 @@
     $(".view-more").click(function(){
         $(".item-detail-cs").addClass("show");
     });
+
+    // ── Mobile header layout: dịch hamburger ☰ vào top bar khi ≤ 991px ──
+    // Vì CSS-only position: absolute bị specificity của style.css cũ override,
+    // ta dùng JS DOM-move để đảm bảo vị trí. Desktop ≥ 992px hoàn toàn không
+    // chạm vào (early-return). Resize window thì auto-restore.
+    var $bars = $(".header-nav .bars");
+    var $topBarUl = $(".header-top-right ul");
+    var $navRow = $(".header-nav .row");
+    if ($bars.length && $topBarUl.length) {
+        var $mobileBarsLi = $('<li class="mobile-bars-li" style="margin-left:auto;list-style:none;"></li>');
+        function syncHeader() {
+            var isMobile = window.matchMedia("(max-width: 991px)").matches;
+            var inTopBar = $bars.parent().hasClass("mobile-bars-li");
+            if (isMobile && !inTopBar) {
+                $mobileBarsLi.append($bars);
+                $topBarUl.append($mobileBarsLi);
+            } else if (!isMobile && inTopBar) {
+                $navRow.append($bars);
+                $mobileBarsLi.detach();
+            }
+        }
+        syncHeader();
+        $(window).on("resize", syncHeader);
+    }
 });
