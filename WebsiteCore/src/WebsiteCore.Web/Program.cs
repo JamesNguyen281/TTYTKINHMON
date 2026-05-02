@@ -36,6 +36,10 @@ builder.Services.AddSession(opt =>
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton<VisitorCounter>();
 
+// Background service — tự sinh lịch trực BS cho tháng kế khi tới ngày 28 hàng tháng.
+// Idempotent (skip BS đã có lịch tháng đó), nên có thể an toàn chạy song song với manual trigger.
+builder.Services.AddHostedService<MonthlyScheduleAutoGenHostedService>();
+
 // WebOptimizer — auto minify CSS/JS khi serve. Files đã có .min trong tên
 // (bootstrap.min.js, jquery.min.js, ...) sẽ được skip để khỏi minify lần 2.
 builder.Services.AddWebOptimizer(pipeline =>

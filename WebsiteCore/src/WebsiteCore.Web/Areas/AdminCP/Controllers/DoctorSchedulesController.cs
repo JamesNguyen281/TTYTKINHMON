@@ -138,4 +138,51 @@ public class DoctorSchedulesController : BaseController
         TempData["Success"] = "Đã xoá (ẩn).";
         return RedirectToAction(nameof(Index));
     }
+
+    /// <summary>
+    /// Form chọn tháng để auto-gen. Mặc định = tháng tiếp theo (vì admin thường thao tác cuối tháng).
+    /// </summary>
+    [HttpGet]
+    public IActionResult AutoGenerate()
+    {
+        ViewBag.Title = "Tự sinh lịch trực tháng";
+        var nextMonth = DateTime.Today.AddMonths(1);
+        ViewBag.DefaultYear  = nextMonth.Year;
+        ViewBag.DefaultMonth = nextMonth.Month;
+        return View();
+    }
+
+    /// <summary>
+    /// Tự sinh lịch trực cho 1 tháng. Idempotent — chạy 2 lần không trùng.
+    /// Chỉ ADMIN (qua [StaffAuthorize] ở class) + CSRF + site scoping.
+    /// </summary>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AutoGenerate(int year, int month, bool confirm)
+    {
+        if (!confirm)
+        {
+            TempData["Error"] = "Vui lòng tick xác nhận trước khi chạy.";
+            return RedirectToAction(nameof(AutoGenerate));
+        }
+        if (year < 2020 || year > 2100 || month < 1 || month > 12)
+        {
+            TempData["Error"] = "Tháng/năm không hợp lệ.";
+            return RedirectToAction(nameof(AutoGenerate));
+        }
+
+        var u = CurrentUser!;
+        var rs = await _service.GenerateMonthlyScheduleAsync(year, month, CurrentSiteId, u.Id);
+        await _audit.LogAsync(u.Id, "Auto-gen lịch trực tháng",
+            $"{u.UserName} auto-gen {month:00}/{year} site={CurrentSiteId} processed={rs.DoctorsProcessed} created={rs.Created} skipped={rs.SkippedExisting}");
+
+        if (rs.Created == 0 && rs.SkippedExisting > 0)
+            TempData["Success"] = $"Tất cả {rs.SkippedExisting} BS đã có lịch tháng {month:00}/{year} — không tạo trùng.";
+        else if (rs.DoctorsProcessed == 0)
+            TempData["Error"] = "Không có BS nào active với khoa active để tạo lịch.";
+        else
+            TempData["Success"] = $"Đã tạo {rs.Created} lịch cho {rs.DoctorsProcessed - rs.SkippedExisting} BS (skip {rs.SkippedExisting} BS đã có lịch).";
+
+        return RedirectToAction(nameof(Index));
+    }
 }

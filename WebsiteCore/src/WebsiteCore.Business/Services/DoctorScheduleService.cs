@@ -12,12 +12,29 @@ public interface IDoctorScheduleService
     Task CreateAsync(DoctorSchedule s);
     Task UpdateAsync(DoctorSchedule s);
     Task DeleteAsync(Guid id);
+    /// <summary>
+    /// Tự sinh lịch trực hàng tháng cho mọi BS active của site. Idempotent — bỏ qua BS đã có
+    /// schedule với ValidFrom = ngày 1 tháng đó. Mỗi BS được tạo Mon→Fri × {sáng, chiều} = 10 slot.
+    /// </summary>
+    Task<MonthlyScheduleResult> GenerateMonthlyScheduleAsync(int year, int month, Guid siteId, Guid? createdBy);
+}
+
+public class MonthlyScheduleResult
+{
+    public int Created { get; set; }
+    public int SkippedExisting { get; set; }
+    public int DoctorsProcessed { get; set; }
+    public List<string> SkippedDoctorNames { get; } = new();
 }
 
 public class DoctorScheduleService : IDoctorScheduleService
 {
     private readonly TtytlpDbContext _db;
     public DoctorScheduleService(TtytlpDbContext db) => _db = db;
+
+    // Process-wide lock — chống race khi manual trigger + cron auto-gen chạy đồng thời cùng tháng.
+    // Cùng process mới hiệu lực; production multi-instance cần thêm DB unique constraint.
+    private static readonly SemaphoreSlim _autoGenLock = new(1, 1);
 
     public Task<List<DoctorSchedule>> GetByDoctorAsync(Guid doctorId) =>
         _db.DoctorSchedules
@@ -61,5 +78,91 @@ public class DoctorScheduleService : IDoctorScheduleService
         if (s == null) return;
         s.ActiveFlag = 0;
         await _db.SaveChangesAsync();
+    }
+
+    public async Task<MonthlyScheduleResult> GenerateMonthlyScheduleAsync(int year, int month, Guid siteId, Guid? createdBy)
+    {
+        var result = new MonthlyScheduleResult();
+        if (year < 2020 || year > 2100 || month < 1 || month > 12)
+            return result;
+
+        // Serialize toàn bộ auto-gen trong process — chống race manual trigger ↔ cron.
+        await _autoGenLock.WaitAsync();
+        try
+        {
+            return await GenerateMonthlyScheduleInternalAsync(year, month, siteId, createdBy);
+        }
+        finally
+        {
+            _autoGenLock.Release();
+        }
+    }
+
+    private async Task<MonthlyScheduleResult> GenerateMonthlyScheduleInternalAsync(int year, int month, Guid siteId, Guid? createdBy)
+    {
+        var result = new MonthlyScheduleResult();
+        var firstDay = new DateOnly(year, month, 1);
+        var lastDay  = firstDay.AddMonths(1).AddDays(-1);
+
+        // Lấy BS site hiện tại + có khoa active. Loại BS không khoa (Giám đốc) — họ không khám trực tiếp.
+        var doctors = await (from d in _db.Doctors
+                             join dep in _db.Departments on d.DepartmentId equals dep.Id
+                             where d.ActiveFlag == 1 && dep.SiteId == siteId && dep.ActiveFlag == 1
+                             orderby d.Ord
+                             select d).ToListAsync();
+
+        result.DoctorsProcessed = doctors.Count;
+        if (doctors.Count == 0) return result;
+
+        // Mặc định: thứ 2 → thứ 6 (weekday 2→6). Mỗi ngày 2 ca sáng+chiều.
+        // Phòng để rỗng (admin tự bổ sung). MaxPatients = quota mặc định.
+        byte[] weekdays = { 2, 3, 4, 5, 6 };
+        string[] sessions = { Constants.SessionMorning, Constants.SessionAfternoon };
+
+        var newSchedules = new List<DoctorSchedule>();
+        foreach (var doc in doctors)
+        {
+            // Idempotency: BS đã có ít nhất 1 lịch active với ValidFrom = ngày 1 tháng đó → skip.
+            // Tránh chạy 2 lần (manual + auto cron) tạo lịch trùng.
+            var hasExisting = await _db.DoctorSchedules
+                .AnyAsync(s => s.DoctorId == doc.Id
+                            && s.ActiveFlag == 1
+                            && s.ValidFrom == firstDay);
+            if (hasExisting)
+            {
+                result.SkippedExisting++;
+                if (!string.IsNullOrEmpty(doc.NameL)) result.SkippedDoctorNames.Add(doc.NameL);
+                continue;
+            }
+
+            foreach (var wd in weekdays)
+            foreach (var ss in sessions)
+            {
+                newSchedules.Add(new DoctorSchedule
+                {
+                    Id            = Guid.NewGuid(),
+                    DoctorId      = doc.Id,
+                    DepartmentId  = doc.DepartmentId,
+                    Weekday       = wd,
+                    Session       = ss,
+                    Room          = null,
+                    MaxPatients   = Constants.DefaultQuotaPerSession,
+                    ValidFrom     = firstDay,
+                    ValidTo       = lastDay,
+                    Note          = $"Auto-gen tháng {month:00}/{year}",
+                    ActiveFlag    = 1,
+                    CreatedDate   = DateTime.Now,
+                    CreatedBy     = createdBy
+                });
+            }
+        }
+
+        if (newSchedules.Count > 0)
+        {
+            _db.DoctorSchedules.AddRange(newSchedules);
+            await _db.SaveChangesAsync();
+        }
+        result.Created = newSchedules.Count;
+        return result;
     }
 }

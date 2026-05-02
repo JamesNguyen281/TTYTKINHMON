@@ -1,0 +1,77 @@
+@{
+    ViewData["Title"] = "Tự sinh lịch trực tháng";
+    int defaultYear  = ViewBag.DefaultYear  ?? DateTime.Today.AddMonths(1).Year;
+    int defaultMonth = ViewBag.DefaultMonth ?? DateTime.Today.AddMonths(1).Month;
+}
+
+<div class="container" style="padding-top:24px; max-width:720px;">
+    <h2 style="color:#0a3d62;">
+        <i class="fa fa-magic"></i> Tự sinh lịch trực BS theo tháng
+    </h2>
+    <p class="text-muted">
+        Tính năng giúp giảm công thao tác — tạo sẵn lịch khung cho mọi BS active của site,
+        admin chỉ cần điều chỉnh phòng / quota cho từng BS sau đó nếu cần.
+    </p>
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">
+            <i class="fa fa-exclamation-circle"></i> @TempData["Error"]
+        </div>
+    }
+
+    <div class="card shadow-sm" style="background:white; padding:20px; border:1px solid #e2e8f0; border-radius:8px;">
+        <form method="post" action="/AdminCP/DoctorSchedules/AutoGenerate">
+            @Html.AntiForgeryToken()
+
+            <div class="form-group" style="margin-bottom:16px;">
+                <label for="month" style="font-weight:600;">Tháng cần tạo lịch</label>
+                <div class="row">
+                    <div class="col-xs-6">
+                        <select id="month" name="month" class="form-control">
+                            @for (int m = 1; m <= 12; m++)
+                            {
+                                <option value="@m" selected="@(m == defaultMonth)">Tháng @m</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-xs-6">
+                        <input type="number" id="year" name="year" class="form-control"
+                               value="@defaultYear" min="2020" max="2100" />
+                    </div>
+                </div>
+                <small class="text-muted">Mặc định = tháng kế tiếp.</small>
+            </div>
+
+            <div class="alert alert-info" style="margin-bottom:16px;">
+                <h4 style="margin-top:0;"><i class="fa fa-info-circle"></i> Quy tắc sinh lịch</h4>
+                <ul style="margin-bottom:0; padding-left:18px;">
+                    <li>Áp dụng cho mọi BS <strong>active</strong> đang thuộc khoa active của site này.</li>
+                    <li>Mỗi BS được sinh <strong>10 slot</strong>: thứ 2 → thứ 6, mỗi ngày 2 ca (sáng + chiều).</li>
+                    <li>Quota mỗi slot = <strong>@WebsiteCore.Business.Constants.DefaultQuotaPerSession</strong> BN (mặc định).</li>
+                    <li>Phòng để trống — admin tự bổ sung sau qua nút <em>Sửa</em>.</li>
+                    <li><strong>Idempotent:</strong> BS đã có lịch tháng này sẽ <em>skip</em> — chạy lại không trùng.</li>
+                    <li>Audit log đầy đủ ai chạy, khi nào, kết quả.</li>
+                </ul>
+            </div>
+
+            <div class="checkbox" style="margin-bottom:20px;">
+                <label>
+                    <input type="checkbox" name="confirm" value="true" required />
+                    <strong>Tôi xác nhận muốn auto-gen lịch tháng đã chọn ở trên.</strong>
+                </label>
+            </div>
+
+            <button type="submit" class="btn btn-primary">
+                <i class="fa fa-magic"></i> Tạo lịch
+            </button>
+            <a href="/AdminCP/DoctorSchedules" class="btn btn-default">Huỷ</a>
+        </form>
+    </div>
+
+    <div class="card shadow-sm" style="background:#f8f9fa; padding:16px; margin-top:16px; border:1px solid #e2e8f0; border-radius:8px;">
+        <p style="margin:0;"><i class="fa fa-clock-o"></i> <strong>Tự động hoá:</strong>
+            Hệ thống cũng tự chạy auto-gen <strong>vào ngày 28 hàng tháng</strong> cho tháng kế.
+            Bạn không cần làm thủ công trừ khi muốn ép sinh sớm.</p>
+    </div>
+</div>
