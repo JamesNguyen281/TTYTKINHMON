@@ -84,6 +84,76 @@
             </div>
         </div>
 
+        @* P2.C — Phân nhánh kết quả: ngoại trú (cấp toa) vs nội trú (chuyển khoa nhập viện) *@
+        <div class="panel panel-info" id="panel-record-type">
+            <div class="panel-heading"><strong><i class="fa fa-stethoscope"></i> Hướng xử trí</strong>
+                <span class="text-muted" style="font-size:12px; font-weight:normal;">— BS chọn ngoại trú (cấp toa về) hoặc nội trú (làm hồ sơ + chỉ định khoa nhập viện)</span>
+            </div>
+            <div class="panel-body">
+                <div class="form-group">
+                    <label class="km-record-radio">
+                        <input type="radio" name="recordType" value="outpatient" checked />
+                        <span class="km-rt-icon"><i class="fa fa-medkit"></i></span>
+                        <strong>Ngoại trú</strong>
+                        <small class="text-muted">— BN cấp toa thuốc, hẹn tái khám nếu cần (mặc định)</small>
+                    </label>
+                    <label class="km-record-radio">
+                        <input type="radio" name="recordType" value="inpatient" />
+                        <span class="km-rt-icon" style="color:#d68610;"><i class="fa fa-hospital-o"></i></span>
+                        <strong>Nội trú (Nhập viện)</strong>
+                        <small class="text-muted">— BS làm hồ sơ bệnh án, điều dưỡng chuyển BN lên khoa nhập viện</small>
+                    </label>
+                </div>
+                <div id="block-inpatient" style="display:none; padding:12px; background:#fff3cd; border:1px solid #f0ad4e; border-radius:6px;">
+                    <div class="form-group">
+                        <label>Khoa nhập viện đích <span class="text-danger">*</span></label>
+                        <select name="targetInpatientDeptId" class="form-control" id="ddl-target-dept">
+                            <option value="">— Chọn khoa nhập viện —</option>
+                            @{
+                                var inpatientDepts = ViewBag.InpatientDepartments as List<WebsiteCore.Data.Entities.Department> ?? new();
+                                foreach (var dep in inpatientDepts)
+                                {
+                                    <option value="@dep.Id">@dep.NameL</option>
+                                }
+                            }
+                        </select>
+                        <small class="text-muted">Chọn khoa BN sẽ được chuyển lên (Khoa Nội, Khoa Sản, Khoa Cấp cứu, …)</small>
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>Lý do nhập viện + ghi chú dặn điều dưỡng</label>
+                        <textarea name="hospitalizationNote" class="form-control" rows="2" maxlength="500"
+                                  placeholder="VD: BN sốt cao 39°C kéo dài 3 ngày, nghi ngờ viêm phổi, chuyển Khoa Nội theo dõi…"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <style>
+            .km-record-radio {
+                display: flex; align-items: center; gap: 8px;
+                padding: 10px 12px; margin-bottom: 6px;
+                border: 1px solid #dee2e6; border-radius: 6px; cursor: pointer;
+                transition: all .15s; font-weight: normal;
+            }
+            .km-record-radio:hover { background: #f0f7fb; border-color: #0a3d62; }
+            .km-rt-icon { font-size: 18px; color: #0a3d62; }
+            .km-record-radio input { margin: 0; }
+        </style>
+        <script>
+            (function(){
+                var radios = document.querySelectorAll('input[name="recordType"]');
+                var block  = document.getElementById('block-inpatient');
+                var ddl    = document.getElementById('ddl-target-dept');
+                function refresh() {
+                    var v = document.querySelector('input[name="recordType"]:checked')?.value;
+                    var inpatient = v === 'inpatient';
+                    block.style.display = inpatient ? 'block' : 'none';
+                    if (ddl) ddl.required = inpatient;
+                }
+                radios.forEach(r => r.addEventListener('change', refresh));
+                refresh();
+            })();
+        </script>
+
         <div class="panel panel-warning">
             <div class="panel-heading"><strong><i class="fa fa-heartbeat"></i> Cập nhật hồ sơ y tế bệnh nhân</strong>
                 <span class="text-muted" style="font-size:12px; font-weight:normal;">— đồng bộ vào hồ sơ cá nhân, BN xem được trên /ho-so</span>

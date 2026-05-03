@@ -186,6 +186,21 @@
                         </div>
                     }
 
+                    @{
+                        // P2.B — render label theo ScheduleType: clinic/emergency/management
+                        string ScheduleLabel(DoctorSchedule s) => (s.ScheduleType ?? "clinic") switch
+                        {
+                            "emergency"  => "🚑 Cấp cứu",
+                            "management" => "🛠 Quản lý",
+                            _            => "🩺 Khám"
+                        };
+                        string ScheduleClass(DoctorSchedule s) => (s.ScheduleType ?? "clinic") switch
+                        {
+                            "emergency"  => "ca-block ca-emergency",
+                            "management" => "ca-block ca-management",
+                            _            => "ca-block"
+                        };
+                    }
                     @* Hàng sáng *@
                     <div class="cell h-session">Sáng</div>
                     @foreach (byte wd in orderedWd)
@@ -196,7 +211,8 @@
                         if (slot != null)
                         {
                             <div class="cell">
-                                <div class="ca-block">
+                                <div class="@ScheduleClass(slot)">
+                                    <div class="ca-type">@ScheduleLabel(slot)</div>
                                     <div class="room"><i class="fa fa-door-open"></i> @(slot.Room ?? "-")</div>
                                     <div class="quota">tối đa @(slot.MaxPatients ?? 0) BN</div>
                                 </div>
@@ -218,7 +234,8 @@
                         if (slot != null)
                         {
                             <div class="cell">
-                                <div class="ca-block afternoon">
+                                <div class="@(ScheduleClass(slot)) afternoon">
+                                    <div class="ca-type">@ScheduleLabel(slot)</div>
                                     <div class="room"><i class="fa fa-door-open"></i> @(slot.Room ?? "-")</div>
                                     <div class="quota">tối đa @(slot.MaxPatients ?? 0) BN</div>
                                 </div>
@@ -232,6 +249,11 @@
                 </div>
             </div>
         </div>
+        <style>
+            .ca-block .ca-type { font-size: 11px; font-weight: 700; opacity: .9; margin-bottom: 2px; }
+            .ca-block.ca-emergency { background: linear-gradient(135deg,#d9534f 0%,#b3403d 100%); }
+            .ca-block.ca-management { background: linear-gradient(135deg,#5a6c7d 0%,#3e4a56 100%); }
+        </style>
 
         @* === BẢNG CHI TIẾT === *@
         <div class="ds-card print-hide">

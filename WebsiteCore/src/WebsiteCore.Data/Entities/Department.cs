@@ -42,4 +42,11 @@ public partial class Department
     public string? BackgroundImage { get; set; }
 
     public string? SubLink { get; set; }
+
+    /// <summary>
+    /// P2.D — true = khoa nhận BN khám (BN có thể đặt lịch trên form online).
+    /// false = khoa hỗ trợ / cận lâm sàng / quản trị (Khoa Xét nghiệm, Dược, Y tế công cộng,
+    /// Khoa Khám bệnh wrapper, Khoa Cấp cứu — đến trực tiếp không đặt trước…).
+    /// </summary>
+    public bool IsClinicalDept { get; set; }
 }

@@ -266,6 +266,13 @@ public class DoctorPortalController : BaseController
         ViewBag.Patient = appt.PatientUserId.HasValue
             ? await _userService.GetByIdAsync(appt.PatientUserId.Value)
             : null;
+        // P2.C — danh sách khoa nội trú đích cho dropdown khi BS chọn "Nội trú".
+        // Loại trừ Khoa Khám bệnh (đó là wrapper) để tránh chuyển BN về cùng nơi.
+        var allDepts = await _deptService.GetActiveBySiteAsync(CurrentSiteId);
+        ViewBag.InpatientDepartments = allDepts
+            .Where(d => !string.Equals(d.Alias, "khoa-kham-benh", StringComparison.OrdinalIgnoreCase))
+            .OrderBy(d => d.Ord ?? 999).ThenBy(d => d.NameL)
+            .ToList();
         return View();
     }
 
@@ -274,7 +281,8 @@ public class DoctorPortalController : BaseController
     public async Task<IActionResult> ChanDoan(Guid apptId, string chiefComplaint, string diagnosis,
         string? treatmentPlan, string? notes, DateTime? followUpDate,
         string? bloodType, string? allergies, string? medicalHistory,
-        string[]? drugName, string[]? dosage, string[]? frequency, string[]? duration, string[]? prescriptionNote)
+        string[]? drugName, string[]? dosage, string[]? frequency, string[]? duration, string[]? prescriptionNote,
+        string? recordType, Guid? targetInpatientDeptId, string? hospitalizationNote)
     {
         var appt = await _apptService.GetByIdAsync(apptId);
         if (appt == null) return NotFound();
@@ -307,18 +315,42 @@ public class DoctorPortalController : BaseController
         static string? Cap(string? s, int max) =>
             s == null ? null : (s.Length > max ? s.Substring(0, max) : s).Trim();
 
+        // P2.C — phân nhánh ngoại trú vs nội trú
+        // Default outpatient (cấp toa về). Inpatient yêu cầu BS chỉ định khoa nhập viện đích.
+        var rt = (recordType ?? Constants.RecordTypeOutpatient).ToLowerInvariant();
+        bool isInpatient = rt == Constants.RecordTypeInpatient;
+        if (isInpatient && (!targetInpatientDeptId.HasValue || targetInpatientDeptId.Value == Guid.Empty))
+        {
+            TempData["Error"] = "Hồ sơ nội trú phải chỉ định khoa nhập viện đích.";
+            return RedirectToAction(nameof(ChanDoan), new { apptId });
+        }
+        // Cross-site guard: khoa nhập viện phải cùng site với appointment (chống IDOR).
+        if (isInpatient && targetInpatientDeptId.HasValue)
+        {
+            var targetDept = await _deptService.GetByIdAsync(targetInpatientDeptId.Value);
+            if (targetDept == null || targetDept.SiteId != appt.SiteId)
+            {
+                TempData["Error"] = "Khoa nhập viện không hợp lệ hoặc không thuộc cơ sở này.";
+                return RedirectToAction(nameof(ChanDoan), new { apptId });
+            }
+        }
+
         var record = new Data.Entities.MedicalRecord
         {
-            PatientUserId  = appt.PatientUserId.Value,
-            AppointmentId  = appt.Id,
-            DoctorId       = u.DoctorId,
-            DepartmentId   = appt.DepartmentId,
-            VisitDate      = DateTime.Now,
-            ChiefComplaint = Cap(chiefComplaint, 1000),
-            Diagnosis      = Cap(diagnosis, 1000)!,
-            TreatmentPlan  = Cap(treatmentPlan, 2000),
-            Notes          = Cap(notes, 2000),
-            FollowUpDate   = followUpDate.HasValue ? DateOnly.FromDateTime(followUpDate.Value) : null
+            PatientUserId         = appt.PatientUserId.Value,
+            AppointmentId         = appt.Id,
+            DoctorId              = u.DoctorId,
+            DepartmentId          = appt.DepartmentId,
+            VisitDate             = DateTime.Now,
+            ChiefComplaint        = Cap(chiefComplaint, 1000),
+            Diagnosis             = Cap(diagnosis, 1000)!,
+            TreatmentPlan         = Cap(treatmentPlan, 2000),
+            Notes                 = Cap(notes, 2000),
+            FollowUpDate          = followUpDate.HasValue ? DateOnly.FromDateTime(followUpDate.Value) : null,
+            RecordType            = isInpatient ? Constants.RecordTypeInpatient : Constants.RecordTypeOutpatient,
+            IsHospitalized        = isInpatient,
+            TargetInpatientDeptId = isInpatient ? targetInpatientDeptId : null,
+            HospitalizationNote   = isInpatient ? Cap(hospitalizationNote, 500) : null,
         };
         var prescriptions = new List<Data.Entities.Prescription>();
         const int MaxRx = 50; // chặn input tham lam (DoS protection)

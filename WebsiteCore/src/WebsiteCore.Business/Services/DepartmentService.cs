@@ -8,6 +8,12 @@ public interface IDepartmentService
 {
     Task<List<Department>> GetActiveBySiteAsync(Guid siteId);
     Task<List<Department>> GetAllBySiteAsync(Guid siteId);
+    /// <summary>
+    /// Trả các khoa có thể nhận BN khám (IsClinicalDept=true) — dùng cho dropdown đặt lịch online.
+    /// Loại trừ Khoa Khám bệnh (wrapper), Khoa Xét nghiệm (cận lâm sàng), Khoa Dược, Khoa Cấp cứu (đến trực tiếp),
+    /// Khoa Y tế công cộng, Phòng Dân số… những khoa không phục vụ khám trực tiếp.
+    /// </summary>
+    Task<List<Department>> GetClinicalBySiteAsync(Guid siteId);
     Task<Department?> GetByIdAsync(Guid id);
     Task<Department?> GetByAliasAsync(string alias);
     Task<Guid> CreateAsync(Department dept, Guid siteId);
@@ -23,6 +29,13 @@ public class DepartmentService : IDepartmentService
     public Task<List<Department>> GetActiveBySiteAsync(Guid siteId) =>
         _db.Departments
            .Where(d => d.SiteId == siteId && d.ActiveFlag == 1)
+           .OrderBy(d => d.Ord)
+           .ThenBy(d => d.NameL)
+           .ToListAsync();
+
+    public Task<List<Department>> GetClinicalBySiteAsync(Guid siteId) =>
+        _db.Departments
+           .Where(d => d.SiteId == siteId && d.ActiveFlag == 1 && d.IsClinicalDept)
            .OrderBy(d => d.Ord)
            .ThenBy(d => d.NameL)
            .ToListAsync();

@@ -30,6 +30,13 @@ public interface IDoctorScheduleService
     /// Trả overview slot của một khoa tại (date, session): tổng quota khoa + chi tiết từng BS.
     /// </summary>
     Task<DepartmentSlotOverviewVm?> GetDepartmentSlotOverviewAsync(Guid siteId, Guid deptId, DateOnly date, string session);
+
+    /// <summary>
+    /// Trả danh sách BS đang trực CẤP CỨU vào (date, session) thuộc site.
+    /// BS trực cấp cứu ở chuyên khoa (Department) gốc của họ, không gán phòng khám.
+    /// Dùng khi tiếp nhận BN cấp cứu (Appointment.IsEmergency=true) — bypass workflow phòng khám thường.
+    /// </summary>
+    Task<List<DoctorAvailabilityVm>> GetEmergencyDoctorsAsync(Guid siteId, DateOnly date, string session);
 }
 
 public class MonthlyScheduleResult
@@ -194,6 +201,10 @@ public class DoctorScheduleService : IDoctorScheduleService
 
         // Multi-site guard: chỉ join Doctor → Department → Site đúng site đang gọi.
         // Không trả về BS của site khác — kể cả khi caller truyền Doctor.Id thuộc site đó.
+        // Chỉ trả BS đang trực khám (ScheduleType="clinic") — KHÔNG bao gồm:
+        //   - emergency: BS trực cấp cứu, ở chuyên khoa, không tiếp nhận BN khám thường
+        //   - management: Ban Giám đốc trực xử lý công việc, không khám
+        // Backward compat: ScheduleType IS NULL → coi như clinic (data cũ trước Phase 2.B).
         var rows = await (from s in _db.DoctorSchedules
                           join d in _db.Doctors on s.DoctorId equals d.Id
                           join dep in _db.Departments on d.DepartmentId equals dep.Id
@@ -202,6 +213,7 @@ public class DoctorScheduleService : IDoctorScheduleService
                              && s.Session == session
                              && s.ValidFrom <= date
                              && (s.ValidTo == null || s.ValidTo >= date)
+                             && (s.ScheduleType == null || s.ScheduleType == Constants.ScheduleTypeClinic)
                              && d.ActiveFlag == 1
                              && dep.SiteId == siteId
                              && dep.ActiveFlag == 1
@@ -253,6 +265,50 @@ public class DoctorScheduleService : IDoctorScheduleService
         .ToList();
 
         return list;
+    }
+
+    public async Task<List<DoctorAvailabilityVm>> GetEmergencyDoctorsAsync(
+        Guid siteId, DateOnly date, string session)
+    {
+        if (string.IsNullOrEmpty(session)) return new();
+        var weekday = ToDbWeekday(date);
+
+        // Chỉ trả ScheduleType="emergency" — BS đang trực cấp cứu tại chuyên khoa.
+        // Multi-site guard qua Department.SiteId.
+        var rows = await (from s in _db.DoctorSchedules
+                          join d in _db.Doctors on s.DoctorId equals d.Id
+                          join dep in _db.Departments on d.DepartmentId equals dep.Id
+                          where s.ActiveFlag == 1
+                             && s.Weekday == weekday
+                             && s.Session == session
+                             && s.ValidFrom <= date
+                             && (s.ValidTo == null || s.ValidTo >= date)
+                             && s.ScheduleType == Constants.ScheduleTypeEmergency
+                             && d.ActiveFlag == 1
+                             && dep.SiteId == siteId
+                             && dep.ActiveFlag == 1
+                          select new { Schedule = s, Doctor = d, Dept = dep })
+                          .AsNoTracking().ToListAsync();
+
+        return rows.Select(r => new DoctorAvailabilityVm
+        {
+            DoctorId       = r.Doctor.Id,
+            DoctorName     = r.Doctor.NameL ?? r.Doctor.NameE ?? "",
+            Position       = r.Doctor.Position,
+            Specialty      = r.Doctor.SpeciallyL ?? r.Doctor.SpeciallyE,
+            ImagePath      = r.Doctor.ImagePath,
+            Ord            = r.Doctor.Ord ?? 0,
+            DepartmentId   = r.Dept.Id,
+            DepartmentName = r.Dept.NameL ?? r.Dept.NameE ?? "",
+            Room           = r.Schedule.Room,
+            Date           = date,
+            Session        = session,
+            // Cấp cứu không có quota khám trực tiếp — gán cap rộng để UI khỏi rỗng
+            MaxSlots       = r.Schedule.MaxPatients ?? Constants.DefaultQuotaPerSession,
+            BookedSlots    = 0,
+        })
+        .OrderBy(x => x.Ord).ThenBy(x => x.DoctorName)
+        .ToList();
     }
 
     public async Task<DepartmentSlotOverviewVm?> GetDepartmentSlotOverviewAsync(

@@ -322,6 +322,7 @@ public partial class TtytlpDbContext : DbContext
                 .ValueGeneratedNever()
                 .HasColumnName("id");
             entity.Property(e => e.ActiveFlag).HasColumnName("active_flag");
+            entity.Property(e => e.IsClinicalDept).HasColumnName("is_clinical_dept");
             entity.Property(e => e.Alias)
                 .HasMaxLength(350)
                 .HasColumnName("alias");

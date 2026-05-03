@@ -27,7 +27,9 @@ public class AppointmentController : BaseController
     public async Task<IActionResult> DatLichKham()
     {
         ViewBag.Title = "Đặt lịch khám";
-        ViewBag.Departments = await _deptService.GetActiveBySiteAsync(CurrentSiteId);
+        // P2.D — chỉ hiển thị khoa nhận BN khám (loại Khoa Xét nghiệm/Dược/KS bệnh tật/
+        // Khoa Cấp cứu (đến trực tiếp)/Khoa Khám bệnh wrapper)
+        ViewBag.Departments = await _deptService.GetClinicalBySiteAsync(CurrentSiteId);
         ViewBag.MaxDaysAhead = Constants.MaxDaysAhead;
 
         var u = CurrentUser;
@@ -46,7 +48,9 @@ public class AppointmentController : BaseController
     public async Task<IActionResult> DatLichKham(BookingInputModel vm)
     {
         ViewBag.Title = "Đặt lịch khám";
-        ViewBag.Departments = await _deptService.GetActiveBySiteAsync(CurrentSiteId);
+        // P2.D — chỉ hiển thị khoa nhận BN khám (loại Khoa Xét nghiệm/Dược/KS bệnh tật/
+        // Khoa Cấp cứu (đến trực tiếp)/Khoa Khám bệnh wrapper)
+        ViewBag.Departments = await _deptService.GetClinicalBySiteAsync(CurrentSiteId);
         ViewBag.MaxDaysAhead = Constants.MaxDaysAhead;
 
         if (!ModelState.IsValid) return View(vm);
