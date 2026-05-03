@@ -38,4 +38,25 @@ public partial class MedicalRecord
     public DateTime? LuUpdated { get; set; }
 
     public Guid? LuUserId { get; set; }
+
+    /// <summary>
+    /// Loại hồ sơ: "outpatient" = ngoại trú (kê đơn về), "inpatient" = nội trú (BS làm hồ sơ
+    /// bệnh án + điều dưỡng chuyển BN lên khoa nhập viện).
+    /// Default null → coi là "outpatient" (backward compat).
+    /// </summary>
+    public string? RecordType { get; set; }
+
+    /// <summary>
+    /// Cờ nhập viện: true = BS chỉ định nằm viện. Khi true thì TargetInpatientDeptId phải có giá trị.
+    /// </summary>
+    public bool IsHospitalized { get; set; }
+
+    /// <summary>
+    /// FK tới Department mà BN sẽ nhập viện (chỉ áp dụng khi IsHospitalized = true).
+    /// Khoa nội trú đích — vd Khoa Nội, Khoa Sản, Khoa Nhi…
+    /// </summary>
+    public Guid? TargetInpatientDeptId { get; set; }
+
+    /// <summary>Lý do nhập viện + ghi chú dặn điều dưỡng (ngắn, ≤ 500 ký tự).</summary>
+    public string? HospitalizationNote { get; set; }
 }

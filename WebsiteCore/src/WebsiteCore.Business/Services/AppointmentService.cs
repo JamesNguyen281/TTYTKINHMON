@@ -435,6 +435,8 @@ public class AppointmentService : IAppointmentService
         Status          = a.Status,
         StaffNote       = a.StaffNote,
         CheckedIn       = a.CheckedIn,
-        CreatedDate     = a.CreatedDate
+        CreatedDate     = a.CreatedDate,
+        ClinicRoomId    = a.ClinicRoomId,
+        IsEmergency     = a.IsEmergency,
     };
 }

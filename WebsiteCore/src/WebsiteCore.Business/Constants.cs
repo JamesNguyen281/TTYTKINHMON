@@ -39,6 +39,15 @@ public static class Constants
     public const string SessionMorning   = "morning";
     public const string SessionAfternoon = "afternoon";
 
+    // P2.B: Loại lịch trực bác sĩ
+    public const string ScheduleTypeClinic     = "clinic";       // Trực khám tại phòng khám của Khoa Khám bệnh
+    public const string ScheduleTypeEmergency  = "emergency";    // Trực cấp cứu — ở chuyên khoa của BS
+    public const string ScheduleTypeManagement = "management";   // Ban Giám đốc xử lí công việc, không khám
+
+    // P2.C: Loại hồ sơ bệnh án
+    public const string RecordTypeOutpatient = "outpatient";  // Ngoại trú: kê đơn về
+    public const string RecordTypeInpatient  = "inpatient";   // Nội trú: BS làm hồ sơ → điều dưỡng chuyển khoa
+
     // Quota mặc định mỗi buổi (dùng khi insert AppointmentQuota mới)
     public const int DefaultQuotaPerSession = 30;
 

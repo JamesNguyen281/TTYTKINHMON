@@ -60,6 +60,8 @@ public partial class TtytlpDbContext : DbContext
 
     public virtual DbSet<ScheduleChangeRequest> ScheduleChangeRequests { get; set; }
 
+    public virtual DbSet<ClinicRoom> ClinicRooms { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Answer>(entity =>
@@ -140,6 +142,11 @@ public partial class TtytlpDbContext : DbContext
                 .IsUnicode(false)
                 .HasDefaultValue("pending")
                 .HasColumnName("status");
+            // P2.A: BN được lễ tân route vào ClinicRoom (phòng khám trong khoa "Khoa Khám bệnh")
+            entity.Property(e => e.ClinicRoomId).HasColumnName("clinic_room_id");
+            // P2.A: Cờ cấp cứu — bypass workflow phòng khám thường
+            entity.Property(e => e.IsEmergency).HasColumnName("is_emergency");
+            entity.HasIndex(e => e.ClinicRoomId, "IX_Appointment_ClinicRoom");
         });
 
         modelBuilder.Entity<AppointmentQuotum>(entity =>
@@ -462,6 +469,11 @@ public partial class TtytlpDbContext : DbContext
                 .HasColumnName("valid_from");
             entity.Property(e => e.ValidTo).HasColumnName("valid_to");
             entity.Property(e => e.Weekday).HasColumnName("weekday");
+            // P2.B: 2 loại lịch trực (clinic / emergency / management)
+            entity.Property(e => e.ScheduleType).HasMaxLength(20).HasColumnName("schedule_type");
+            // P2.A: BS được luân phiên gán vào ClinicRoom — chỉ khi schedule_type='clinic'
+            entity.Property(e => e.ClinicRoomId).HasColumnName("clinic_room_id");
+            entity.HasIndex(e => e.ClinicRoomId, "IX_DocSched_ClinicRoom");
         });
 
         modelBuilder.Entity<Document>(entity =>
@@ -568,6 +580,12 @@ public partial class TtytlpDbContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime")
                 .HasColumnName("visit_date");
+            // P2.C: Hồ sơ ngoại trú vs nội trú
+            entity.Property(e => e.RecordType).HasMaxLength(20).HasColumnName("record_type");
+            entity.Property(e => e.IsHospitalized).HasColumnName("is_hospitalized");
+            entity.Property(e => e.TargetInpatientDeptId).HasColumnName("target_inpatient_dept_id");
+            entity.Property(e => e.HospitalizationNote).HasMaxLength(500).HasColumnName("hospitalization_note");
+            entity.HasIndex(e => e.IsHospitalized, "IX_MedicalRecord_IsHospitalized").HasFilter("[is_hospitalized] = 1");
         });
 
         modelBuilder.Entity<News>(entity =>
@@ -1062,6 +1080,29 @@ public partial class TtytlpDbContext : DbContext
             entity.Property(e => e.ProcessedDate).HasColumnType("datetime").HasColumnName("processed_date");
             entity.HasIndex(e => e.DoctorId);
             entity.HasIndex(e => e.Status);
+        });
+
+        // ClinicRoom — phòng khám trong khoa "Khoa Khám bệnh" (xem ClinicRoom.cs)
+        modelBuilder.Entity<ClinicRoom>(entity =>
+        {
+            entity.ToTable("ClinicRoom");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasDefaultValueSql("(newid())").HasColumnName("id");
+            entity.Property(e => e.DepartmentId).HasColumnName("department_id");
+            entity.Property(e => e.RoomCode).HasMaxLength(50).HasColumnName("room_code");
+            entity.Property(e => e.RoomName).HasMaxLength(200).HasColumnName("room_name");
+            entity.Property(e => e.SpecialtyL).HasMaxLength(200).HasColumnName("specialty_l");
+            entity.Property(e => e.SpecialtyE).HasMaxLength(200).HasColumnName("specialty_e");
+            entity.Property(e => e.Floor).HasMaxLength(50).HasColumnName("floor");
+            entity.Property(e => e.CommonSymptoms).HasMaxLength(1000).HasColumnName("common_symptoms");
+            entity.Property(e => e.Ord).HasColumnName("ord");
+            entity.Property(e => e.ActiveFlag).HasDefaultValue(1).HasColumnName("active_flag");
+            entity.Property(e => e.CreatedDate).HasColumnType("datetime").HasColumnName("created_date");
+            entity.Property(e => e.CreatedBy).HasColumnName("created_by");
+            entity.Property(e => e.LuUpdated).HasColumnType("datetime").HasColumnName("lu_updated");
+            entity.Property(e => e.LuUserId).HasColumnName("lu_user_id");
+            entity.HasIndex(e => e.DepartmentId);
+            entity.HasIndex(e => new { e.DepartmentId, e.RoomCode }).IsUnique();
         });
 
         OnModelCreatingPartial(modelBuilder);

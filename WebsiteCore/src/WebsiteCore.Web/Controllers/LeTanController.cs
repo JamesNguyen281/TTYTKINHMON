@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using WebsiteCore.Business;
 using WebsiteCore.Business.Services;
+using WebsiteCore.Data.Entities;
 using WebsiteCore.Web.Helpers;
 
 namespace WebsiteCore.Web.Controllers;
@@ -18,6 +20,7 @@ public class LeTanController : BaseController
     private readonly IDoctorService _doctorService;
     private readonly IDepartmentService _deptService;
     private readonly IQuotaService _quotaService;
+    private readonly IClinicRoomService _clinicRoomService;
 
     public LeTanController(
         ISiteService siteService,
@@ -26,7 +29,8 @@ public class LeTanController : BaseController
         IDoctorScheduleService scheduleService,
         IDoctorService doctorService,
         IDepartmentService deptService,
-        IQuotaService quotaService) : base(siteService)
+        IQuotaService quotaService,
+        IClinicRoomService clinicRoomService) : base(siteService)
     {
         _apptService = apptService;
         _auditService = auditService;
@@ -34,6 +38,7 @@ public class LeTanController : BaseController
         _doctorService = doctorService;
         _deptService = deptService;
         _quotaService = quotaService;
+        _clinicRoomService = clinicRoomService;
     }
 
     public async Task<IActionResult> Index()
@@ -151,6 +156,11 @@ public class LeTanController : BaseController
 
         ViewBag.Availabilities  = availabilities;
         ViewBag.DeptOverview    = deptOverview;
+
+        // P2.A: load list ClinicRoom của site để lễ tân route BN vào phòng khám phù hợp.
+        // Workflow: BN trình bày triệu chứng → lễ tân pick room (phòng khám trong khoa "Khám bệnh"
+        // tương ứng chuyên khoa cần khám). BS sẽ tiếp nhận BN tại room đó.
+        ViewBag.ClinicRooms = await _clinicRoomService.GetActiveBySiteAsync(CurrentSiteId);
         // Fallback: nếu hệ thống chưa có lịch trực (vd: khởi tạo dữ liệu mới),
         // hiển thị toàn bộ BS cùng khoa (không kèm slot count) — dùng cho phân lịch khẩn cấp.
         var allDoctors = await _doctorService.GetAllAsync(CurrentSiteId);
@@ -187,6 +197,66 @@ public class LeTanController : BaseController
             fillPercent    = x.FillPercent,
             isAvailable    = x.IsAvailable,
         }));
+    }
+
+    /// <summary>
+    /// P2.A — Phân phòng khám: lễ tân route BN vào ClinicRoom phù hợp theo triệu chứng.
+    /// Chỉ lễ tân có quyền phân room (không có quyền chuyển khoa). Sau khi gán room,
+    /// BS trực ở phòng đó sẽ tiếp nhận BN.
+    /// </summary>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AssignRoom(Guid id, Guid? clinicRoomId)
+    {
+        var u = CurrentUser!;
+        // Site scoping
+        var current = await _apptService.GetByIdAsync(id);
+        if (current == null || current.SiteId != CurrentSiteId) return NotFound();
+
+        // Verify status — chỉ pending/rescheduled/confirmed mới phân được
+        // (cancelled/rejected/completed thì khoá)
+        if (current.Status == Constants.ApptCancelled ||
+            current.Status == Constants.ApptRejected  ||
+            current.Status == Constants.ApptCompleted)
+        {
+            TempData["Error"] = "Không thể phân phòng — lịch đã đóng.";
+            return RedirectToAction(nameof(Detail), new { id });
+        }
+
+        // Cross-site guard: room phải thuộc cùng site
+        ClinicRoom? room = null;
+        if (clinicRoomId.HasValue)
+        {
+            room = await _clinicRoomService.GetByIdInSiteAsync(clinicRoomId.Value, CurrentSiteId);
+            if (room == null)
+            {
+                TempData["Error"] = "Phòng khám không tồn tại hoặc không thuộc cơ sở này.";
+                return RedirectToAction(nameof(Detail), new { id });
+            }
+        }
+
+        // Set field — không qua AppointmentService vì AssignDoctor có guard riêng cho doctor.
+        // Phân room là thao tác riêng của lễ tân, chỉ update 1 field + audit.
+        await UpdateAppointmentRoomAsync(id, clinicRoomId, u.Id);
+        await _auditService.LogAsync(u.Id, "Phân phòng khám",
+            $"{u.UserName} apptId={id} BN={current.PatientName}: room → {room?.RoomName ?? "(huỷ phân)"}");
+        TempData["Success"] = clinicRoomId.HasValue
+            ? $"Đã phân BN vào phòng \"{room!.RoomName}\"."
+            : "Đã bỏ phân phòng.";
+        return RedirectToAction(nameof(Detail), new { id });
+    }
+
+    private async Task UpdateAppointmentRoomAsync(Guid apptId, Guid? roomId, Guid staffUserId)
+    {
+        // Direct DB update — không qua service để giữ AppointmentService gọn cho doctor logic.
+        // Thay đổi đơn giản 1 field + lu_updated, không ảnh hưởng quota / state machine.
+        var db = HttpContext.RequestServices.GetRequiredService<WebsiteCore.Data.TtytlpDbContext>();
+        var appt = await db.Appointments.FirstOrDefaultAsync(x => x.Id == apptId);
+        if (appt == null) return;
+        appt.ClinicRoomId = roomId;
+        appt.LuUpdated    = DateTime.Now;
+        appt.LuUserId     = staffUserId;
+        await db.SaveChangesAsync();
     }
 
     [HttpPost]

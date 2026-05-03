@@ -124,6 +124,7 @@ app.MapControllerRoute("LeTanCounts",      "le-tan/counts",           new { cont
 app.MapControllerRoute("LeTanTimSdt",      "le-tan/tim-theo-sdt",     new { controller = "LeTan", action = "TimTheoSdt" });
 app.MapControllerRoute("LeTanLichNgay",    "le-tan/lich-theo-ngay",   new { controller = "LeTan", action = "LichTheoNgay" });
 app.MapControllerRoute("LeTanAvailDocs",   "le-tan/bac-si-co-slot",   new { controller = "LeTan", action = "AvailableDoctors" });
+app.MapControllerRoute("LeTanAssignRoom",  "le-tan/phan-phong-kham",  new { controller = "LeTan", action = "AssignRoom" });
 
 // === Cổng Bác sĩ (DOCTOR) ===
 app.MapControllerRoute("DocPortal",       "bac-si-portal",                     new { controller = "DoctorPortal", action = "Index" });

@@ -56,6 +56,12 @@ public class AppointmentRow
     public string? StaffNote { get; set; }
     public bool CheckedIn { get; set; }
     public DateTime? CreatedDate { get; set; }
+
+    /// <summary>P2.A — Phòng khám được lễ tân route BN vào (trong khoa Khoa Khám bệnh).</summary>
+    public Guid? ClinicRoomId { get; set; }
+
+    /// <summary>P2.A — Cờ cấp cứu — BN bypass workflow phòng khám thường.</summary>
+    public bool IsEmergency { get; set; }
 }
 
 public class BookingResult

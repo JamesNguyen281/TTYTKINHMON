@@ -37,6 +37,7 @@ public static class BusinessServiceExtensions
         services.AddScoped<IDocumentService, DocumentService>();
         services.AddScoped<IQuotaService, QuotaService>();
         services.AddScoped<IScheduleChangeRequestService, ScheduleChangeRequestService>();
+        services.AddScoped<IClinicRoomService, ClinicRoomService>();
         return services;
     }
 }

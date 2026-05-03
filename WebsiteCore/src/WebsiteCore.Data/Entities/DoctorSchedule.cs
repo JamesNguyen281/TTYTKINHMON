@@ -30,4 +30,17 @@ public partial class DoctorSchedule
     public DateTime CreatedDate { get; set; }
 
     public Guid? CreatedBy { get; set; }
+
+    /// <summary>
+    /// Loại lịch trực: "clinic" = trực khám chữa bệnh tại phòng khám,
+    /// "emergency" = trực cấp cứu, "management" = ban giám đốc xử lí công việc (không khám).
+    /// Default null → coi là "clinic" (backward compat với data cũ).
+    /// </summary>
+    public string? ScheduleType { get; set; }
+
+    /// <summary>
+    /// FK tới ClinicRoom — phòng khám mà BS được luân phiên gán vào (chỉ áp dụng khi
+    /// ScheduleType = "clinic"). Nullable: BS trực cấp cứu hoặc ban giám đốc không gán phòng.
+    /// </summary>
+    public Guid? ClinicRoomId { get; set; }
 }

@@ -7,15 +7,21 @@
     var availabilities = ViewBag.Availabilities as List<DoctorAvailabilityVm> ?? new();
     var deptOverview   = ViewBag.DeptOverview as DepartmentSlotOverviewVm;
     var fallbackDocs   = ViewBag.FallbackDoctors as List<Doctor> ?? new();
+    var clinicRooms    = ViewBag.ClinicRooms as List<ClinicRoom> ?? new();
     int allDocCount    = (int)(ViewBag.AllDoctorsCount ?? 0);
 
     // Chỉ cho phân BS khi pending hoặc rescheduled (sau confirm BS-quota đã trừ).
     bool canAssign = Model.Status == "pending" || Model.Status == "rescheduled";
+    // Phân phòng khám được phép cả khi đã confirmed — lễ tân route lại nếu BN nhầm phòng.
+    bool canAssignRoom = Model.Status != "completed" && Model.Status != "cancelled" && Model.Status != "rejected";
     var assignedAvail = Model.DoctorId.HasValue
         ? availabilities.FirstOrDefault(x => x.DoctorId == Model.DoctorId.Value)
         : null;
     var assignedName = assignedAvail?.DoctorName
         ?? fallbackDocs.FirstOrDefault(d => d.Id == Model.DoctorId)?.NameL;
+    var assignedRoom = Model.ClinicRoomId.HasValue
+        ? clinicRooms.FirstOrDefault(r => r.Id == Model.ClinicRoomId.Value)
+        : null;
 }
 
 <div class="container" style="padding-top:24px;">
@@ -45,6 +51,18 @@
                     <span class="label label-@(Model.Status == "confirmed" ? "success" : Model.Status == "pending" ? "warning" : "default")">@Constants.ApptStatusLabel(Model.Status)</span>
                     @if (Model.CheckedIn) { <span class="label label-info">Đã check-in</span> }
                 </dd>
+                <dt>Phòng khám</dt> <dd>
+                    @if (assignedRoom != null)
+                    {
+                        <strong style="color:#0a3d62;"><i class="fa fa-door-open"></i> @assignedRoom.RoomCode — @assignedRoom.RoomName</strong>
+                        @if (!string.IsNullOrEmpty(assignedRoom.Floor)) { <span class="text-muted"> · @assignedRoom.Floor</span> }
+                        @if (!string.IsNullOrEmpty(assignedRoom.SpecialtyL)) { <br /><small class="text-muted">@assignedRoom.SpecialtyL</small> }
+                    }
+                    else
+                    {
+                        <em class="text-muted">Chưa phân phòng — lễ tân cần route BN vào phòng khám phù hợp theo triệu chứng</em>
+                    }
+                </dd>
                 <dt>Bác sĩ phụ trách</dt> <dd>
                     @if (Model.DoctorId.HasValue)
                     {
@@ -62,6 +80,90 @@
             </dl>
         </div>
     </div>
+
+    @* P2.A: Panel phân phòng khám — luôn hiện khi appointment chưa đóng *@
+    @if (canAssignRoom)
+    {
+        <div class="panel panel-warning" id="panel-assign-room">
+            <div class="panel-heading">
+                <strong><i class="fa fa-door-open"></i> Phân phòng khám</strong>
+                <small style="font-weight:normal; opacity:.85; margin-left:8px;">— route BN vào phòng phù hợp theo triệu chứng (mọi BN khám thường đều phải qua Khoa Khám bệnh)</small>
+            </div>
+            <div class="panel-body">
+                @if (!clinicRooms.Any())
+                {
+                    <div class="alert alert-warning" style="margin:0;">
+                        <i class="fa fa-warning"></i> Hệ thống chưa có phòng khám nào. Quản trị viên cần seed ClinicRoom trước khi tiếp nhận BN.
+                    </div>
+                }
+                else
+                {
+                    <form asp-action="AssignRoom" method="post" id="frm-assign-room">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <div class="km-room-pick-grid">
+                            @foreach (var r in clinicRooms.OrderBy(x => x.Ord ?? 999).ThenBy(x => x.RoomCode))
+                            {
+                                bool isPicked = Model.ClinicRoomId == r.Id;
+                                <label class="km-room-card @(isPicked ? "is-picked" : "")">
+                                    <input type="radio" name="clinicRoomId" value="@r.Id" checked="@isPicked" />
+                                    <div class="km-room-body">
+                                        <div class="km-room-code">@r.RoomCode</div>
+                                        <div class="km-room-name">@r.RoomName</div>
+                                        @if (!string.IsNullOrEmpty(r.SpecialtyL))
+                                        {
+                                            <div class="km-room-specialty"><i class="fa fa-stethoscope"></i> @r.SpecialtyL</div>
+                                        }
+                                        @if (!string.IsNullOrEmpty(r.Floor))
+                                        {
+                                            <div class="km-room-floor"><i class="fa fa-building"></i> @r.Floor</div>
+                                        }
+                                        @if (!string.IsNullOrEmpty(r.CommonSymptoms))
+                                        {
+                                            <div class="km-room-symptoms">
+                                                <small><strong>Triệu chứng phổ biến:</strong> @r.CommonSymptoms</small>
+                                            </div>
+                                        }
+                                    </div>
+                                </label>
+                            }
+                            <label class="km-room-card km-room-skip">
+                                <input type="radio" name="clinicRoomId" value="" checked="@(!Model.ClinicRoomId.HasValue)" />
+                                <div class="km-room-body" style="text-align:center;">
+                                    <div style="font-size:24px; color:#6c757d;"><i class="fa fa-ban"></i></div>
+                                    <div><strong>Chưa phân</strong></div>
+                                </div>
+                            </label>
+                        </div>
+                        <div style="margin-top:14px; display:flex; gap:8px; flex-wrap:wrap;">
+                            <button type="submit" class="btn btn-warning"><i class="fa fa-save"></i> Lưu phân phòng</button>
+                            <small class="text-muted" style="align-self:center;">@clinicRooms.Count phòng khám đang hoạt động</small>
+                        </div>
+                    </form>
+                }
+            </div>
+        </div>
+        <style>
+            .km-room-pick-grid {
+                display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+                gap: 12px;
+            }
+            .km-room-card {
+                display: block; padding: 10px 12px; cursor: pointer;
+                border: 2px solid #f0ad4e; border-radius: 8px; background: #fffaf3;
+                font-weight: normal; margin: 0; transition: all .15s;
+            }
+            .km-room-card:hover { border-color: #ec971f; background: #fdf5e6; }
+            .km-room-card.is-picked { border-color: #d68610; background: #fce8c8; box-shadow: 0 2px 6px rgba(214,134,16,.20); }
+            .km-room-card input[type=radio] { margin-right: 6px; }
+            .km-room-code { font-size: 11px; font-weight: 700; color: #d68610; letter-spacing: 1px; }
+            .km-room-name { font-weight: 700; color: #5d4516; font-size: 14px; margin-top: 2px; }
+            .km-room-specialty { font-size: 12px; color: #7a5b1f; margin-top: 4px; font-style: italic; }
+            .km-room-floor { font-size: 11px; color: #8a6c2f; margin-top: 2px; }
+            .km-room-symptoms { font-size: 11px; color: #5d4516; margin-top: 4px; line-height: 1.3; }
+            .km-room-skip { background: #f8f9fa; border-color: #ced4da; }
+        </style>
+    }
 
     @if (canAssign)
     {
