@@ -24,6 +24,14 @@ public interface IAppointmentService
     /// <summary>Phân/đổi bác sĩ phụ trách cho lịch hẹn. Set null để bỏ phân.
     /// Chỉ được gọi khi appt status ∈ {pending, confirmed, rescheduled} — không cho đổi khi đã completed/cancelled/rejected.</summary>
     Task<bool> AssignDoctorAsync(Guid apptId, Guid? doctorId, Guid staffUserId);
+
+    /// <summary>
+    /// P3.B — BS bấm "Hẹn khám lại" sau khi khám xong: sinh appointment con với
+    /// status=confirmed (auto-confirmed, không cần lễ tân duyệt vì BS đã quyết),
+    /// có booking_code, kế thừa thông tin BN + BS hiện tại. Increment quota.
+    /// </summary>
+    Task<ScheduleFollowUpResult> ScheduleFollowUpAsync(
+        Guid currentApptId, DateOnly followUpDate, string session, Guid doctorUserId);
 }
 
 /// <summary>
@@ -400,6 +408,118 @@ public class AppointmentService : IAppointmentService
         appt.LuUserId  = staffUserId;
         await _db.SaveChangesAsync();
         return true;
+    }
+
+    public async Task<ScheduleFollowUpResult> ScheduleFollowUpAsync(
+        Guid currentApptId, DateOnly followUpDate, string session, Guid doctorUserId)
+    {
+        if (string.IsNullOrEmpty(session)) return ScheduleFollowUpResult.Fail("Buổi khám không hợp lệ.");
+        if (session != Constants.SessionMorning && session != Constants.SessionAfternoon)
+            return ScheduleFollowUpResult.Fail("Buổi khám phải là sáng hoặc chiều.");
+        if (followUpDate < DateOnly.FromDateTime(DateTime.Today))
+            return ScheduleFollowUpResult.Fail("Ngày tái khám không được trong quá khứ.");
+        if (followUpDate > DateOnly.FromDateTime(DateTime.Today.AddDays(Constants.MaxDaysAhead * 6)))
+            return ScheduleFollowUpResult.Fail($"Ngày tái khám không quá {Constants.MaxDaysAhead * 6} ngày.");
+
+        var current = await _db.Appointments.FirstOrDefaultAsync(x => x.Id == currentApptId);
+        if (current == null) return ScheduleFollowUpResult.Fail("Lịch khám hiện tại không tồn tại.");
+        if (!current.PatientUserId.HasValue)
+            return ScheduleFollowUpResult.Fail("BN chưa có tài khoản — không thể đặt lịch tái khám tự động.");
+        if (!current.DepartmentId.HasValue)
+            return ScheduleFollowUpResult.Fail("Lịch hiện tại thiếu khoa — không thể tái khám.");
+        if (!current.DoctorId.HasValue)
+            return ScheduleFollowUpResult.Fail("Lịch hiện tại thiếu BS — không thể đặt tái khám.");
+
+        // Sinh booking code dạng KMyymmdd<S|C><6hex>
+        var sessTag = session == Constants.SessionMorning ? "S" : "C";
+        var rand    = Guid.NewGuid().ToString("N")[..6].ToUpper();
+        var dateStr = followUpDate.ToString("yyMMdd");
+        var bookingCode = $"KM{dateStr}{sessTag}{rand}";
+
+        var newAppt = new Appointment
+        {
+            Id              = Guid.NewGuid(),
+            PatientUserId   = current.PatientUserId,
+            PatientName     = current.PatientName,
+            PatientPhone    = current.PatientPhone,
+            PatientEmail    = current.PatientEmail,
+            DepartmentId    = current.DepartmentId,
+            DepartmentName  = current.DepartmentName,
+            DoctorId        = current.DoctorId,           // BS hiện tại theo dõi tiếp
+            ClinicRoomId    = current.ClinicRoomId,        // BS thường ở cùng phòng
+            AppointmentDate = followUpDate,
+            Session         = session,
+            Reason          = $"Tái khám theo chỉ định BS sau lịch {current.BookingCode ?? current.Id.ToString("N")[..8]}.",
+            Status          = Constants.ApptConfirmed,    // BS đã quyết → confirmed luôn
+            BookingCode     = bookingCode,
+            CheckedIn       = false,
+            IsEmergency     = false,
+            SiteId          = current.SiteId,
+            CreatedDate     = DateTime.Now,
+            LuUpdated       = DateTime.Now,
+            LuUserId        = doctorUserId,
+        };
+        _db.Appointments.Add(newAppt);
+
+        // Increment quota — cả dept-level và doctor-level (giống flow confirm bình thường)
+        var deptId = current.DepartmentId.Value;
+        async Task IncQuota(Guid? docId)
+        {
+            var q = await _db.AppointmentQuota.FirstOrDefaultAsync(x =>
+                x.DepartmentId == deptId
+                && x.DoctorId == docId
+                && x.ApptDate == followUpDate
+                && x.Session == session);
+            if (q == null)
+            {
+                int defaultMax = Constants.DefaultQuotaPerSession;
+                if (docId.HasValue)
+                {
+                    var weekday = followUpDate.DayOfWeek == DayOfWeek.Sunday
+                        ? (byte)1 : (byte)((int)followUpDate.DayOfWeek + 1);
+                    var sched = await _db.DoctorSchedules.FirstOrDefaultAsync(s =>
+                        s.DoctorId == docId.Value && s.Weekday == weekday && s.Session == session
+                        && s.ActiveFlag == 1 && s.ValidFrom <= followUpDate
+                        && (s.ValidTo == null || s.ValidTo >= followUpDate));
+                    if (sched == null)
+                        throw new InvalidOperationException($"BS không có lịch trực ngày {followUpDate:dd/MM/yyyy} buổi {session}.");
+                    defaultMax = sched.MaxPatients ?? Constants.DefaultQuotaPerSession;
+                }
+                _db.AppointmentQuota.Add(new AppointmentQuotum
+                {
+                    Id = Guid.NewGuid(), DepartmentId = deptId, DoctorId = docId,
+                    ApptDate = followUpDate, Session = session,
+                    MaxCount = defaultMax, BookedCount = 1, CreatedDate = DateTime.Now,
+                });
+            }
+            else
+            {
+                if (q.BookedCount + 1 > q.MaxCount)
+                    throw new InvalidOperationException(docId.HasValue
+                        ? $"BS đã hết suất buổi này ({q.BookedCount}/{q.MaxCount})."
+                        : $"Khoa đã hết suất buổi này ({q.BookedCount}/{q.MaxCount}).");
+                q.BookedCount += 1;
+                q.LuUpdated = DateTime.Now;
+            }
+        }
+        try
+        {
+            await IncQuota(null);                       // dept-level
+            await IncQuota(current.DoctorId.Value);     // doctor-level
+            await _db.SaveChangesAsync();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return ScheduleFollowUpResult.Fail(ex.Message);
+        }
+
+        return new ScheduleFollowUpResult
+        {
+            Success       = true,
+            AppointmentId = newAppt.Id,
+            BookingCode   = bookingCode,
+            FollowUpDate  = followUpDate,
+        };
     }
 
     public async Task<bool> MarkCheckedInAsync(Guid id, Guid staffUserId)

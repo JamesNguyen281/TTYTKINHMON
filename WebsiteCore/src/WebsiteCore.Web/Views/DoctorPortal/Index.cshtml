@@ -13,7 +13,8 @@
 }
 
 <style>
-    .doc-wrap { max-width:1280px; margin:0 auto; padding:18px 0 40px; }
+    .doc-wrap { max-width:1280px; margin:0 auto; padding:18px 16px 40px; box-sizing:border-box; }
+    .doc-wrap *, .doc-wrap *::before, .doc-wrap *::after { box-sizing:border-box; }
     .doc-hero { background:linear-gradient(135deg,#43aa8b 0%,#2f7a5e 100%); color:white; padding:18px 24px; border-radius:8px; margin-bottom:18px; box-shadow:0 4px 12px rgba(67,170,139,0.25); }
     .doc-hero h1 { margin:0; font-size:20px; font-weight:600; }
     .doc-hero .meta { font-size:13px; opacity:0.9; margin-top:4px; }
@@ -38,8 +39,8 @@
     .doc-card .body { padding:14px; }
     .doc-card .head .badge { background:#43aa8b; color:white; padding:3px 10px; border-radius:12px; font-size:12px; font-weight:600; }
 
-    .patient-row { display:flex; align-items:center; gap:12px; padding:10px; border:1px solid #f0f3f7; border-radius:6px; margin-bottom:8px; transition:all 0.15s; }
-    .patient-row:hover { border-color:#43aa8b; background:#f7fdfa; }
+    .patient-row { display:flex; align-items:center; gap:12px; padding:10px; border:1px solid #f0f3f7; border-radius:6px; margin-bottom:8px; transition:all 0.15s; cursor:pointer; text-decoration:none; color:inherit; }
+    .patient-row:hover { border-color:#43aa8b; background:#f7fdfa; text-decoration:none; color:inherit; }
     .patient-row .avatar { width:38px; height:38px; border-radius:50%; background:#0a3d62; color:white; display:flex; align-items:center; justify-content:center; font-weight:600; flex-shrink:0; }
     .patient-row .info { flex:1; min-width:0; }
     .patient-row .info .name { font-weight:600; color:#0a3d62; }
@@ -51,10 +52,10 @@
     .patient-row .btn-action { padding:5px 12px; font-size:12px; flex-shrink:0; }
 
     .qn-list { padding:0; margin:0; list-style:none; }
-    .qn-list li { padding:10px 12px; border:1px solid #f0f3f7; border-radius:6px; margin-bottom:8px; }
-    .qn-list li a { color:#0a3d62; text-decoration:none; font-weight:600; }
+    .qn-list li { padding:10px 12px; border:1px solid #f0f3f7; border-radius:6px; margin-bottom:8px; overflow:hidden; }
+    .qn-list li a { color:#0a3d62; text-decoration:none; font-weight:600; word-break:break-word; }
     .qn-list li a:hover { color:#43aa8b; }
-    .qn-list li .qbody { font-size:13px; color:#3c4858; margin-top:4px; line-height:1.5; }
+    .qn-list li .qbody { font-size:13px; color:#3c4858; margin-top:4px; line-height:1.5; word-break:break-word; overflow-wrap:anywhere; }
     .qn-list li .qmeta { font-size:11px; color:#8898aa; margin-top:4px; }
 
     .quick-action { display:flex; align-items:center; gap:10px; padding:11px 14px; background:white; border:1px solid #e5e9ee; border-radius:6px; margin-bottom:8px; color:#0a3d62 !important; text-decoration:none; transition:all 0.15s; }
@@ -145,13 +146,13 @@
                             string statusLbl = p.CheckedIn
                                 ? (p.Status == "completed" ? "✓ Đã khám" : "🟢 Sẵn sàng")
                                 : "⏳ Chưa đến";
-                            string actionUrl = (p.CheckedIn && p.Status != "completed")
-                                ? $"/bac-si-portal/chan-doan/{p.Id}"
-                                : "#";
+                            // Click row luôn → trang chẩn đoán (GET cho phép xem detail dù chưa check-in;
+                            // chỉ POST tạo hồ sơ mới yêu cầu check-in)
+                            string detailUrl = $"/bac-si-portal/chan-doan/{p.Id}";
                             string initials = !string.IsNullOrEmpty(p.PatientName) && p.PatientName.Length > 0
                                 ? p.PatientName.Trim().Split(' ').Last().Substring(0, 1).ToUpper()
                                 : "?";
-                            <div class="patient-row">
+                            <a href="@detailUrl" class="patient-row" title="Click để xem chi tiết bệnh nhân">
                                 <div class="avatar">@initials</div>
                                 <div class="info">
                                     <div class="name">@p.PatientName <small style="color:#6c757d; font-weight:400;">— @p.PatientPhone</small></div>
@@ -164,9 +165,13 @@
                                 <span class="status-tag @status">@statusLbl</span>
                                 @if (p.CheckedIn && p.Status != "completed")
                                 {
-                                    <a href="@actionUrl" class="btn btn-success btn-action"><i class="fa fa-stethoscope"></i> Chẩn đoán</a>
+                                    <span class="btn btn-success btn-action"><i class="fa fa-stethoscope"></i> Chẩn đoán</span>
                                 }
-                            </div>
+                                else
+                                {
+                                    <span class="btn btn-default btn-action"><i class="fa fa-eye"></i> Xem</span>
+                                }
+                            </a>
                         }
                         @if (todayList.Count > 8)
                         {

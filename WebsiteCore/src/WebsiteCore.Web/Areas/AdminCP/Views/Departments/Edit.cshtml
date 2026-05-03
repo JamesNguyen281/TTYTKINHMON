@@ -62,6 +62,18 @@
                     </label>
                 </div>
             </div>
+            <div class="form-group" style="background:#e8f4fc; padding:10px; border-radius:6px; border:1px solid #c8d8e3;">
+                <div class="checkbox" style="margin:0;">
+                    <label>
+                        <input asp-for="IsClinicalDept" type="checkbox" value="true" />
+                        <strong>Khoa nhận BN khám</strong>
+                    </label>
+                </div>
+                <small class="text-muted">
+                    Nếu tick → khoa hiện trong dropdown đặt lịch online + dropdown chuyển nhập viện.
+                    Bỏ tick cho khoa hỗ trợ (Xét nghiệm, Dược, KS bệnh tật) hoặc khoa đến trực tiếp (Cấp cứu).
+                </small>
+            </div>
         </div>
     </div>
 

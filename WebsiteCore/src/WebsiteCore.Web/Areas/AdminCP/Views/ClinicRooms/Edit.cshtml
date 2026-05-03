@@ -1,0 +1,79 @@
+@model WebsiteCore.Data.Entities.ClinicRoom
+@using WebsiteCore.Data.Entities
+@{
+    ViewData["Title"] = "Sửa phòng khám: " + Model.RoomName;
+    var depts = ViewBag.Departments as List<Department> ?? new();
+}
+
+<h2 class="admin-page-title"><i class="fa fa-pencil"></i> Sửa phòng @Model.RoomCode</h2>
+
+@if (TempData["Error"] != null) { <div class="alert alert-danger">@TempData["Error"]</div> }
+
+<form asp-action="Edit" method="post" class="form-horizontal" style="max-width:780px;">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="ActiveFlag" />
+    <input type="hidden" asp-for="CreatedDate" />
+    <input type="hidden" asp-for="CreatedBy" />
+
+    <div class="form-group">
+        <label class="col-sm-3 control-label">Mã phòng <span class="text-danger">*</span></label>
+        <div class="col-sm-9">
+            <input asp-for="RoomCode" class="form-control" maxlength="50" required />
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="col-sm-3 control-label">Tên phòng <span class="text-danger">*</span></label>
+        <div class="col-sm-9">
+            <input asp-for="RoomName" class="form-control" maxlength="200" required />
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="col-sm-3 control-label">Khoa <span class="text-danger">*</span></label>
+        <div class="col-sm-9">
+            <select asp-for="DepartmentId" class="form-control" required>
+                @foreach (var d in depts)
+                {
+                    <option value="@d.Id" selected="@(d.Id == Model.DepartmentId)">@d.NameL</option>
+                }
+            </select>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="col-sm-3 control-label">Chuyên môn (vi)</label>
+        <div class="col-sm-9">
+            <input asp-for="SpecialtyL" class="form-control" maxlength="200" />
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="col-sm-3 control-label">Tầng</label>
+        <div class="col-sm-9">
+            <input asp-for="Floor" class="form-control" maxlength="50" />
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="col-sm-3 control-label">Triệu chứng phổ biến</label>
+        <div class="col-sm-9">
+            <textarea asp-for="CommonSymptoms" class="form-control" rows="2" maxlength="1000"></textarea>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="col-sm-3 control-label">Thứ tự (Ord)</label>
+        <div class="col-sm-9">
+            <input asp-for="Ord" type="number" class="form-control" style="width:100px;" />
+        </div>
+    </div>
+
+    <div class="form-group">
+        <div class="col-sm-offset-3 col-sm-9">
+            <button type="submit" class="btn btn-warning"><i class="fa fa-save"></i> Lưu thay đổi</button>
+            <a href="/AdminCP/ClinicRooms" class="btn btn-default">Huỷ</a>
+        </div>
+    </div>
+</form>

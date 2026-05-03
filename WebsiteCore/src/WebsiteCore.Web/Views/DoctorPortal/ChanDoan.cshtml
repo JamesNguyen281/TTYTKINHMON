@@ -78,8 +78,35 @@
                     <textarea name="notes" class="form-control" rows="2"></textarea>
                 </div>
                 <div class="form-group">
-                    <label>Ngày tái khám</label>
-                    <input name="followUpDate" type="date" class="form-control" />
+                    <label>Ngày tái khám <small class="text-muted">— ghi nhận trong hồ sơ</small></label>
+                    <input name="followUpDate" type="date" class="form-control" id="ip-followup-date" />
+                </div>
+            </div>
+        </div>
+
+        @* P3.B — Hẹn lịch tái khám tự động (sinh appointment + booking code, BS quyết) *@
+        <div class="panel panel-success" id="panel-followup-auto">
+            <div class="panel-heading"><strong><i class="fa fa-calendar-plus-o"></i> Đặt lịch tái khám tự động</strong>
+                <span class="text-muted" style="font-size:12px; font-weight:normal;">— BS bấm sẽ sinh ngay lịch khám với mã booking, không qua lễ tân</span>
+            </div>
+            <div class="panel-body" id="block-followup-auto">
+                <p class="text-muted" style="margin-bottom:10px;">
+                    BN sẽ thấy lịch trong "Lịch của tôi" với mã booking để cầm theo lần sau (không qua lễ tân duyệt).
+                </p>
+                <div class="row">
+                    <div class="col-sm-4">
+                        <label>Buổi khám</label>
+                        <select name="session" id="ip-followup-session" form="frm-followup" class="form-control">
+                            <option value="morning" selected>Sáng</option>
+                            <option value="afternoon">Chiều</option>
+                        </select>
+                    </div>
+                    <div class="col-sm-8" style="padding-top:24px;">
+                        <button type="submit" form="frm-followup" class="btn btn-success">
+                            <i class="fa fa-calendar-plus-o"></i> Tạo lịch tái khám tự động
+                        </button>
+                        <small class="text-muted" style="margin-left:8px;">— dùng "Ngày tái khám" ở trên</small>
+                    </div>
                 </div>
             </div>
         </div>
@@ -211,6 +238,37 @@
 
         <button type="submit" class="btn btn-primary btn-lg"><i class="fa fa-save"></i> Lưu hồ sơ</button>
     </form>
+
+    @* P3.B — Form riêng cho Hẹn khám lại (ngoài form chính ChanDoan để tránh form lồng).
+       Sử dụng form attribute trên input/button trong panel để liên kết. *@
+    <form id="frm-followup" action="/bac-si-portal/hen-kham-lai" method="post" style="display:none;">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="currentApptId" value="@appt?.Id" />
+        <input type="hidden" name="followUpDate" id="ip-followup-date-shadow" />
+    </form>
+    <script>
+        // Sync followUpDate input chính → hidden trong form riêng để submit cùng giá trị
+        (function(){
+            var src = document.getElementById('ip-followup-date');
+            var shadow = document.getElementById('ip-followup-date-shadow');
+            var btn = document.querySelector('button[form="frm-followup"]');
+            if (src && shadow) {
+                src.addEventListener('change', function(){ shadow.value = src.value; });
+                shadow.value = src.value;
+            }
+            if (btn) {
+                btn.addEventListener('click', function(e){
+                    if (!src.value) {
+                        e.preventDefault();
+                        alert('Vui lòng chọn "Ngày tái khám" trước khi đặt lịch tự động.');
+                        src.focus();
+                    } else {
+                        shadow.value = src.value;
+                    }
+                });
+            }
+        })();
+    </script>
 </div>
 
 @section Scripts {

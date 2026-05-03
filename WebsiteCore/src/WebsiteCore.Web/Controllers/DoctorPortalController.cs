@@ -392,4 +392,39 @@ public class DoctorPortalController : BaseController
         TempData["Success"] = $"Đã tạo hồ sơ {record.RecordNo}.";
         return RedirectToAction(nameof(BenhNhanHomNay));
     }
+
+    /// <summary>
+    /// P3.B — BS bấm "Hẹn khám lại": tạo appointment con với status=confirmed +
+    /// booking_code (BS quyết, không cần lễ tân duyệt). Increment quota tự động.
+    /// </summary>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> HenKhamLai(Guid currentApptId, DateTime followUpDate, string session)
+    {
+        var u = CurrentUser!;
+        var current = await _apptService.GetByIdAsync(currentApptId);
+        if (current == null) return NotFound();
+        if (current.SiteId != CurrentSiteId) return NotFound();
+        // Cross-doctor guard: chỉ BS phụ trách lịch (hoặc admin) được hẹn tái khám
+        if (u.GroupId != Constants.AdminGroup
+            && u.DoctorId.HasValue
+            && current.DoctorId.HasValue
+            && current.DoctorId.Value != u.DoctorId.Value)
+        {
+            TempData["Error"] = "Chỉ BS phụ trách lịch mới được hẹn tái khám.";
+            return RedirectToAction(nameof(ChanDoan), new { apptId = currentApptId });
+        }
+
+        var result = await _apptService.ScheduleFollowUpAsync(
+            currentApptId, DateOnly.FromDateTime(followUpDate.Date), session, u.Id);
+        if (!result.Success)
+        {
+            TempData["Error"] = result.ErrorMessage ?? "Không thể đặt lịch tái khám.";
+            return RedirectToAction(nameof(ChanDoan), new { apptId = currentApptId });
+        }
+        await _auditService.LogAsync(u.Id, "Hẹn khám lại",
+            $"{u.UserName} hẹn tái khám cho {current.PatientName}: {result.FollowUpDate:dd/MM/yyyy} {session}, code={result.BookingCode}");
+        TempData["Success"] = $"Đã đặt lịch tái khám {result.FollowUpDate:dd/MM/yyyy} buổi {(session == "morning" ? "sáng" : "chiều")} — mã {result.BookingCode}.";
+        return RedirectToAction(nameof(ChanDoan), new { apptId = currentApptId });
+    }
 }

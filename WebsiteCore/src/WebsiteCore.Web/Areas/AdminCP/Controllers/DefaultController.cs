@@ -39,6 +39,7 @@ public class DefaultController : BaseController
         ViewBag.QuestionCount      = await _db.Questions.CountAsync();
         ViewBag.MedicalRecordCount = await _db.MedicalRecords.CountAsync(m => m.ActiveFlag == 1);
         ViewBag.DoctorCount        = await _db.Doctors.CountAsync(d => d.ActiveFlag == 1);
+        ViewBag.ClinicRoomCount    = await _db.ClinicRooms.CountAsync(c => c.ActiveFlag == 1);
 
         // Notification banner (file-backed)
         ViewBag.NotificationOn   = System.IO.File.Exists(NotificationPath) && (await System.IO.File.ReadAllTextAsync(NotificationPath)).Trim().Length > 0;

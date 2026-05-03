@@ -1,0 +1,81 @@
+@model WebsiteCore.Data.Entities.ClinicRoom
+@using WebsiteCore.Data.Entities
+@{
+    ViewData["Title"] = "Tạo phòng khám mới";
+    var depts = ViewBag.Departments as List<Department> ?? new();
+}
+
+<h2 class="admin-page-title"><i class="fa fa-plus-circle"></i> Tạo phòng khám mới</h2>
+
+@if (TempData["Error"] != null) { <div class="alert alert-danger">@TempData["Error"]</div> }
+
+<form asp-action="Create" method="post" class="form-horizontal" style="max-width:780px;">
+    @Html.AntiForgeryToken()
+
+    <div class="form-group">
+        <label class="col-sm-3 control-label">Mã phòng <span class="text-danger">*</span></label>
+        <div class="col-sm-9">
+            <input asp-for="RoomCode" class="form-control" placeholder="VD: P101, P201" maxlength="50" required />
+            <small class="help-block">Unique trong khoa. Convention: P + tầng + số (P101 = tầng 1 phòng 1)</small>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="col-sm-3 control-label">Tên phòng <span class="text-danger">*</span></label>
+        <div class="col-sm-9">
+            <input asp-for="RoomName" class="form-control" placeholder="VD: Phòng khám Nội tổng hợp" maxlength="200" required />
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="col-sm-3 control-label">Khoa <span class="text-danger">*</span></label>
+        <div class="col-sm-9">
+            <select asp-for="DepartmentId" class="form-control" required>
+                <option value="">— Chọn khoa —</option>
+                @foreach (var d in depts)
+                {
+                    <option value="@d.Id">@d.NameL</option>
+                }
+            </select>
+            <small class="help-block">Tất cả phòng khám nên gán vào "Khoa Khám bệnh" (theo workflow chuẩn).</small>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="col-sm-3 control-label">Chuyên môn (vi)</label>
+        <div class="col-sm-9">
+            <input asp-for="SpecialtyL" class="form-control" placeholder="VD: Nội khoa - Tim mạch - Huyết áp" maxlength="200" />
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="col-sm-3 control-label">Tầng</label>
+        <div class="col-sm-9">
+            <input asp-for="Floor" class="form-control" placeholder="VD: Tầng 1, Tầng 2 khu A" maxlength="50" />
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="col-sm-3 control-label">Triệu chứng phổ biến</label>
+        <div class="col-sm-9">
+            <textarea asp-for="CommonSymptoms" class="form-control" rows="2" maxlength="1000"
+                      placeholder="VD: Đau bụng, đau ngực, mệt mỏi, huyết áp, ho kéo dài"></textarea>
+            <small class="help-block">Gợi ý lễ tân khi route BN — hiện trên card phòng.</small>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="col-sm-3 control-label">Thứ tự (Ord)</label>
+        <div class="col-sm-9">
+            <input asp-for="Ord" type="number" class="form-control" placeholder="VD: 1, 2, 3" style="width:100px;" />
+            <small class="help-block">Số nhỏ hiện trước trong dropdown.</small>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <div class="col-sm-offset-3 col-sm-9">
+            <button type="submit" class="btn btn-success"><i class="fa fa-save"></i> Tạo phòng</button>
+            <a href="/AdminCP/ClinicRooms" class="btn btn-default">Huỷ</a>
+        </div>
+    </div>
+</form>

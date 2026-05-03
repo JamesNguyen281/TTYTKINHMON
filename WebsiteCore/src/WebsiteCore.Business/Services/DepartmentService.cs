@@ -74,6 +74,7 @@ public class DepartmentService : IDepartmentService
         existing.ImagePath = dept.ImagePath;
         existing.ActiveFlag = dept.ActiveFlag;
         existing.Ord = dept.Ord;
+        existing.IsClinicalDept = dept.IsClinicalDept;
         existing.LuUpdated = DateTime.Now;
         existing.Alias = Helpers.StringHelper.ChangeText(dept.NameL ?? string.Empty);
         existing.Link = "chuyen-khoa/" + existing.Alias;

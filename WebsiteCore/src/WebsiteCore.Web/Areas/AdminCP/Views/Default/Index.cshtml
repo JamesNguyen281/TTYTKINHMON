@@ -132,6 +132,13 @@
                 </a>
             </div>
             <div class="col-sm-3 col-xs-6">
+                <a href="/AdminCP/ClinicRooms" class="stat-card" style="display:block; text-decoration:none; background:#fff3cd;">
+                    <i class="fa fa-door-open stat-icon" style="color:#d68610;"></i>
+                    <div class="stat-value" style="color:#d68610;">@(ViewBag.ClinicRoomCount ?? 0)</div>
+                    <div class="stat-label">Phòng khám</div>
+                </a>
+            </div>
+            <div class="col-sm-3 col-xs-6">
                 <a href="/AdminCP/News" class="stat-card" style="display:block; text-decoration:none;">
                     <i class="fa fa-newspaper-o stat-icon" style="color:#4d96ff;"></i>
                     <div class="stat-value">@ViewBag.NewsCount</div>

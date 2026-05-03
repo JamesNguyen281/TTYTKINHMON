@@ -1,0 +1,58 @@
+@model List<WebsiteCore.Data.Entities.ClinicRoom>
+@{ ViewData["Title"] = "Quản lý phòng khám"; }
+
+<h2 class="admin-page-title"><i class="fa fa-door-open"></i> Quản lý phòng khám</h2>
+<p class="text-muted">Phòng khám trong khoa "Khoa Khám bệnh" — lễ tân route BN vào theo triệu chứng. BS được luân phiên gán phòng qua Lịch trực.</p>
+
+<div class="admin-toolbar">
+    <a href="/AdminCP/ClinicRooms/Create" class="btn btn-success">
+        <i class="fa fa-plus-circle"></i> Thêm phòng khám
+    </a>
+    <span class="pull-right text-muted" style="line-height:34px;">@Model.Count phòng đang hoạt động</span>
+</div>
+
+@if (TempData["Success"] != null) { <div class="alert alert-success">@TempData["Success"]</div> }
+@if (TempData["Error"]   != null) { <div class="alert alert-danger">@TempData["Error"]</div> }
+
+<div class="table-responsive">
+    <table class="table table-hover table-bordered">
+        <thead>
+            <tr>
+                <th style="width:90px;">Mã</th>
+                <th>Tên phòng</th>
+                <th>Chuyên môn</th>
+                <th style="width:90px;">Tầng</th>
+                <th>Triệu chứng phổ biến</th>
+                <th style="width:60px; text-align:center;">Ord</th>
+                <th style="width:140px;">Hành động</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var r in Model.OrderBy(x => x.Ord ?? 999).ThenBy(x => x.RoomCode))
+        {
+            <tr>
+                <td><strong style="color:#d68610;">@r.RoomCode</strong></td>
+                <td><strong>@r.RoomName</strong></td>
+                <td>@(r.SpecialtyL ?? "—")</td>
+                <td>@(r.Floor ?? "—")</td>
+                <td><small>@(r.CommonSymptoms ?? "—")</small></td>
+                <td style="text-align:center;">@(r.Ord?.ToString() ?? "—")</td>
+                <td>
+                    <a href="/AdminCP/ClinicRooms/Edit/@r.Id" class="btn btn-xs btn-warning" title="Sửa"><i class="fa fa-pencil"></i></a>
+                    <form action="/AdminCP/ClinicRooms/Delete/@r.Id" method="post" style="display:inline;"
+                          onsubmit="return confirm('Vô hiệu hoá phòng @r.RoomCode? Soft-delete giữ lịch sử appointment cũ.')">
+                        @Html.AntiForgeryToken()
+                        <button class="btn btn-xs btn-danger" title="Vô hiệu hoá"><i class="fa fa-ban"></i></button>
+                    </form>
+                </td>
+            </tr>
+        }
+        @if (!Model.Any())
+        {
+            <tr><td colspan="7" class="text-center text-muted" style="padding:24px;">
+                Chưa có phòng khám nào. Bấm "Thêm phòng khám" để tạo phòng đầu tiên.
+            </td></tr>
+        }
+        </tbody>
+    </table>
+</div>

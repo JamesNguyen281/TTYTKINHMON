@@ -71,6 +71,18 @@ public class BookingResult
     public Guid? AppointmentId { get; set; }
 }
 
+/// <summary>P3.B — kết quả hẹn khám lại. Có BookingCode để BN lưu.</summary>
+public class ScheduleFollowUpResult
+{
+    public bool   Success       { get; set; }
+    public string? ErrorMessage { get; set; }
+    public Guid?  AppointmentId { get; set; }
+    public string? BookingCode  { get; set; }
+    public DateOnly? FollowUpDate { get; set; }
+
+    public static ScheduleFollowUpResult Fail(string msg) => new() { Success = false, ErrorMessage = msg };
+}
+
 public class UpdateStatusResult
 {
     public bool Success { get; set; }
