@@ -1,4 +1,5 @@
 @using WebsiteCore.Business.ViewModels
+@using WebsiteCore.Business
 @using WebsiteCore.Data.Entities
 @{
     ViewData["Title"] = "Chẩn đoán bệnh nhân";
@@ -9,11 +10,43 @@
     int? age = patient?.Dob.HasValue == true
         ? (int)Math.Floor((DateTime.Today - patient.Dob.Value.ToDateTime(TimeOnly.MinValue)).TotalDays / 365.25)
         : null;
+    bool isCheckedIn = appt?.CheckedIn == true;
+    bool canDiagnose = isCheckedIn && appt?.Status != Constants.ApptCompleted
+                                   && appt?.Status != Constants.ApptCancelled
+                                   && appt?.Status != Constants.ApptRejected;
 }
 
 <div class="container" style="padding-top:24px;">
     <h2 style="color:#0a3d62;"><i class="fa fa-stethoscope"></i> Chẩn đoán cho <strong>@appt?.PatientName</strong></h2>
     <a href="/bac-si-portal/benh-nhan-hom-nay" class="btn btn-default" style="margin-bottom:12px;">← Bệnh nhân hôm nay</a>
+
+    @* Guard: BN chưa check-in → banner cảnh báo + disable form *@
+    @if (!canDiagnose)
+    {
+        <div class="alert alert-warning" style="border-left:5px solid #f0ad4e; padding:18px 20px;">
+            @if (!isCheckedIn)
+            {
+                <h4 style="margin-top:0;"><i class="fa fa-exclamation-triangle"></i> Bệnh nhân chưa check-in</h4>
+                <p style="margin-bottom:0;">
+                    Lễ tân cần <strong>check-in BN tại quầy</strong> (xác nhận BN đã đến cơ sở) trước khi BS lập hồ sơ chẩn đoán.
+                    Workflow chuẩn: <em>BN đến BV → lễ tân quét mã booking <code>@appt?.BookingCode</code> → check-in → BS thấy BN trong "Sẵn sàng khám" → BS lập hồ sơ.</em>
+                </p>
+                <p style="margin-top:8px; margin-bottom:0;">
+                    <strong>Bạn vẫn xem được thông tin BN bên dưới</strong>, nhưng các trường nhập + nút lưu hồ sơ sẽ bị khoá đến khi check-in.
+                </p>
+            }
+            else if (appt?.Status == Constants.ApptCompleted)
+            {
+                <h4 style="margin-top:0;"><i class="fa fa-check-circle"></i> Lịch đã hoàn tất</h4>
+                <p style="margin-bottom:0;">Hồ sơ khám đã được lập xong. Không thể ghi đè — cần khám lại phải tạo appointment mới.</p>
+            }
+            else
+            {
+                <h4 style="margin-top:0;"><i class="fa fa-ban"></i> Lịch đã đóng (@Constants.ApptStatusLabel(appt?.Status ?? ""))</h4>
+                <p style="margin-bottom:0;">Không thể lập hồ sơ cho lịch ở trạng thái này.</p>
+            }
+        </div>
+    }
 
     <div class="row">
         <div class="col-md-6">
@@ -54,6 +87,7 @@
         </div>
     </div>
 
+    <fieldset @(canDiagnose ? "" : "disabled") style="@(canDiagnose ? "" : "opacity:.65;")">
     <form asp-action="ChanDoan" method="post">
         @Html.AntiForgeryToken()
         <input type="hidden" name="apptId" value="@appt?.Id" />
@@ -78,7 +112,7 @@
                     <textarea name="notes" class="form-control" rows="2"></textarea>
                 </div>
                 <div class="form-group">
-                    <label>Ngày tái khám <small class="text-muted">— ghi nhận trong hồ sơ</small></label>
+                    <label>Ngày tái khám</label>
                     <input name="followUpDate" type="date" class="form-control" id="ip-followup-date" />
                 </div>
             </div>
@@ -86,13 +120,8 @@
 
         @* P3.B — Hẹn lịch tái khám tự động (sinh appointment + booking code, BS quyết) *@
         <div class="panel panel-success" id="panel-followup-auto">
-            <div class="panel-heading"><strong><i class="fa fa-calendar-plus-o"></i> Đặt lịch tái khám tự động</strong>
-                <span class="text-muted" style="font-size:12px; font-weight:normal;">— BS bấm sẽ sinh ngay lịch khám với mã booking, không qua lễ tân</span>
-            </div>
+            <div class="panel-heading"><strong><i class="fa fa-calendar-plus-o"></i> Đặt lịch tái khám tự động</strong></div>
             <div class="panel-body" id="block-followup-auto">
-                <p class="text-muted" style="margin-bottom:10px;">
-                    BN sẽ thấy lịch trong "Lịch của tôi" với mã booking để cầm theo lần sau (không qua lễ tân duyệt).
-                </p>
                 <div class="row">
                     <div class="col-sm-4">
                         <label>Buổi khám</label>
@@ -105,7 +134,6 @@
                         <button type="submit" form="frm-followup" class="btn btn-success">
                             <i class="fa fa-calendar-plus-o"></i> Tạo lịch tái khám tự động
                         </button>
-                        <small class="text-muted" style="margin-left:8px;">— dùng "Ngày tái khám" ở trên</small>
                     </div>
                 </div>
             </div>
@@ -113,22 +141,18 @@
 
         @* P2.C — Phân nhánh kết quả: ngoại trú (cấp toa) vs nội trú (chuyển khoa nhập viện) *@
         <div class="panel panel-info" id="panel-record-type">
-            <div class="panel-heading"><strong><i class="fa fa-stethoscope"></i> Hướng xử trí</strong>
-                <span class="text-muted" style="font-size:12px; font-weight:normal;">— BS chọn ngoại trú (cấp toa về) hoặc nội trú (làm hồ sơ + chỉ định khoa nhập viện)</span>
-            </div>
+            <div class="panel-heading"><strong><i class="fa fa-stethoscope"></i> Hướng xử trí</strong></div>
             <div class="panel-body">
                 <div class="form-group">
                     <label class="km-record-radio">
                         <input type="radio" name="recordType" value="outpatient" checked />
                         <span class="km-rt-icon"><i class="fa fa-medkit"></i></span>
                         <strong>Ngoại trú</strong>
-                        <small class="text-muted">— BN cấp toa thuốc, hẹn tái khám nếu cần (mặc định)</small>
                     </label>
                     <label class="km-record-radio">
                         <input type="radio" name="recordType" value="inpatient" />
                         <span class="km-rt-icon" style="color:#d68610;"><i class="fa fa-hospital-o"></i></span>
                         <strong>Nội trú (Nhập viện)</strong>
-                        <small class="text-muted">— BS làm hồ sơ bệnh án, điều dưỡng chuyển BN lên khoa nhập viện</small>
                     </label>
                 </div>
                 <div id="block-inpatient" style="display:none; padding:12px; background:#fff3cd; border:1px solid #f0ad4e; border-radius:6px;">
@@ -183,7 +207,6 @@
 
         <div class="panel panel-warning">
             <div class="panel-heading"><strong><i class="fa fa-heartbeat"></i> Cập nhật hồ sơ y tế bệnh nhân</strong>
-                <span class="text-muted" style="font-size:12px; font-weight:normal;">— đồng bộ vào hồ sơ cá nhân, BN xem được trên /ho-so</span>
             </div>
             <div class="panel-body">
                 <div class="row">
@@ -236,8 +259,13 @@
             </div>
         </div>
 
-        <button type="submit" class="btn btn-primary btn-lg"><i class="fa fa-save"></i> Lưu hồ sơ</button>
+        <button type="submit" class="btn btn-primary btn-lg" @(canDiagnose ? "" : "disabled")><i class="fa fa-save"></i> Lưu hồ sơ</button>
+        @if (!canDiagnose)
+        {
+            <span class="text-danger" style="margin-left:12px;"><i class="fa fa-lock"></i> Không thể lưu khi BN chưa check-in</span>
+        }
     </form>
+    </fieldset>
 
     @* P3.B — Form riêng cho Hẹn khám lại (ngoài form chính ChanDoan để tránh form lồng).
        Sử dụng form attribute trên input/button trong panel để liên kết. *@
