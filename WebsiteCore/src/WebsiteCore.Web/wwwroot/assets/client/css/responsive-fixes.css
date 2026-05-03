@@ -1348,11 +1348,17 @@ h1, h2, h3 {
         margin: 0 !important;
     }
 
-    /* Logo + name xuống dòng tiếp theo — header-nav giữ vai trò logo container */
-    .header-nav { padding: 8px 0 !important; }
+    /* Logo + name xuống dòng tiếp theo — header-nav giữ vai trò logo container.
+       Logo image gốc có chiều cao khá lớn — cho khung khoảng trống lớn hơn để logo
+       không bị "lọt thỏm" giữa header. */
+    .header-nav { padding: 14px 0 !important; }
+    .brand-block { width: 100% !important; text-align: center; }
+    .brand-link { width: 100%; display: block !important; text-align: center; }
     .brand-logo-img, .header-logo img {
-        max-height: 70px !important;
-        max-width: 240px !important;
+        max-height: 110px !important;
+        max-width: min(360px, 92vw) !important;
+        width: auto;
+        margin: 0 auto;
     }
 }
 
@@ -1363,12 +1369,18 @@ h1, h2, h3 {
     li.mobile-bars-li .bars { width: 32px !important; height: 32px !important; min-width: 32px; min-height: 32px; }
     .header-top-right ul li.social a i,
     li.mobile-bars-li .bars i { font-size: 14px !important; }
-    .brand-logo-img, .header-logo img { max-height: 56px !important; max-width: 200px !important; }
+    .brand-logo-img, .header-logo img {
+        max-height: 95px !important;
+        max-width: min(320px, 92vw) !important;
+    }
 }
 
 /* ---- TIER 374px → ẩn ĐƯỜNG DÂY NÓNG, giữ duy nhất CẤP CỨU + login + ☰ ---- */
 @media (max-width: 374px) {
     .header-top-right ul li.li1.li1-2 { display: none !important; }
     .header-top-right ul li.li1 a { font-size: 11px !important; }
-    .brand-logo-img, .header-logo img { max-height: 50px !important; max-width: 180px !important; }
+    .brand-logo-img, .header-logo img {
+        max-height: 80px !important;
+        max-width: min(280px, 92vw) !important;
+    }
 }

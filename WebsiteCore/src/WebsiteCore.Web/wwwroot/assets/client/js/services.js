@@ -132,8 +132,20 @@ $(document).ready(function () {
                               + buildScheduleGrid(d.schedules, d.cycle_label) + '</div>';
                 line.html(infoHtml + schedHtml);
             }
+            // Reset scroll về đầu cho cả hai cột — tránh hiện tượng modal mở ra đã ở vị trí cuối
+            // do người dùng vuốt ở bác sĩ trước đó (DOM cũ vẫn giữ scrollTop cho đến khi reset).
+            modal.find('.km-doc-scroll, .km-doc-left').each(function () { this.scrollTop = 0; });
             modal.modal('show');
         }).fail(function (err) { console.error('DoctorDetail fail:', err); });
+    });
+
+    // Khi modal hiển thị xong (Bootstrap đã tính lại layout) — đảm bảo scroll thực sự ở đầu.
+    $(document).on('shown.bs.modal', '#detaildoctor1, #doctor-detail', function () {
+        $(this).find('.km-doc-scroll, .km-doc-left').each(function () { this.scrollTop = 0; });
+    });
+    // Khi modal đóng — reset luôn để lần mở lại không kế thừa state cũ trên một số trình duyệt.
+    $(document).on('hidden.bs.modal', '#detaildoctor1, #doctor-detail', function () {
+        $(this).find('.km-doc-scroll, .km-doc-left').each(function () { this.scrollTop = 0; });
     });
 
     /* ============== Comment trên bài tin (legacy /home/comment).

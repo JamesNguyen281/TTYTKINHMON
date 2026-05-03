@@ -22,13 +22,14 @@
     /* === Wrapper modal — center, có giới hạn chiều cao + có scroll riêng === */
     #detaildoctor1.modal { padding-right: 0 !important; }
     #detaildoctor1 .km-doc-dialog {
-        max-width: 960px; width: calc(100% - 32px);
-        margin: 30px auto;
+        max-width: 1100px; width: calc(100% - 32px);
+        margin: 24px auto;
     }
     .km-doc-modal {
         border-radius: 12px; overflow: hidden; border: 0;
         box-shadow: 0 24px 60px rgba(10,61,98,0.30);
-        max-height: calc(100vh - 60px);
+        min-height: 620px;
+        max-height: calc(100vh - 48px);
         display: flex; flex-direction: column;
     }
     .km-modal-close {
@@ -48,9 +49,23 @@
         overflow: hidden;
     }
     @@media (max-width: 768px) {
-        .km-doc-grid { grid-template-columns: 1fr; }
-        .km-doc-modal { max-height: calc(100vh - 30px); }
-        #detaildoctor1 .km-doc-dialog { margin: 15px auto; }
+        /* 1 cột: row 1 = avatar block (auto), row 2 = scroll info (lấp chỗ còn lại) */
+        .km-doc-grid {
+            grid-template-columns: 1fr;
+            grid-template-rows: auto 1fr;
+        }
+        #detaildoctor1 .km-doc-dialog {
+            margin: 12px auto; width: calc(100% - 16px); max-width: none;
+        }
+        .km-doc-modal {
+            /* Force gần full chiều cao màn hình để vùng nội dung scroll đủ rộng */
+            height: calc(100vh - 24px);
+            min-height: 0;
+            max-height: calc(100vh - 24px);
+            border-radius: 10px;
+        }
+        /* Cột trái không cuộn riêng nữa khi đã thành row 1 — để tổng modal đủ chỗ cho info ở dưới */
+        .km-doc-left { overflow: visible; }
     }
 
     /* === Cột trái (sticky avatar) === */
