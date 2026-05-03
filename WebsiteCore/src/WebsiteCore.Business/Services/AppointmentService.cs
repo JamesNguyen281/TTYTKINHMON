@@ -237,33 +237,92 @@ public class AppointmentService : IAppointmentService
                 var deptId   = appt.DepartmentId.Value;
                 var apptDate = appt.AppointmentDate.Value;
                 var sess     = appt.Session;
-                var quota = await _db.AppointmentQuota
+
+                // ===== TẦNG 1: dept-level quota (cap tổng cho cả khoa) =====
+                var deptQuota = await _db.AppointmentQuota
                     .FirstOrDefaultAsync(q => q.DepartmentId == deptId
                                            && q.DoctorId == null
                                            && q.ApptDate == apptDate
                                            && q.Session == sess);
-                if (quota == null)
+                if (deptQuota == null)
                 {
-                    quota = new AppointmentQuotum
+                    deptQuota = new AppointmentQuotum
                     {
                         Id           = Guid.NewGuid(),
                         DepartmentId = deptId,
+                        DoctorId     = null,
                         ApptDate     = apptDate,
                         Session      = sess,
                         MaxCount     = Constants.DefaultQuotaPerSession,
                         BookedCount  = Math.Max(0, delta),
                         CreatedDate  = DateTime.Now
                     };
-                    _db.AppointmentQuota.Add(quota);
+                    _db.AppointmentQuota.Add(deptQuota);
                 }
                 else
                 {
-                    // Khi confirm: từ chối nếu vượt quota max
-                    if (delta > 0 && quota.BookedCount + delta > quota.MaxCount)
-                        return UpdateStatusResult.Fail($"Buổi này đã hết suất ({quota.BookedCount}/{quota.MaxCount}).");
-                    quota.BookedCount = quota.BookedCount + delta;
-                    if (quota.BookedCount < 0) quota.BookedCount = 0;
-                    quota.LuUpdated = DateTime.Now;
+                    // Khi confirm: từ chối nếu vượt quota max của KHOA (cap trên cùng)
+                    if (delta > 0 && deptQuota.BookedCount + delta > deptQuota.MaxCount)
+                        return UpdateStatusResult.Fail($"Khoa đã hết suất buổi này ({deptQuota.BookedCount}/{deptQuota.MaxCount}).");
+                    deptQuota.BookedCount = deptQuota.BookedCount + delta;
+                    if (deptQuota.BookedCount < 0) deptQuota.BookedCount = 0;
+                    deptQuota.LuUpdated = DateTime.Now;
+                }
+
+                // ===== TẦNG 2: doctor-level quota (chỉ áp dụng nếu appt đã phân BS) =====
+                // Đảm bảo: BS có lịch trực ngày + ca tương ứng. BS không trực thì không cho confirm.
+                // Khi cancel/reject từ confirmed có DoctorId, decrement BS-quota về.
+                if (appt.DoctorId.HasValue)
+                {
+                    var doctorId = appt.DoctorId.Value;
+                    var docQuota = await _db.AppointmentQuota
+                        .FirstOrDefaultAsync(q => q.DepartmentId == deptId
+                                               && q.DoctorId == doctorId
+                                               && q.ApptDate == apptDate
+                                               && q.Session == sess);
+
+                    // Default MaxCount cho BS-quota: lấy từ DoctorSchedule.MaxPatients (vd: BS senior 15 / junior 8)
+                    int defaultDocMax = Constants.DefaultQuotaPerSession;
+                    if (delta > 0 && docQuota == null)
+                    {
+                        var weekday = apptDate.DayOfWeek == DayOfWeek.Sunday
+                            ? (byte)1 : (byte)((int)apptDate.DayOfWeek + 1);
+                        var sched = await _db.DoctorSchedules
+                            .FirstOrDefaultAsync(s => s.DoctorId == doctorId
+                                                   && s.Weekday == weekday
+                                                   && s.Session == sess
+                                                   && s.ActiveFlag == 1
+                                                   && s.ValidFrom <= apptDate
+                                                   && (s.ValidTo == null || s.ValidTo >= apptDate));
+                        if (sched == null)
+                            return UpdateStatusResult.Fail($"Bác sĩ không có lịch trực vào ngày {apptDate:dd/MM/yyyy} buổi {sess}.");
+
+                        defaultDocMax = sched.MaxPatients ?? Constants.DefaultQuotaPerSession;
+                    }
+
+                    if (docQuota == null)
+                    {
+                        docQuota = new AppointmentQuotum
+                        {
+                            Id           = Guid.NewGuid(),
+                            DepartmentId = deptId,
+                            DoctorId     = doctorId,
+                            ApptDate     = apptDate,
+                            Session      = sess,
+                            MaxCount     = defaultDocMax,
+                            BookedCount  = Math.Max(0, delta),
+                            CreatedDate  = DateTime.Now
+                        };
+                        _db.AppointmentQuota.Add(docQuota);
+                    }
+                    else
+                    {
+                        if (delta > 0 && docQuota.BookedCount + delta > docQuota.MaxCount)
+                            return UpdateStatusResult.Fail($"Bác sĩ đã hết suất buổi này ({docQuota.BookedCount}/{docQuota.MaxCount}).");
+                        docQuota.BookedCount = docQuota.BookedCount + delta;
+                        if (docQuota.BookedCount < 0) docQuota.BookedCount = 0;
+                        docQuota.LuUpdated = DateTime.Now;
+                    }
                 }
             }
 
@@ -315,10 +374,27 @@ public class AppointmentService : IAppointmentService
     {
         var appt = await _db.Appointments.FirstOrDefaultAsync(x => x.Id == apptId);
         if (appt == null) return false;
-        // Không cho đổi nếu đã ở trạng thái cuối
+
+        // Chỉ cho phép phân/đổi BS khi appointment chưa confirm hoặc đã reschedule (chờ duyệt lại).
+        // Sau khi confirmed → BS-quota đã trừ; đổi BS bằng cách này sẽ phá quota.
+        // Lễ tân muốn đổi BS post-confirm phải reject + tạo lại lịch (workflow chuẩn ISTQB).
         var status = appt.Status ?? "";
-        if (status == Constants.ApptCompleted || status == Constants.ApptCancelled || status == Constants.ApptRejected)
+        if (status != Constants.ApptPending && status != Constants.ApptRescheduled)
             return false;
+
+        // Cross-site guard: nếu doctorId được truyền vào, phải thuộc cùng site với appointment.
+        if (doctorId.HasValue && appt.SiteId.HasValue)
+        {
+            var docInSite = await (from d in _db.Doctors
+                                   join dep in _db.Departments on d.DepartmentId equals dep.Id
+                                   where d.Id == doctorId.Value
+                                      && dep.SiteId == appt.SiteId.Value
+                                      && d.ActiveFlag == 1
+                                      && dep.ActiveFlag == 1
+                                   select d.Id).AnyAsync();
+            if (!docInSite) return false;
+        }
+
         appt.DoctorId  = doctorId;
         appt.LuUpdated = DateTime.Now;
         appt.LuUserId  = staffUserId;

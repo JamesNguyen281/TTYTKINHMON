@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using WebsiteCore.Business.ViewModels;
 using WebsiteCore.Data;
 using WebsiteCore.Data.Entities;
 
@@ -17,6 +18,18 @@ public interface IDoctorScheduleService
     /// schedule với ValidFrom = ngày 1 tháng đó. Mỗi BS được tạo Mon→Fri × {sáng, chiều} = 10 slot.
     /// </summary>
     Task<MonthlyScheduleResult> GenerateMonthlyScheduleAsync(int year, int month, Guid siteId, Guid? createdBy);
+
+    /// <summary>
+    /// Trả danh sách BS có lịch trực vào (date, session) thuộc site, kèm số slot còn lại.
+    /// Sort: BS đang rảnh nhất (BookedSlots ASC) → giúp lễ tân phân bổ đều.
+    /// Filter theo deptId nếu khác null (chỉ BS thuộc khoa đó).
+    /// </summary>
+    Task<List<DoctorAvailabilityVm>> GetAvailableDoctorsAsync(Guid siteId, Guid? deptId, DateOnly date, string session);
+
+    /// <summary>
+    /// Trả overview slot của một khoa tại (date, session): tổng quota khoa + chi tiết từng BS.
+    /// </summary>
+    Task<DepartmentSlotOverviewVm?> GetDepartmentSlotOverviewAsync(Guid siteId, Guid deptId, DateOnly date, string session);
 }
 
 public class MonthlyScheduleResult
@@ -164,5 +177,112 @@ public class DoctorScheduleService : IDoctorScheduleService
         }
         result.Created = newSchedules.Count;
         return result;
+    }
+
+    /// <summary>
+    /// Convert DateOnly → byte weekday theo quy ước DB: 1=CN, 2=T2..7=T7.
+    /// (DateOnly.DayOfWeek: Sunday=0, Monday=1...Saturday=6).
+    /// </summary>
+    private static byte ToDbWeekday(DateOnly d) =>
+        d.DayOfWeek == DayOfWeek.Sunday ? (byte)1 : (byte)((int)d.DayOfWeek + 1);
+
+    public async Task<List<DoctorAvailabilityVm>> GetAvailableDoctorsAsync(
+        Guid siteId, Guid? deptId, DateOnly date, string session)
+    {
+        if (string.IsNullOrEmpty(session)) return new();
+        var weekday = ToDbWeekday(date);
+
+        // Multi-site guard: chỉ join Doctor → Department → Site đúng site đang gọi.
+        // Không trả về BS của site khác — kể cả khi caller truyền Doctor.Id thuộc site đó.
+        var rows = await (from s in _db.DoctorSchedules
+                          join d in _db.Doctors on s.DoctorId equals d.Id
+                          join dep in _db.Departments on d.DepartmentId equals dep.Id
+                          where s.ActiveFlag == 1
+                             && s.Weekday == weekday
+                             && s.Session == session
+                             && s.ValidFrom <= date
+                             && (s.ValidTo == null || s.ValidTo >= date)
+                             && d.ActiveFlag == 1
+                             && dep.SiteId == siteId
+                             && dep.ActiveFlag == 1
+                             && (deptId == null || d.DepartmentId == deptId)
+                          select new
+                          {
+                              Schedule = s, Doctor = d, Dept = dep
+                          }).AsNoTracking().ToListAsync();
+
+        if (rows.Count == 0) return new();
+
+        var doctorIds = rows.Select(r => r.Doctor.Id).ToList();
+        var quotas = await _db.AppointmentQuota
+            .Where(q => q.DoctorId != null
+                     && doctorIds.Contains(q.DoctorId.Value)
+                     && q.ApptDate == date
+                     && q.Session == session)
+            .AsNoTracking()
+            .ToListAsync();
+
+        // Đảm bảo phân bổ đều: sort theo (BookedSlots ASC, RemainingSlots DESC, Ord ASC)
+        // → BS đang nhận ít BN nhất sẽ đứng đầu, lễ tân nhìn vào auto-pick là OK.
+        var list = rows.Select(r =>
+        {
+            var q       = quotas.FirstOrDefault(qq => qq.DoctorId == r.Doctor.Id);
+            var maxFromSched = r.Schedule.MaxPatients ?? Constants.DefaultQuotaPerSession;
+            var max     = q?.MaxCount ?? maxFromSched;
+            var booked  = q?.BookedCount ?? 0;
+            return new DoctorAvailabilityVm
+            {
+                DoctorId       = r.Doctor.Id,
+                DoctorName     = r.Doctor.NameL ?? r.Doctor.NameE ?? "",
+                Position       = r.Doctor.Position,
+                Specialty      = r.Doctor.SpeciallyL ?? r.Doctor.SpeciallyE,
+                ImagePath      = r.Doctor.ImagePath,
+                Ord            = r.Doctor.Ord ?? 0,
+                DepartmentId   = r.Dept.Id,
+                DepartmentName = r.Dept.NameL ?? r.Dept.NameE ?? "",
+                Room           = r.Schedule.Room,
+                Date           = date,
+                Session        = session,
+                MaxSlots       = max,
+                BookedSlots    = booked,
+            };
+        })
+        .OrderBy(x => x.BookedSlots)
+        .ThenByDescending(x => x.MaxSlots)
+        .ThenBy(x => x.Ord)
+        .ToList();
+
+        return list;
+    }
+
+    public async Task<DepartmentSlotOverviewVm?> GetDepartmentSlotOverviewAsync(
+        Guid siteId, Guid deptId, DateOnly date, string session)
+    {
+        // Verify khoa đúng site — chống IDOR cross-site khi caller truyền deptId của site khác.
+        var dept = await _db.Departments
+            .FirstOrDefaultAsync(x => x.Id == deptId && x.SiteId == siteId && x.ActiveFlag == 1);
+        if (dept == null) return null;
+
+        // Quota tổng khoa (DoctorId == null = quota chung của khoa)
+        var deptQuota = await _db.AppointmentQuota
+            .FirstOrDefaultAsync(q => q.DepartmentId == deptId
+                                   && q.DoctorId == null
+                                   && q.ApptDate == date
+                                   && q.Session == session);
+        var deptMax    = deptQuota?.MaxCount    ?? Constants.DefaultQuotaPerSession;
+        var deptBooked = deptQuota?.BookedCount ?? 0;
+
+        var doctors = await GetAvailableDoctorsAsync(siteId, deptId, date, session);
+
+        return new DepartmentSlotOverviewVm
+        {
+            DepartmentId    = dept.Id,
+            DepartmentName  = dept.NameL ?? dept.NameE ?? "",
+            Date            = date,
+            Session         = session,
+            DeptMaxSlots    = deptMax,
+            DeptBookedSlots = deptBooked,
+            Doctors         = doctors,
+        };
     }
 }

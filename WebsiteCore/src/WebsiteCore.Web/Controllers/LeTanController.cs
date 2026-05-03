@@ -127,15 +127,66 @@ public class LeTanController : BaseController
         if (a.SiteId != CurrentSiteId) return NotFound();
         ViewBag.Title = "Chi tiết lịch hẹn";
 
-        // Load list bác sĩ phù hợp để phân lịch:
-        // ưu tiên bs cùng khoa, fallback toàn bộ bs site nếu chưa có ai theo khoa.
+        // ===== Tính danh sách BS available cho ngày + ca của appointment =====
+        // Chỉ liệt kê BS:
+        //   1. Có lịch trực vào weekday + session đó
+        //   2. Cùng khoa với appointment (nếu khoa có set)
+        //   3. Còn slot khám (BookedCount < MaxCount)
+        //   4. Cùng site với lễ tân (đã guard bởi CurrentSiteId)
+        // Sort: BS đang rảnh nhất (BookedSlots ASC) lên đầu → gợi ý phân bổ đều.
+        var availabilities = new List<WebsiteCore.Business.ViewModels.DoctorAvailabilityVm>();
+        WebsiteCore.Business.ViewModels.DepartmentSlotOverviewVm? deptOverview = null;
+        if (a.AppointmentDate.HasValue && !string.IsNullOrEmpty(a.Session))
+        {
+            var date = DateOnly.FromDateTime(a.AppointmentDate.Value);
+            availabilities = await _scheduleService.GetAvailableDoctorsAsync(
+                CurrentSiteId, a.DepartmentId, date, a.Session);
+
+            if (a.DepartmentId.HasValue)
+            {
+                deptOverview = await _scheduleService.GetDepartmentSlotOverviewAsync(
+                    CurrentSiteId, a.DepartmentId.Value, date, a.Session);
+            }
+        }
+
+        ViewBag.Availabilities  = availabilities;
+        ViewBag.DeptOverview    = deptOverview;
+        // Fallback: nếu hệ thống chưa có lịch trực (vd: khởi tạo dữ liệu mới),
+        // hiển thị toàn bộ BS cùng khoa (không kèm slot count) — dùng cho phân lịch khẩn cấp.
         var allDoctors = await _doctorService.GetAllAsync(CurrentSiteId);
         var deptDoctors = a.DepartmentId.HasValue
             ? allDoctors.Where(d => d.DepartmentId == a.DepartmentId.Value).ToList()
             : allDoctors;
-        ViewBag.AvailableDoctors = deptDoctors.Any() ? deptDoctors : allDoctors;
-        ViewBag.AllDoctorsCount  = allDoctors.Count;
+        ViewBag.FallbackDoctors = deptDoctors.Any() ? deptDoctors : allDoctors;
+        ViewBag.AllDoctorsCount = allDoctors.Count;
         return View(a);
+    }
+
+    /// <summary>
+    /// AJAX endpoint trả JSON danh sách BS có thể phân cho 1 (date, session, deptId?).
+    /// Dùng cho dropdown động khi lễ tân chuyển ngày/khoa trong cùng form mà không reload trang.
+    /// </summary>
+    [HttpGet]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+    public async Task<IActionResult> AvailableDoctors(DateTime date, string session, Guid? deptId)
+    {
+        if (string.IsNullOrEmpty(session)) return BadRequest("Thiếu session.");
+        var d = DateOnly.FromDateTime(date.Date);
+        var list = await _scheduleService.GetAvailableDoctorsAsync(CurrentSiteId, deptId, d, session);
+        return Json(list.Select(x => new
+        {
+            doctorId       = x.DoctorId,
+            doctorName     = x.DoctorName,
+            position       = x.Position,
+            specialty      = x.Specialty,
+            departmentName = x.DepartmentName,
+            room           = x.Room,
+            maxSlots       = x.MaxSlots,
+            bookedSlots    = x.BookedSlots,
+            remainingSlots = x.RemainingSlots,
+            fillPercent    = x.FillPercent,
+            isAvailable    = x.IsAvailable,
+        }));
     }
 
     [HttpPost]
@@ -233,13 +284,51 @@ public class LeTanController : BaseController
     }
 
     [HttpGet]
-    public async Task<IActionResult> DoctorsOnDuty()
+    /// <summary>
+    /// Hiển thị danh sách BS trực vào ngày được chọn (mặc định: hôm nay) — cả buổi sáng + chiều,
+    /// **tất cả các khoa**, kèm slot count thời gian thực. Lễ tân dùng để overview ai đang làm việc.
+    /// Cho phép pick date trong khoảng [today−30, today+MaxDaysAhead].
+    /// </summary>
+    public async Task<IActionResult> DoctorsOnDuty(DateTime? date)
     {
-        ViewBag.Title = "Bác sĩ trực hôm nay";
-        var today = (byte)DateTime.Today.DayOfWeek;
-        var allSchedules = await _scheduleService.GetAllActiveAsync();
-        ViewBag.Schedules = allSchedules.Where(s => s.Weekday == today).ToList();
-        ViewBag.Doctors = await _doctorService.GetAllAsync(CurrentSiteId);
+        var picked = (date ?? DateTime.Today).Date;
+        var minDate = DateTime.Today.AddDays(-30);
+        var maxDate = DateTime.Today.AddDays(Constants.MaxDaysAhead);
+        if (picked < minDate) picked = minDate;
+        if (picked > maxDate) picked = maxDate;
+        var d = DateOnly.FromDateTime(picked);
+
+        // Service đã handle weekday mapping đúng (1=CN, 2=T2..7=T7) +
+        // filter site + active flag + valid date range. Truyền deptId=null → mọi khoa.
+        var morningList = await _scheduleService.GetAvailableDoctorsAsync(
+            CurrentSiteId, null, d, Constants.SessionMorning);
+        var afternoonList = await _scheduleService.GetAvailableDoctorsAsync(
+            CurrentSiteId, null, d, Constants.SessionAfternoon);
+
+        ViewBag.Title       = $"Bác sĩ trực ngày {picked:dd/MM/yyyy}";
+        ViewBag.PickedDate  = picked;
+        ViewBag.IsToday     = picked == DateTime.Today;
+        ViewBag.MinDate     = minDate;
+        ViewBag.MaxDate     = maxDate;
+        ViewBag.WeekdayName = picked.ToString("dddd", new System.Globalization.CultureInfo("vi-VN"));
+
+        // Group theo khoa cho UI dễ đọc — strongly-typed (Razor không xử lý được anonymous Key)
+        WebsiteCore.Business.ViewModels.DeptDoctorGroup MakeGroup(IGrouping<Guid, WebsiteCore.Business.ViewModels.DoctorAvailabilityVm> g) =>
+            new()
+            {
+                DepartmentId   = g.Key,
+                DepartmentName = g.First().DepartmentName,
+                Doctors        = g.ToList(),
+            };
+        ViewBag.MorningByDept   = morningList.GroupBy(x => x.DepartmentId).Select(MakeGroup)
+                                             .OrderBy(g => g.DepartmentName).ToList();
+        ViewBag.AfternoonByDept = afternoonList.GroupBy(x => x.DepartmentId).Select(MakeGroup)
+                                               .OrderBy(g => g.DepartmentName).ToList();
+
+        ViewBag.MorningCount   = morningList.Count;
+        ViewBag.AfternoonCount = afternoonList.Count;
+        ViewBag.TotalDeptCount = morningList.Concat(afternoonList).Select(x => x.DepartmentId).Distinct().Count();
+
         return View();
     }
 

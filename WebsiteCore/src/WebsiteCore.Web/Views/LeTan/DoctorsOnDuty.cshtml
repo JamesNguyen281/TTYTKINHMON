@@ -1,42 +1,122 @@
-@using WebsiteCore.Data.Entities
 @using WebsiteCore.Business
+@using WebsiteCore.Business.ViewModels
 @{
-    ViewData["Title"] = "Bác sĩ trực hôm nay";
-    var schedules = ViewBag.Schedules as List<DoctorSchedule> ?? new();
-    var doctors = ViewBag.Doctors as List<Doctor> ?? new();
-    var docDict = doctors.ToDictionary(d => d.Id, d => d);
+    ViewData["Title"] = ViewBag.Title as string ?? "Bác sĩ trực";
+    var picked      = (DateTime)(ViewBag.PickedDate ?? DateTime.Today);
+    var minDate     = (DateTime)(ViewBag.MinDate ?? DateTime.Today.AddDays(-30));
+    var maxDate     = (DateTime)(ViewBag.MaxDate ?? DateTime.Today.AddDays(30));
+    var weekdayName = ViewBag.WeekdayName as string ?? "";
+    var morningGroups   = ViewBag.MorningByDept   as List<DeptDoctorGroup> ?? new();
+    var afternoonGroups = ViewBag.AfternoonByDept as List<DeptDoctorGroup> ?? new();
+    int morningCount   = (int)(ViewBag.MorningCount   ?? 0);
+    int afternoonCount = (int)(ViewBag.AfternoonCount ?? 0);
+    int deptCount      = (int)(ViewBag.TotalDeptCount ?? 0);
+    bool isToday       = (bool)(ViewBag.IsToday ?? false);
 }
 
 <div class="container" style="padding-top:24px;">
-    <h2 style="color:#0a3d62;"><i class="fa fa-stethoscope"></i> Bác sĩ trực hôm nay (@DateTime.Today.ToString("dd/MM/yyyy"))</h2>
-    <a href="/le-tan" class="btn btn-default" style="margin-bottom:12px;">← Tổng quan</a>
+    <div class="km-onduty-header">
+        <div>
+            <h2 style="color:#0a3d62; margin:0;">
+                <i class="fa fa-stethoscope"></i>
+                Bác sĩ trực ngày @picked.ToString("dd/MM/yyyy")
+                @if (!string.IsNullOrEmpty(weekdayName))
+                {
+                    <small class="text-muted" style="font-size:14px;">(@weekdayName)</small>
+                }
+                @if (isToday) { <span class="label label-success" style="font-size:12px; vertical-align:middle;">HÔM NAY</span> }
+            </h2>
+            <small class="text-muted">
+                Sáng: <strong>@morningCount</strong> bác sĩ ·
+                Chiều: <strong>@afternoonCount</strong> bác sĩ ·
+                Tổng <strong>@deptCount</strong> khoa hoạt động
+            </small>
+        </div>
+        <a href="/le-tan" class="btn btn-default btn-sm">← Tổng quan</a>
+    </div>
+
+    <form method="get" action="/le-tan/bac-si-truc" class="km-onduty-filter">
+        <label><i class="fa fa-calendar"></i> Chọn ngày khác:</label>
+        <input type="date" name="date" value="@picked.ToString("yyyy-MM-dd")"
+               min="@minDate.ToString("yyyy-MM-dd")" max="@maxDate.ToString("yyyy-MM-dd")"
+               class="form-control" style="width:auto; display:inline-block;" />
+        <button type="submit" class="btn btn-primary btn-sm">Xem</button>
+        <a href="/le-tan/bac-si-truc" class="btn btn-link btn-sm" title="Hôm nay">Hôm nay</a>
+    </form>
 
     <div class="row">
-        @{ var sessions = new[] { (Constants.SessionMorning, "Buổi sáng"), (Constants.SessionAfternoon, "Buổi chiều") }; }
-        @foreach (var (key, label) in sessions)
+        @{
+            var sections = new[]
+            {
+                (label: "Buổi sáng",  groups: morningGroups,   total: morningCount,   icon: "sun-o"),
+                (label: "Buổi chiều", groups: afternoonGroups, total: afternoonCount, icon: "moon-o"),
+            };
+        }
+        @foreach (var sec in sections)
         {
-            var sess = schedules.Where(s => s.Session == key).ToList();
             <div class="col-md-6">
                 <div class="panel panel-primary">
-                    <div class="panel-heading"><strong>@label</strong></div>
+                    <div class="panel-heading">
+                        <strong><i class="fa fa-@sec.icon"></i> @sec.label</strong>
+                        <span class="badge pull-right">@sec.total bác sĩ</span>
+                    </div>
                     <div class="panel-body">
-                        @if (!sess.Any()) { <p class="text-muted">Không có bác sĩ nào trực.</p> }
-                        @foreach (var s in sess)
+                        @if (sec.groups == null || !sec.groups.Any())
                         {
-                            docDict.TryGetValue(s.DoctorId, out var d);
-                            if (d == null) continue;
-                            <div style="border-bottom:1px solid #eee; padding:8px 0;">
-                                @if (!string.IsNullOrEmpty(d.ImagePath))
+                            <div class="alert alert-default" style="margin:0; background:#f8f9fa; color:#6c757d;">
+                                <i class="fa fa-info-circle"></i> Không có bác sĩ nào trực buổi này.
+                                @if (picked.DayOfWeek == DayOfWeek.Saturday || picked.DayOfWeek == DayOfWeek.Sunday)
                                 {
-                                    <img src="/@d.ImagePath.TrimStart('/')" alt="@d.NameL"
-                                         style="height:48px; width:48px; object-fit:cover; border-radius:50%; float:left; margin-right:10px;"
-                                         onerror="this.onerror=null;this.src='/assets/client/images/doctor-default.svg';" />
+                                    <br />
+                                    <small>(Ngày cuối tuần — lịch auto-gen mặc định chỉ Mon–Fri.
+                                        Quản trị viên có thể tạo lịch cuối tuần thủ công qua AdminCP nếu cần.)</small>
                                 }
-                                <strong>@d.NameL</strong>
-                                <br /><small class="text-muted">@d.SpeciallyL</small>
-                                @if (!string.IsNullOrEmpty(s.Room)) { <br /><small>Phòng: <strong>@s.Room</strong></small> }
-                                <div style="clear:both;"></div>
                             </div>
+                        }
+                        else
+                        {
+                            foreach (var grp in sec.groups)
+                            {
+                                <div class="km-dept-block">
+                                    <div class="km-dept-name">
+                                        <i class="fa fa-hospital-o"></i> @grp.DepartmentName
+                                        <span class="text-muted">(@grp.Doctors.Count BS)</span>
+                                    </div>
+                                    @foreach (var d in grp.Doctors.OrderBy(x => x.BookedSlots).ThenBy(x => x.Ord))
+                                    {
+                                        string fillColor = d.FillPercent >= 90 ? "#d9534f"
+                                                         : d.FillPercent >= 70 ? "#f0ad4e" : "#5cb85c";
+                                        <div class="km-doc-row @(d.IsAvailable ? "" : "is-full")">
+                                            <div class="km-doc-avatar">
+                                                <img src="@(string.IsNullOrEmpty(d.ImagePath) ? "/assets/admin/images/user_none.jpg" : "/" + d.ImagePath.TrimStart('/'))"
+                                                     onerror="this.onerror=null;this.src='/assets/admin/images/user_none.jpg';" alt="@d.DoctorName" />
+                                            </div>
+                                            <div class="km-doc-info">
+                                                <div class="km-doc-name">@d.DoctorName</div>
+                                                @if (!string.IsNullOrEmpty(d.Position))
+                                                {
+                                                    <div class="km-doc-pos">@d.Position</div>
+                                                }
+                                                @if (!string.IsNullOrEmpty(d.Specialty))
+                                                {
+                                                    <div class="km-doc-specialty">@d.Specialty</div>
+                                                }
+                                                <div class="km-doc-meta">
+                                                    @if (!string.IsNullOrEmpty(d.Room)) { <span><i class="fa fa-door-open"></i> Phòng @d.Room</span> }
+                                                    <span class="km-doc-slot-text">
+                                                        <strong>@d.BookedSlots / @d.MaxSlots</strong> ca
+                                                        @if (!d.IsAvailable) { <span class="text-danger">— hết suất</span> }
+                                                        else { <span class="text-muted">— còn @d.RemainingSlots</span> }
+                                                    </span>
+                                                </div>
+                                                <div class="km-doc-bar">
+                                                    <div class="km-doc-fill" style="width:@(d.FillPercent)%; background:@fillColor;"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
                         }
                     </div>
                 </div>
@@ -44,3 +124,46 @@
         }
     </div>
 </div>
+
+<style>
+    .km-onduty-header {
+        display: flex; justify-content: space-between; align-items: flex-start;
+        gap: 12px; flex-wrap: wrap; margin-bottom: 16px;
+    }
+    .km-onduty-filter {
+        display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+        background: #f0f7fb; border: 1px solid #c8d8e3; border-radius: 6px;
+        padding: 10px 14px; margin-bottom: 14px;
+    }
+    .km-dept-block {
+        margin-bottom: 14px; padding-bottom: 8px; border-bottom: 2px dashed #eef5fb;
+    }
+    .km-dept-block:last-child { border-bottom: 0; margin-bottom: 0; }
+    .km-dept-name {
+        font-size: 13px; font-weight: 700; color: #0a3d62;
+        margin-bottom: 8px; padding: 4px 0;
+        border-bottom: 1px solid #dee2e6;
+    }
+    .km-doc-row {
+        display: flex; gap: 10px; padding: 8px 4px;
+        border-radius: 6px; margin-bottom: 4px;
+        transition: background .15s;
+    }
+    .km-doc-row:hover { background: #f8fbfd; }
+    .km-doc-row.is-full { opacity: .6; }
+    .km-doc-avatar img {
+        width: 44px; height: 44px; border-radius: 50%;
+        object-fit: cover; border: 2px solid #eef5fb;
+    }
+    .km-doc-info { flex: 1; min-width: 0; }
+    .km-doc-name { font-weight: 700; color: #2c3e50; font-size: 14px; }
+    .km-doc-pos  { font-size: 11px; color: #1d5688; font-weight: 600; }
+    .km-doc-specialty { font-size: 12px; color: #5a6c7d; font-style: italic; margin-top: 2px; }
+    .km-doc-meta {
+        display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+        font-size: 11px; color: #6c757d; margin-top: 4px;
+    }
+    .km-doc-slot-text { font-size: 12px; }
+    .km-doc-bar { height: 5px; background: #e1e8ed; border-radius: 3px; margin-top: 4px; overflow: hidden; }
+    .km-doc-fill { height: 100%; transition: width .3s; }
+</style>
