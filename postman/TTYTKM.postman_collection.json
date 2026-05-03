@@ -1,0 +1,200 @@
+{
+  "info": {
+    "name": "TTYTKM - Smoke tests",
+    "description": "Bo collection kiem thu HTTP endpoint cua website TTYT phuong Kinh Mon. Import vao Postman 11+ hoac chay bang Newman: newman run TTYTKM.postman_collection.json --env-var baseUrl=http://localhost:5050",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5050" }
+  ],
+  "item": [
+    {
+      "name": "01 - GET / (Trang chu)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/",
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('Response time < 1s', () => pm.expect(pm.response.responseTime).to.be.below(1000));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - GET /dang-nhap (CSRF cookie active)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/dang-nhap"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Trang dang nhap tra 200', () => pm.response.to.have.status(200));",
+              "pm.test('CSRF cookie .AspNetCore.Antiforgery duoc set', () => {",
+              "  const all = pm.response.headers.all();",
+              "  const setCookies = all.filter(h => h.key.toLowerCase() === 'set-cookie').map(h => h.value).join(' || ');",
+              "  pm.expect(setCookies).to.include('.AspNetCore.Antiforgery');",
+              "});",
+              "pm.test('Form chua input __RequestVerificationToken', () => {",
+              "  pm.expect(pm.response.text()).to.include('__RequestVerificationToken');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 - POST /dang-nhap (no CSRF) -> 400",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/dang-nhap",
+        "header": [{ "key": "Content-Type", "value": "application/x-www-form-urlencoded" }],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            { "key": "username", "value": "admin" },
+            { "key": "password", "value": "123456" }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Khong co CSRF token -> tu choi (400/302/401/403)', () => {",
+              "  pm.expect([400, 302, 401, 403]).to.include(pm.response.code);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 - POST /dat-lich-kham (no CSRF) -> 400",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/dat-lich-kham",
+        "header": [{ "key": "Content-Type", "value": "application/x-www-form-urlencoded" }],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            { "key": "DoctorId", "value": "test" },
+            { "key": "Date", "value": "2026-06-01" }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Khong co CSRF token -> tu choi (400/302/401/403)', () => {",
+              "  pm.expect([400, 302, 401, 403]).to.include(pm.response.code);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 - GET /da-dat (without session)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/da-dat"
+      },
+      "protocolProfileBehavior": { "followRedirects": false },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Khong co session -> redirect/error (200/302/404)', () => {",
+              "  pm.expect([200, 302, 404]).to.include(pm.response.code);",
+              "});",
+              "pm.test('Body khong tiet lo ma booking dang KMyymmddS###', () => {",
+              "  pm.expect(pm.response.text()).to.not.match(/KM\\d{6}S\\d{3}/);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 - POST /le-tan/lich-hen/confirm/{id} (no role)",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/le-tan/lich-hen/confirm/00000000-0000-0000-0000-000000000000"
+      },
+      "protocolProfileBehavior": { "followRedirects": false },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Khong co role Reception -> chan (302/400/401/403/404)', () => {",
+              "  pm.expect([302, 400, 401, 403, 404]).to.include(pm.response.code);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "07 - GET /bac-si-portal/chan-doan/{id} (no auth -> redirect)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/bac-si-portal/chan-doan/cross-doctor-test-id"
+      },
+      "protocolProfileBehavior": { "followRedirects": false },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('IDOR/Auth guard hoat dong (302/401/403/404)', () => {",
+              "  pm.expect([302, 401, 403, 404]).to.include(pm.response.code);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "08 - POST /dang-ky (no CSRF) -> 400",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/dang-ky",
+        "header": [{ "key": "Content-Type", "value": "application/x-www-form-urlencoded" }],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            { "key": "Phone", "value": "0987654321" },
+            { "key": "Password", "value": "Pass1234" }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Khong co CSRF token -> tu choi (400/302/401/403)', () => {",
+              "  pm.expect([400, 302, 401, 403]).to.include(pm.response.code);",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

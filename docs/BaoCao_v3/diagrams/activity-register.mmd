@@ -1,0 +1,20 @@
+flowchart TD
+    Start([Bắt đầu]) --> A1[Truy cập /dang-ky]
+    A1 --> A2[Nhập họ tên, SĐT, email, mật khẩu]
+    A2 --> A3[Nhập lại mật khẩu xác nhận]
+    A3 --> A4[Submit form - POST /dang-ky]
+    A4 --> Q1{Anti-forgery token<br/>hợp lệ?}
+    Q1 -- Không --> E1[400 Bad Request]
+    Q1 -- Có --> Q2{Validate input<br/>SĐT, email, mật khẩu mạnh?}
+    Q2 -- Không --> E2[Hiển thị lỗi validate]
+    Q2 -- Có --> Q3{SĐT đã tồn tại<br/>trong site?}
+    Q3 -- Có --> E3[Lỗi: SĐT đã được đăng ký]
+    Q3 -- Không --> A5[Hash mật khẩu - PBKDF2-SHA256<br/>600,000 vòng]
+    A5 --> A6[Tạo User mới<br/>group_code = MEMBER]
+    A6 --> A7[Lưu DB]
+    A7 --> A8[Audit log: USER_REGISTERED]
+    A8 --> A9[Set session login + redirect /ho-so]
+    A9 --> End([Kết thúc])
+    E1 --> End
+    E2 --> A2
+    E3 --> A2

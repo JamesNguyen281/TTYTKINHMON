@@ -1,0 +1,59 @@
+graph TB
+    subgraph "Public / Khách"
+        UC01[Xem trang chủ]
+        UC02[Xem chuyên khoa / bác sĩ]
+        UC03[Tra cứu tin tức / văn bản]
+        UC04[Đăng ký tài khoản]
+        UC05[Đăng nhập]
+        UC06[Đặt lịch khám với tư cách khách]
+    end
+
+    subgraph "Bệnh nhân (Member đã đăng nhập)"
+        UC07[Đặt lịch khám]
+        UC08[Xem Lịch của tôi]
+        UC09[Theo dõi trạng thái real-time]
+        UC10[Xem lý do từ chối/đổi lịch]
+        UC11[Đặt câu hỏi cho bác sĩ]
+        UC12[Xem Câu hỏi của tôi]
+        UC13[Xem lịch sử khám]
+        UC14[Đổi mật khẩu]
+        UC15[Cập nhật hồ sơ cá nhân]
+    end
+
+    subgraph "Lễ tân (Reception)"
+        UC20[Xem danh sách lịch hẹn]
+        UC21[Xác nhận lịch → sinh mã khám]
+        UC22[Từ chối lịch + lý do bắt buộc]
+        UC23[Đề nghị đổi lịch]
+        UC24[Check-in bệnh nhân ngày khám]
+        UC25[Quản lý quota suất khám]
+        UC26[Xem lịch trực bác sĩ]
+        UC27[Polling stat real-time]
+    end
+
+    subgraph "Bác sĩ (Doctor)"
+        UC30[Xem bệnh nhân hôm nay]
+        UC31[Tạo hồ sơ khám + chẩn đoán]
+        UC32[Kê đơn thuốc]
+        UC33[Đánh dấu lịch hoàn tất]
+        UC34[Duyệt + trả lời câu hỏi]
+    end
+
+    subgraph "Admin"
+        UC40[Cấu hình site logo/favicon]
+        UC41[Quản lý News/Category/Department]
+        UC42[Quản lý Doctor/User/Role]
+        UC43[Quản lý Slide/Video/Document]
+        UC44[Xem audit log]
+        UC45[Force change password cho user]
+    end
+
+    Patient((Bệnh nhân))
+    Reception((Lễ tân))
+    Doctor((Bác sĩ))
+    Admin((Admin))
+
+    Patient --> UC04 & UC05 & UC06 & UC07 & UC08 & UC09 & UC10 & UC11 & UC12 & UC13 & UC14 & UC15
+    Reception --> UC20 & UC21 & UC22 & UC23 & UC24 & UC25 & UC26 & UC27
+    Doctor --> UC30 & UC31 & UC32 & UC33 & UC34
+    Admin --> UC40 & UC41 & UC42 & UC43 & UC44 & UC45
