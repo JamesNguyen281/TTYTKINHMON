@@ -39,7 +39,7 @@ Trong giai đoạn chuyển đổi số mạnh mẽ của ngành y tế Việt N
 
 Tuy nhiên, hệ thống thông tin y tế là một hệ thống nghiệp vụ phức tạp: phục vụ đồng thời nhiều vai trò người dùng (bệnh nhân, lễ tân, bác sĩ, quản trị), có nhiều luồng nghiệp vụ liên quan tới nhau (đặt lịch — duyệt lịch — check-in — chẩn đoán — kê đơn — hỏi đáp), và phải đáp ứng các yêu cầu khắt khe về bảo mật, audit, sao lưu dữ liệu y tế. Việc kiểm thử thủ công cho hệ thống quy mô như vậy tốn rất nhiều nhân lực, dễ bỏ sót các lỗi hồi quy và khó đảm bảo tính nhất quán giữa các phiên bản.
 
-Xuất phát từ thực tiễn đó, em chọn đề tài **"Nghiên cứu xây dựng website y tế và triển khai kiểm thử tự động bằng Playwright"** làm đồ án tốt nghiệp. Đề tài đặt ra hai mục tiêu song song:
+Xuất phát từ thực tiễn đó, đề tài **"Nghiên cứu xây dựng website y tế và triển khai kiểm thử tự động bằng Playwright"** được chọn làm đồ án tốt nghiệp. Đề tài đặt ra hai mục tiêu song song:
 
 - **Mục tiêu 1:** Xây dựng website y tế cho Trung tâm Y tế phường Kinh Môn (TP Hải Phòng) trên nền tảng ASP.NET Core 8 + Entity Framework Core 8 + SQL Server, đáp ứng các nghiệp vụ chính: đặt lịch khám, duyệt và xác nhận lịch, sinh mã booking, check-in, tạo hồ sơ khám và đơn thuốc, hỏi đáp giữa bệnh nhân và bác sĩ; áp dụng đầy đủ các lớp bảo mật theo OWASP Top 10.
 

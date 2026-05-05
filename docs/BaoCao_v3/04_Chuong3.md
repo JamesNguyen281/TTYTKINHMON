@@ -148,7 +148,7 @@ Giao diện đặt lịch được thiết kế dạng *step-by-step* gồm 4 b�
 
 ![Hình 3.13. Giao diện Danh sách bệnh nhân hôm nay](images/hinh-3-16.png){width=14cm}
 
-### 3.6.4. Đặc tả chức năng
+### 3.6.3. Đặc tả chức năng
 
 **Bảng 3.6. Đặc tả chức năng Cổng Bác sĩ**
 

@@ -1,6 +1,6 @@
 # KẾT LUẬN {.unnumbered}
 
-Sau bốn tháng thực hiện đồ án tốt nghiệp dưới sự hướng dẫn tận tình của ThS. Nguyễn Thu Hường, em đã hoàn thành cả hai mục tiêu đề ra ban đầu: xây dựng website y tế cho Trung tâm Y tế phường Kinh Môn và triển khai bộ kịch bản kiểm thử tự động bằng Playwright. Kết quả cụ thể của đồ án được tổng kết như sau.
+Sau bốn tháng thực hiện đồ án tốt nghiệp dưới sự hướng dẫn tận tình của ThS. Nguyễn Thu Hường, đồ án đã hoàn thành cả hai mục tiêu đề ra ban đầu: xây dựng website y tế cho Trung tâm Y tế phường Kinh Môn và triển khai bộ kịch bản kiểm thử tự động bằng Playwright. Kết quả cụ thể của đồ án được tổng kết như sau.
 
 ## Kết quả đạt được {.unnumbered}
 
