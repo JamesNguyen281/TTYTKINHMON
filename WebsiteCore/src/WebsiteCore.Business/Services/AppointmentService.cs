@@ -32,6 +32,14 @@ public interface IAppointmentService
     /// </summary>
     Task<ScheduleFollowUpResult> ScheduleFollowUpAsync(
         Guid currentApptId, DateOnly followUpDate, string session, Guid doctorUserId);
+
+    /// <summary>
+    /// Tự động hard-delete lịch chờ duyệt của khách vãng lai (PatientUserId == null) khi:
+    ///   - Đã quá ngày khám (no-show pending), HOẶC
+    ///   - Tạo cách đây hơn <see cref="Constants.PendingWalkInTtlDays"/> ngày.
+    /// BN có account giữ nguyên — họ cần lịch sử để tự huỷ/đặt lại.
+    /// </summary>
+    Task<int> PurgeStaleWalkInPendingAsync(Guid siteId);
 }
 
 /// <summary>
@@ -128,11 +136,34 @@ public class AppointmentService : IAppointmentService
 
     public async Task<List<AppointmentRow>> GetByStatusAsync(string status, Guid siteId)
     {
+        // Lễ tân muốn thấy ngày mới nhất trước (workflow: lịch hôm nay/ngày mai cần duyệt gấp,
+        // ngày cũ thì hoặc đã quá hạn hoặc đang chờ purge).
         var list = await _db.Appointments
             .Where(a => a.Status == status && a.SiteId == siteId)
-            .OrderBy(a => a.AppointmentDate).ThenBy(a => a.Session).ThenBy(a => a.CreatedDate)
+            .OrderByDescending(a => a.AppointmentDate)
+            .ThenByDescending(a => a.CreatedDate)
+            .ThenBy(a => a.Session)
             .ToListAsync();
         return list.Select(MapRow).ToList();
+    }
+
+    public async Task<int> PurgeStaleWalkInPendingAsync(Guid siteId)
+    {
+        var today  = DateOnly.FromDateTime(DateTime.Today);
+        var cutoff = DateTime.Now.AddDays(-Constants.PendingWalkInTtlDays);
+        var stale = await _db.Appointments
+            .Where(a => a.SiteId == siteId
+                     && a.Status == Constants.ApptPending
+                     && a.PatientUserId == null
+                     && (
+                         (a.AppointmentDate.HasValue && a.AppointmentDate < today)
+                         || (a.CreatedDate < cutoff)
+                     ))
+            .ToListAsync();
+        if (stale.Count == 0) return 0;
+        _db.Appointments.RemoveRange(stale);
+        await _db.SaveChangesAsync();
+        return stale.Count;
     }
 
     public async Task<AppointmentRow?> GetByIdAsync(Guid id)
