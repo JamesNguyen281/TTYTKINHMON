@@ -7,6 +7,7 @@ namespace WebsiteCore.Business.Services;
 public interface IMedicalRecordService
 {
     Task<List<MedicalRecord>> GetByPatientAsync(Guid patientUserId, int take = 100);
+    Task<List<MedicalRecord>> GetByDoctorAsync(Guid doctorId, Guid siteId, string? q = null, int take = 100);
     Task<MedicalRecord?> GetByIdAsync(Guid id);
     Task<List<Prescription>> GetPrescriptionsAsync(Guid medicalRecordId);
     Task<string> NextRecordNoAsync();
@@ -24,6 +25,23 @@ public class MedicalRecordService : IMedicalRecordService
             .OrderByDescending(m => m.VisitDate)
             .Take(take)
             .ToListAsync();
+
+    /// <summary>
+    /// Hồ sơ do chính bác sĩ này ký, lọc cross-site qua appointment.site_id.
+    /// Bác sĩ chỉ thấy hồ sơ do mình ký — defense-in-depth ngoài layer route.
+    /// </summary>
+    public Task<List<MedicalRecord>> GetByDoctorAsync(Guid doctorId, Guid siteId, string? q = null, int take = 100)
+    {
+        var query = from m in _db.MedicalRecords
+                    where m.ActiveFlag == 1 && m.DoctorId == doctorId
+                    join a in _db.Appointments on m.AppointmentId equals a.Id into ag
+                    from a in ag.DefaultIfEmpty()
+                    where a == null || a.SiteId == siteId
+                    select m;
+        if (!string.IsNullOrWhiteSpace(q))
+            query = query.Where(m => m.RecordNo!.Contains(q) || m.Diagnosis!.Contains(q));
+        return query.OrderByDescending(m => m.VisitDate).Take(take).ToListAsync();
+    }
 
     public Task<MedicalRecord?> GetByIdAsync(Guid id) =>
         _db.MedicalRecords.FirstOrDefaultAsync(m => m.Id == id);

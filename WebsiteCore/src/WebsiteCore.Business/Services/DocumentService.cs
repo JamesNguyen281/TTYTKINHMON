@@ -62,7 +62,14 @@ public class DocumentService : IDocumentService
     {
         var d = await _db.Documents.FirstOrDefaultAsync(x => x.Id == id);
         if (d == null) return;
-        d.ActiveFlag = 0;
-        await _db.SaveChangesAsync();
+        _db.Documents.Remove(d);
+        try { await _db.SaveChangesAsync(); }
+        catch (DbUpdateException)
+        {
+            _db.Entry(d).State = EntityState.Unchanged;
+            d.ActiveFlag = 0;
+            d.LuUpdated = DateTime.Now;
+            await _db.SaveChangesAsync();
+        }
     }
 }

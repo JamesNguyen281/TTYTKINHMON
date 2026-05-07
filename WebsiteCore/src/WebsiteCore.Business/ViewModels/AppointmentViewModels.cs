@@ -19,9 +19,7 @@ public class BookingInputModel
     [Display(Name = "Email")]
     public string? PatientEmail { get; set; }
 
-    [Required(ErrorMessage = "Vui lòng chọn chuyên khoa")]
-    [Display(Name = "Chuyên khoa")]
-    public Guid? DepartmentId { get; set; }
+    // BN không chọn khoa/phòng: mọi BN vào "Khoa Khám bệnh" trước, lễ tân phân phòng sau khi tiếp nhận triệu chứng.
 
     [Required(ErrorMessage = "Vui lòng chọn ngày khám")]
     [DataType(DataType.Date)]

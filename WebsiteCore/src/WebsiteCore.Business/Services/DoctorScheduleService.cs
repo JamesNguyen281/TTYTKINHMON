@@ -96,8 +96,14 @@ public class DoctorScheduleService : IDoctorScheduleService
     {
         var s = await _db.DoctorSchedules.FirstOrDefaultAsync(x => x.Id == id);
         if (s == null) return;
-        s.ActiveFlag = 0;
-        await _db.SaveChangesAsync();
+        _db.DoctorSchedules.Remove(s);
+        try { await _db.SaveChangesAsync(); }
+        catch (DbUpdateException)
+        {
+            _db.Entry(s).State = EntityState.Unchanged;
+            s.ActiveFlag = 0;
+            await _db.SaveChangesAsync();
+        }
     }
 
     public async Task<MonthlyScheduleResult> GenerateMonthlyScheduleAsync(int year, int month, Guid siteId, Guid? createdBy)

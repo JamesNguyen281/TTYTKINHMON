@@ -1,0 +1,77 @@
+@using WebsiteCore.Data.Entities
+@{
+    ViewData["Title"] = "Phòng khám chuyên môn";
+    var rooms = ViewBag.ClinicRooms as List<ClinicRoom> ?? new();
+}
+
+<div class="container" style="padding:24px 15px 60px;">
+    <h1 style="color:#0a3d62; margin-bottom:8px;">
+        <i class="fa fa-hospital-o"></i> Phòng khám chuyên môn
+    </h1>
+    <p class="text-muted" style="font-size:14px; margin-bottom:24px; line-height:1.7;">
+        Trung tâm hiện có <strong>@rooms.Count phòng khám chuyên môn</strong> tại Khoa Khám bệnh, sẵn sàng tiếp đón
+        bệnh nhân với đội ngũ bác sĩ giàu kinh nghiệm. Quý khách vui lòng chọn phòng khám phù hợp để tham khảo
+        thông tin, lịch trực bác sĩ và quy trình khám.
+    </p>
+
+    @if (!rooms.Any())
+    {
+        <div class="alert alert-info">Hiện chưa có phòng khám nào được kích hoạt.</div>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var r in rooms)
+            {
+                <div class="col-md-6 col-sm-6 col-xs-12" style="margin-bottom:18px;">
+                    <a href="/phong-kham/@r.Id" class="clinic-card" style="display:block; padding:18px 20px; background:white; border:1px solid #e5e9ee; border-radius:8px; text-decoration:none; color:inherit; transition:all 0.2s; box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+                        <div style="display:flex; align-items:flex-start; gap:14px;">
+                            <div style="width:52px; height:52px; flex-shrink:0; border-radius:50%; background:#e8f5e9; color:#16a085; display:flex; align-items:center; justify-content:center; font-size:22px;">
+                                <i class="fa fa-stethoscope"></i>
+                            </div>
+                            <div style="flex:1; min-width:0;">
+                                <h4 style="color:#0a3d62; margin:0 0 6px 0;">
+                                    @r.RoomName
+                                    <small class="text-muted" style="font-weight:normal;">— @r.RoomCode</small>
+                                </h4>
+                                @if (!string.IsNullOrEmpty(r.SpecialtyL))
+                                {
+                                    <div style="color:#16a085; font-size:13px; font-weight:600; margin-bottom:6px;">
+                                        <i class="fa fa-bookmark-o"></i> @r.SpecialtyL
+                                    </div>
+                                }
+                                @if (!string.IsNullOrEmpty(r.Floor))
+                                {
+                                    <div style="font-size:13px; color:#7f8c8d; margin-bottom:4px;">
+                                        <i class="fa fa-map-marker"></i> @r.Floor
+                                    </div>
+                                }
+                                @if (!string.IsNullOrEmpty(r.CommonSymptoms))
+                                {
+                                    <div style="font-size:12.5px; color:#5d6d7e; line-height:1.5; margin-top:6px;">
+                                        <strong>Tiếp nhận:</strong> @r.CommonSymptoms
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            }
+        </div>
+
+        <div style="margin-top:24px; padding:16px 20px; background:#f7f9fc; border-radius:8px; border-left:4px solid #0a3d62;">
+            <h4 style="color:#0a3d62; margin-top:0;"><i class="fa fa-info-circle"></i> Quy trình tiếp nhận chuẩn</h4>
+            <ol style="margin-bottom:0; line-height:1.8;">
+                <li>Bệnh nhân <a href="/dat-lich-kham">đặt lịch online</a> hoặc đến trực tiếp lấy số tại quầy lễ tân;</li>
+                <li>Lễ tân tiếp nhận thông tin và triệu chứng → phân vào <strong>1 trong 8 phòng khám chuyên môn</strong>;</li>
+                <li>Bác sĩ tại phòng khám tiến hành khám và chỉ định xét nghiệm (nếu cần);</li>
+                <li>Có kết quả xét nghiệm → bệnh nhân quay lại phòng khám tiếp nhận ban đầu để bác sĩ kê đơn;</li>
+                <li>Hoàn tất khám: nhận đơn thuốc, hồ sơ điện tử lưu trên hệ thống.</li>
+            </ol>
+        </div>
+    }
+</div>
+
+<style>
+    .clinic-card:hover { transform: translateY(-2px); border-color:#0a3d62 !important; box-shadow:0 6px 18px rgba(10,61,98,0.12) !important; }
+</style>

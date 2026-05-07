@@ -1,0 +1,22 @@
+flowchart TD
+    Start([Bắt đầu]) --> A1[Bệnh nhân tới quầy lễ tân]
+    A1 --> A2[Đọc/quét booking_code KM26...]
+    A2 --> A3[Lễ tân nhập code → /le-tan/check-in]
+    A3 --> A4[GetByBookingCodeAsync code]
+    A4 --> Q1{Tìm thấy?}
+    Q1 -- Không --> E1[Flash: Mã không tồn tại]
+    Q1 -- Có --> Q2{status = confirmed?}
+    Q2 -- Không --> E2[Flash: Lịch chưa được duyệt]
+    Q2 -- Có --> Q3{appointment_date = hôm nay?}
+    Q3 -- Không --> E3[Flash: Không đúng ngày khám]
+    Q3 -- Có --> Q4{Đã checked_in?}
+    Q4 -- Có --> A5[Idempotent: trả OK]
+    Q4 -- Không --> A6[CheckedIn=true, LuUpdated, LuUserId]
+    A6 --> A7[SaveChanges]
+    A7 --> A8[Audit log: CHECK_IN]
+    A5 --> A9[Hiển thị thông tin BN + chuyển khoa]
+    A8 --> A9
+    A9 --> End([Bệnh nhân chờ gọi tên])
+    E1 --> End
+    E2 --> End
+    E3 --> End

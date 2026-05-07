@@ -1,0 +1,225 @@
+@using WebsiteCore.Data.Entities
+@{
+    ViewData["Title"] = "Giới thiệu Trung tâm Y tế phường Kinh Môn";
+    var news = ViewBag.News as News;
+    var isAdmin = (ViewBag.CurrentUser as WebsiteCore.Business.ViewModels.LoggedInUser)?.GroupId == "ADMIN";
+}
+
+@if (news != null && !string.IsNullOrWhiteSpace(news.DetailL))
+{
+    <div class="container" style="padding:24px 15px 60px;">
+        <h1 style="color:#0a3d62; margin-bottom:20px;"><i class="fa fa-hospital-o"></i> @news.TitleL</h1>
+        @if (isAdmin)
+        {
+            <a href="/AdminCP/News/Edit/@news.Id" class="btn btn-warning btn-sm" style="float:right; margin-top:-50px;"><i class="fa fa-edit"></i> Sửa nội dung</a>
+        }
+        @Html.Raw(news.DetailL)
+    </div>
+    return;
+}
+
+@if (isAdmin)
+{
+    <div class="container" style="padding-top:14px;">
+        <div class="alert alert-warning">
+            <i class="fa fa-info-circle"></i>
+            Đây là nội dung mặc định (lấy từ cổng chính thức ttytthixakinhmon.vn). Để admin sửa được qua UI, tạo bài News với <strong>Alias = <code>gioi-thieu-trung-tam</code></strong> tại
+            <a href="/AdminCP/News/Create" class="btn btn-xs btn-primary">+ Tạo bài News</a>
+        </div>
+    </div>
+}
+
+<div class="container" style="padding:24px 15px 60px;">
+    <h1 style="color:#0a3d62; margin-bottom:8px;">
+        <i class="fa fa-hospital-o"></i> Giới thiệu Trung tâm
+    </h1>
+    <p class="text-muted" style="font-size:14px; margin-bottom:24px;">
+        Trung tâm Y tế phường Kinh Môn — tiền thân là Bệnh viện Đa khoa Kinh Môn — Thành phố Hải Phòng.
+    </p>
+
+    <div class="row">
+        <div class="col-md-8">
+
+            <h3 style="color:#0a3d62; border-bottom:2px solid #0a3d62; padding-bottom:8px;">
+                Lịch sử hình thành
+            </h3>
+            <p style="line-height:1.9; text-align:justify;">
+                Trung tâm Y tế thị xã Kinh Môn (nay là Trung tâm Y tế phường Kinh Môn — Thành phố Hải Phòng) được thành lập theo
+                <strong>Quyết định số 56/TCDC ngày 01/5/1966</strong> của Ủy ban hành chính tỉnh Hải Dương.
+                Qua các giai đoạn lịch sử, đơn vị đã chuyển đổi sang mô hình Trung tâm Y tế (1997 – 2005)
+                và tái lập Bệnh viện theo <strong>Quyết định số 3734/2015/QĐ-UBND ngày 23/8/2005</strong> của UBND tỉnh Hải Dương.
+            </p>
+            <p style="line-height:1.9; text-align:justify;">
+                Ngày mới thành lập, đội ngũ cán bộ và nhân viên còn thiếu và yếu, chỉ có 30 cán bộ với 50 giường bệnh,
+                cơ sở vật chất nghèo nàn, phát triển trên cơ sở tiền thân là Bệnh xá và Trạm vệ sinh phòng dịch huyện Kinh Môn.
+                Sau hơn 60 năm xây dựng và phát triển, đơn vị đã không ngừng lớn mạnh, trở thành một trong những đơn vị y tế quan trọng
+                của khu vực Đông Bắc thành phố Hải Phòng.
+            </p>
+
+            <h3 style="color:#0a3d62; border-bottom:2px solid #0a3d62; padding-bottom:8px; margin-top:30px;">
+                Quy mô hiện tại
+            </h3>
+            <p style="line-height:1.9; text-align:justify;">
+                Hiện nay, Trung tâm là cơ sở y tế công lập <strong>hạng II đạt chuẩn quốc gia</strong> về quy mô và trang thiết bị,
+                trực thuộc Sở Y tế Thành phố Hải Phòng. Sau khi sáp nhập đơn vị hành chính, đơn vị được tổ chức lại thành
+                <strong>Trung tâm Y tế phường Kinh Môn</strong>, tập trung vào khám chữa bệnh ngoại trú và y tế cộng đồng.
+            </p>
+
+            <div style="background:#f7f9fc; padding:18px 22px; border-left:4px solid #0a3d62; margin:18px 0;">
+                <h4 style="color:#0a3d62; margin-top:0;">Chỉ số quy mô</h4>
+                <ul style="line-height:1.9; margin-bottom:0;">
+                    <li><strong>150 giường bệnh</strong> — phục vụ điều trị nội trú khu vực;</li>
+                    <li><strong>172 cán bộ — nhân viên</strong>, trong đó có 32 bác sĩ
+                        (01 BS chuyên khoa II, 02 thạc sĩ, 08 BS chuyên khoa I, 21 BS đa khoa);</li>
+                    <li><strong>02 dược sĩ đại học</strong>, 16 cử nhân đại học, 13 cử nhân kinh tế;</li>
+                    <li><strong>Hơn 200.000 lượt khám ngoại trú</strong> mỗi năm;</li>
+                    <li><strong>Hơn 10.000 lượt điều trị nội trú</strong> mỗi năm.</li>
+                </ul>
+            </div>
+
+            <h3 style="color:#0a3d62; border-bottom:2px solid #0a3d62; padding-bottom:8px; margin-top:30px;">
+                Sứ mệnh và phương châm
+            </h3>
+            <p style="line-height:1.9; text-align:justify;">
+                Trung tâm Y tế phường Kinh Môn được Tỉnh ủy — HĐND — UBND tỉnh, Sở Y tế quan tâm lãnh đạo,
+                chỉ đạo, đầu tư kinh phí xây dựng cơ sở hạ tầng khang trang, mua sắm trang thiết bị y tế hiện đại.
+                Toàn thể cán bộ, nhân viên đơn vị thấm nhuần lời dạy của Chủ tịch Hồ Chí Minh
+                <em>"Lương y phải như từ mẫu"</em>, đoàn kết, thống nhất xây dựng đơn vị không ngừng nâng cao về y đức,
+                giỏi về y thuật, tạo dựng niềm tin của người bệnh.
+            </p>
+            <p style="line-height:1.9; text-align:justify;">
+                Đơn vị có nhiệm vụ khám, chữa bệnh và chăm sóc sức khỏe cho cán bộ, nhân dân và công nhân các doanh nghiệp
+                trên địa bàn phường Kinh Môn và các khu vực lân cận. Đặc biệt, Trung tâm đang triển khai thực hiện Kế hoạch
+                <em>"Đổi mới phong cách, thái độ phục vụ của cán bộ y tế hướng tới sự hài lòng của người bệnh"</em>,
+                cải tiến quy trình khám chữa bệnh, xây dựng môi trường <strong>xanh — sạch — đẹp</strong> nhằm thực hiện tốt
+                nhiệm vụ bảo vệ, chăm sóc và nâng cao sức khỏe nhân dân.
+            </p>
+
+            <h3 id="co-cau-to-chuc" style="color:#0a3d62; border-bottom:2px solid #0a3d62; padding-bottom:8px; margin-top:30px; scroll-margin-top:80px;">
+                Cơ cấu tổ chức
+            </h3>
+            <p style="line-height:1.9; text-align:justify;">
+                Trung tâm Y tế phường Kinh Môn được tổ chức theo mô hình bệnh viện hạng II với các khối chuyên môn rõ ràng,
+                bao gồm <strong>Ban Giám đốc</strong>, các khoa khối <strong>lâm sàng</strong>, <strong>cận lâm sàng</strong>, <strong>dự phòng</strong>
+                cùng các phòng chức năng quản trị. Đặc biệt, Trung tâm còn quản lý mạng lưới <strong>trạm y tế cơ sở</strong> trên toàn địa bàn.
+            </p>
+
+            <div class="row" style="margin-top:14px;">
+                <div class="col-md-6">
+                    <div style="background:#f0f7ff; border-left:4px solid #0a3d62; padding:14px 18px; margin-bottom:14px; height:100%;">
+                        <h5 style="color:#0a3d62; margin-top:0;"><i class="fa fa-stethoscope"></i> Khối lâm sàng</h5>
+                        <ul style="margin:0; padding-left:18px; font-size:13.5px; line-height:1.8;">
+                            <li>Khoa Khám bệnh (đầu mối ngoại trú)</li>
+                            <li>Khoa Nội</li>
+                            <li>Khoa Ngoại — Phẫu thuật — Gây mê hồi sức</li>
+                            <li>Khoa Nhi</li>
+                            <li>Khoa Truyền nhiễm</li>
+                            <li>Khoa Răng hàm mặt — Mắt — Tai mũi họng</li>
+                            <li>Khoa Cấp cứu — Hồi sức tích cực và Chống độc</li>
+                            <li>Khoa Y học cổ truyền & Phục hồi chức năng</li>
+                            <li>Khoa Chăm sóc sức khỏe sinh sản và Phụ sản</li>
+                            <li>Bộ phận Thận nhân tạo</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div style="background:#fff5e0; border-left:4px solid #f39c12; padding:14px 18px; margin-bottom:14px; height:100%;">
+                        <h5 style="color:#0a3d62; margin-top:0;"><i class="fa fa-flask"></i> Khối cận lâm sàng</h5>
+                        <ul style="margin:0; padding-left:18px; font-size:13.5px; line-height:1.8;">
+                            <li>Khoa Xét nghiệm</li>
+                            <li>Khoa Chẩn đoán hình ảnh</li>
+                            <li>Khoa Dược — Trang thiết bị — Vật tư y tế</li>
+                            <li>Khoa Kiểm soát nhiễm khuẩn</li>
+                        </ul>
+                        <h5 style="color:#0a3d62; margin-top:14px;"><i class="fa fa-shield"></i> Khối dự phòng</h5>
+                        <ul style="margin:0; padding-left:18px; font-size:13.5px; line-height:1.8;">
+                            <li>Khoa Kiểm soát bệnh tật và HIV/AIDS — Tư vấn và điều trị nghiện chất</li>
+                            <li>Khoa Y tế công cộng — Dinh dưỡng và An toàn thực phẩm</li>
+                            <li>Phòng Dân số — Truyền thông và Giáo dục sức khỏe</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div style="background:#f7f9fc; border-left:4px solid #16a085; padding:14px 18px; margin-bottom:14px;">
+                <h5 style="color:#0a3d62; margin-top:0;"><i class="fa fa-cogs"></i> Phòng chức năng</h5>
+                <p style="margin:0; font-size:13.5px;">
+                    Phòng Tài chính — Kế toán &nbsp;·&nbsp; Phòng Tổ chức hành chính &nbsp;·&nbsp;
+                    Phòng Kế hoạch — Nghiệp vụ &nbsp;·&nbsp; Phòng Điều dưỡng
+                </p>
+            </div>
+
+            <div style="background:#e8f5e9; border-left:4px solid #16a085; padding:14px 18px; margin-bottom:14px;">
+                <h5 style="color:#0a3d62; margin-top:0;"><i class="fa fa-map-marker"></i> Mạng lưới trạm y tế cơ sở</h5>
+                <p style="margin:0; font-size:13px; line-height:1.7;">
+                    Cơ sở 2 Nhị Chiểu &nbsp;·&nbsp; Phòng khám đa khoa khu vực Phúc Thành.
+                </p>
+                <p style="margin:6px 0 0; font-size:13px; line-height:1.7;">
+                    Trạm Y tế các phường: Thái Thịnh, Hiến Thành, An Lưu, Long Xuyên, Hiệp An, Hiệp Sơn, An Sinh,
+                    Phạm Thái, Thất Hùng, An Phụ, Tân Dân, Duy Tân, Minh Tân, Phú Thứ.
+                </p>
+                <p style="margin:6px 0 0; font-size:13px; line-height:1.7;">
+                    Trạm Y tế các xã: Minh Hòa, Bạch Đằng, Lê Ninh, Quang Thành, Thăng Long, Lạc Long, Hiệp Hòa, Hoành Sơn.
+                </p>
+            </div>
+
+            <h3 style="color:#0a3d62; border-bottom:2px solid #0a3d62; padding-bottom:8px; margin-top:30px;">
+                Định hướng phát triển
+            </h3>
+            <p style="line-height:1.9; text-align:justify;">
+                Trong giai đoạn tới, Trung tâm Y tế phường Kinh Môn phấn đấu giữ vững vị trí cơ sở y tế công lập
+                hạng II đạt chuẩn quốc gia, phát triển <strong>khám chữa bệnh ngoại trú</strong> chất lượng cao, đầu tư
+                trang thiết bị hiện đại, đội ngũ cán bộ có trình độ chuyên môn vững vàng, phẩm chất đạo đức tốt,
+                phong cách làm việc khoa học, chuyên nghiệp. Đáp ứng nhu cầu khám bệnh, chữa bệnh ngày càng cao của nhân dân
+                trong địa bàn và các khu vực lân cận.
+            </p>
+
+            <p class="text-muted" style="font-size:13px; margin-top:24px; padding-top:14px; border-top:1px dashed #ddd;">
+                <i class="fa fa-info-circle"></i>
+                Nguồn: Cổng thông tin chính thức Trung tâm Y tế thị xã Kinh Môn —
+                <a href="http://ttytthixakinhmon.vn/gioi-thieu-ve-trung-tam" target="_blank" rel="noopener">ttytthixakinhmon.vn</a>.
+            </p>
+        </div>
+
+        <div class="col-md-4">
+            <div class="panel panel-default">
+                <div class="panel-heading" style="background:#0a3d62; color:white;">
+                    <strong><i class="fa fa-id-card"></i> Thông tin liên hệ</strong>
+                </div>
+                <div class="panel-body" style="line-height:1.8; font-size:14px;">
+                    <p style="margin:0;">
+                        <strong>Trung tâm Y tế phường Kinh Môn</strong><br>
+                        <i class="fa fa-map-marker"></i> 294 Trần Hưng Đạo,<br>
+                        Phường Kinh Môn, TP Hải Phòng<br><br>
+                        <i class="fa fa-phone"></i> Hotline: <a href="tel:02203822205">0220.3.822.205</a><br>
+                        <i class="fa fa-ambulance"></i> Cấp cứu 24/7: <a href="tel:0964801616">0964.801.616</a><br>
+                        <i class="fa fa-globe"></i> <a href="http://ttytthixakinhmon.vn/" target="_blank" rel="noopener">ttytthixakinhmon.vn</a>
+                    </p>
+                </div>
+            </div>
+
+            <div class="panel panel-default">
+                <div class="panel-heading" style="background:#16a085; color:white;">
+                    <strong><i class="fa fa-link"></i> Liên kết nhanh</strong>
+                </div>
+                <div class="list-group">
+                    <a href="/phong-kham" class="list-group-item">
+                        <i class="fa fa-stethoscope"></i> 8 phòng khám chuyên môn
+                    </a>
+                    <a href="/bac-si" class="list-group-item">
+                        <i class="fa fa-user-md"></i> Đội ngũ bác sĩ
+                    </a>
+                    <a href="/chuyen-khoa" class="list-group-item">
+                        <i class="fa fa-medkit"></i> Các chuyên khoa
+                    </a>
+                    <a href="/dat-lich-kham" class="list-group-item" style="background:#e8f5e9;">
+                        <i class="fa fa-calendar-plus-o"></i> <strong>Đặt lịch khám online</strong>
+                    </a>
+                    <a href="/cau-hoi-thuong-gap" class="list-group-item">
+                        <i class="fa fa-question-circle"></i> Câu hỏi thường gặp
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

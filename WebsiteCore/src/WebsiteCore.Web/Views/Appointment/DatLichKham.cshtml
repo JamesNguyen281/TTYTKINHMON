@@ -1,9 +1,7 @@
-@using WebsiteCore.Data.Entities
 @using WebsiteCore.Business.ViewModels
 @model WebsiteCore.Business.ViewModels.BookingInputModel
 @{
     ViewData["Title"] = "Đặt lịch khám";
-    var depts = ViewBag.Departments as List<Department> ?? new();
     var maxDays = (int)(ViewBag.MaxDaysAhead ?? 30);
     var loggedUser = ViewBag.CurrentUser as LoggedInUser;
     var returnUrl = Uri.EscapeDataString(Context.Request.Path + Context.Request.QueryString);
@@ -22,10 +20,12 @@
         }
         <div class="card shadow-sm">
             <div class="card-body p-4">
-                <h3 style="color:#0a3d62;"><i class="fa fa-calendar-plus-o"></i> Đặt lịch khám</h3>
-                <p class="text-muted small">
-                    Vui lòng điền thông tin bên dưới. Lễ tân sẽ liên hệ xác nhận trong vòng 24 giờ.
-                    Sau khi xác nhận, bạn sẽ nhận được mã khám.
+                <h3 style="color:#0a3d62;"><i class="fa fa-calendar-plus-o"></i> Đặt lịch khám tại Khoa Khám bệnh</h3>
+                <p class="text-muted small" style="line-height:1.6;">
+                    Mọi bệnh nhân đặt lịch sẽ được tiếp nhận tại <strong>Khoa Khám bệnh</strong> (sàng lọc đa khoa).
+                    Tại quầy lễ tân, sau khi tiếp nhận triệu chứng, bệnh nhân sẽ được phân vào <strong>1 trong 8 phòng khám chuyên môn</strong>:
+                    Nội — Ngoại — Tiểu đường — Sản — Truyền nhiễm — Nhi — Đông y — Răng Hàm Mặt.
+                    Lễ tân sẽ liên hệ xác nhận trong vòng 24 giờ và cấp mã khám.
                 </p>
 
                 <form asp-action="DatLichKham" method="post">
@@ -49,17 +49,6 @@
                         <input asp-for="PatientEmail" type="email" class="form-control" />
                     </div>
 
-                    <div class="mb-3">
-                        <label asp-for="DepartmentId" class="form-label fw-bold">Chuyên khoa</label>
-                        <select asp-for="DepartmentId" class="form-select">
-                            <option value="">-- Chọn chuyên khoa --</option>
-                            @foreach (var d in depts)
-                            {
-                                <option value="@d.Id">@d.NameL</option>
-                            }
-                        </select>
-                    </div>
-
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label asp-for="AppointmentDate" class="form-label fw-bold">Ngày khám</label>
@@ -78,8 +67,10 @@
                     </div>
 
                     <div class="mb-3">
-                        <label asp-for="Reason" class="form-label">Lý do đến khám</label>
-                        <textarea asp-for="Reason" class="form-control" rows="3" placeholder="Mô tả triệu chứng hoặc nhu cầu khám..."></textarea>
+                        <label asp-for="Reason" class="form-label fw-bold">Triệu chứng / Lý do khám</label>
+                        <textarea asp-for="Reason" class="form-control" rows="3"
+                                  placeholder="Ví dụ: Đau bụng 2 ngày, sốt nhẹ. Hoặc: Khám sức khoẻ định kỳ."></textarea>
+                        <small class="text-muted">Mô tả càng chi tiết, lễ tân càng phân đúng phòng khám chuyên môn cho bạn.</small>
                     </div>
 
                     <button type="submit" class="btn btn-primary btn-lg">

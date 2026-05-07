@@ -56,7 +56,13 @@ public class PartnerService : IPartnerService
     {
         var p = await _db.Partners.FirstOrDefaultAsync(x => x.Id == id);
         if (p == null) return;
-        p.ActiveFlag = 0;
-        await _db.SaveChangesAsync();
+        _db.Partners.Remove(p);
+        try { await _db.SaveChangesAsync(); }
+        catch (DbUpdateException)
+        {
+            _db.Entry(p).State = EntityState.Unchanged;
+            p.ActiveFlag = 0;
+            await _db.SaveChangesAsync();
+        }
     }
 }

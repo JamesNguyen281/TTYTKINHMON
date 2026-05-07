@@ -111,12 +111,22 @@ public class ClinicRoomService : IClinicRoomService
     {
         var room = await GetByIdInSiteAsync(id, siteId);
         if (room == null) return false;
-        // Soft-delete để giữ tham chiếu lịch sử (Appointment đã gán phòng này)
         var entity = await _db.ClinicRooms.FirstOrDefaultAsync(x => x.Id == id);
         if (entity == null) return false;
-        entity.ActiveFlag = 0;
-        entity.LuUpdated = DateTime.Now;
-        await _db.SaveChangesAsync();
-        return true;
+        // Hard delete neu khong co Appointment ref; neu co -> soft delete giu lich su
+        _db.ClinicRooms.Remove(entity);
+        try
+        {
+            await _db.SaveChangesAsync();
+            return true;
+        }
+        catch (DbUpdateException)
+        {
+            _db.Entry(entity).State = EntityState.Unchanged;
+            entity.ActiveFlag = 0;
+            entity.LuUpdated = DateTime.Now;
+            await _db.SaveChangesAsync();
+            return true;
+        }
     }
 }

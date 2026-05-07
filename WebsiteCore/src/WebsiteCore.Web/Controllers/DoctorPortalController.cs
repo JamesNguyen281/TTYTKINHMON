@@ -215,6 +215,51 @@ public class DoctorPortalController : BaseController
         return RedirectToAction(nameof(YeuCauDoiLich));
     }
 
+    /// <summary>Hồ sơ khám đã ký bởi chính bác sĩ này (filter DoctorId + cross-site).</summary>
+    public async Task<IActionResult> HoSoDaKham(string? q)
+    {
+        ViewBag.Title = "Hồ sơ đã chẩn đoán";
+        var u = CurrentUser!;
+        if (!u.DoctorId.HasValue)
+        {
+            ViewBag.Records = new List<Data.Entities.MedicalRecord>();
+            ViewBag.Q = q;
+            return View(new List<Data.Entities.MedicalRecord>());
+        }
+        var list = await _mrService.GetByDoctorAsync(u.DoctorId.Value, CurrentSiteId, q);
+        ViewBag.Q = q;
+        return View(list);
+    }
+
+    /// <summary>Chi tiết hồ sơ — guard: chỉ xem được nếu chính bác sĩ này ký.</summary>
+    public async Task<IActionResult> HoSoChiTiet(Guid id)
+    {
+        var u = CurrentUser!;
+        var m = await _mrService.GetByIdAsync(id);
+        if (m == null) return NotFound();
+
+        // Cross-doctor guard: bs chỉ xem hồ sơ chính mình ký (admin role bypass đã handle ở MedicalRecordsController)
+        if (u.GroupId != Constants.AdminGroup)
+        {
+            if (!u.DoctorId.HasValue || m.DoctorId != u.DoctorId.Value)
+            {
+                TempData["Error"] = "Hồ sơ này thuộc bác sĩ khác — bạn không có quyền xem.";
+                return RedirectToAction(nameof(HoSoDaKham));
+            }
+        }
+
+        // Cross-site guard qua appointment
+        if (m.AppointmentId.HasValue)
+        {
+            var appt = await _apptService.GetByIdAsync(m.AppointmentId.Value);
+            if (appt != null && appt.SiteId != CurrentSiteId) return NotFound();
+        }
+
+        ViewBag.Title = "Chi tiết hồ sơ " + m.RecordNo;
+        ViewBag.Prescriptions = await _mrService.GetPrescriptionsAsync(id);
+        return View(m);
+    }
+
     public async Task<IActionResult> DuyetCauHoi(Guid id)
     {
         ViewBag.Title = "Duyệt và trả lời câu hỏi";

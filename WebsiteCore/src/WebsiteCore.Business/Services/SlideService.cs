@@ -58,7 +58,13 @@ public class SlideService : ISlideService
     {
         var s = await _db.Slides.FirstOrDefaultAsync(x => x.Id == id);
         if (s == null) return;
-        s.ActiveFlag = 0;
-        await _db.SaveChangesAsync();
+        _db.Slides.Remove(s);
+        try { await _db.SaveChangesAsync(); }
+        catch (DbUpdateException)
+        {
+            _db.Entry(s).State = EntityState.Unchanged;
+            s.ActiveFlag = 0;
+            await _db.SaveChangesAsync();
+        }
     }
 }

@@ -1,0 +1,72 @@
+@model List<WebsiteCore.Data.Entities.MedicalRecord>
+@{
+    ViewData["Title"] = "Hồ sơ đã chẩn đoán";
+    var q = ViewBag.Q as string;
+    var u = ViewBag.CurrentUser as WebsiteCore.Business.ViewModels.LoggedInUser;
+}
+
+<div class="container" style="padding:20px 0 40px;">
+    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:14px;">
+        <h2 style="margin:0; color:#0a3d62;">
+            <i class="fa fa-folder-open-o"></i> Hồ sơ đã chẩn đoán
+            <small style="font-size:13px; color:#6c757d;">— BS. @u?.FullName</small>
+        </h2>
+        <a href="/bac-si-portal" class="btn btn-default btn-sm"><i class="fa fa-arrow-left"></i> Tổng quan</a>
+    </div>
+
+    <form method="get" action="/bac-si-portal/ho-so-da-kham" style="margin-bottom:14px;">
+        <div class="row">
+            <div class="col-md-6">
+                <input type="text" name="q" value="@q" class="form-control" placeholder="Tìm theo mã HS / chẩn đoán" maxlength="100" />
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-primary" type="submit"><i class="fa fa-search"></i> Tìm</button>
+                @if (!string.IsNullOrEmpty(q))
+                {
+                    <a href="/bac-si-portal/ho-so-da-kham" class="btn btn-default">Xoá lọc</a>
+                }
+            </div>
+        </div>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table table-hover table-bordered" style="background:white;">
+            <thead style="background:#0a3d62; color:white;">
+                <tr>
+                    <th>Mã HS</th>
+                    <th>Ngày khám</th>
+                    <th>Chẩn đoán</th>
+                    <th>Lý do</th>
+                    <th style="width:90px;">Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var m in Model)
+            {
+                <tr>
+                    <td><code>@m.RecordNo</code></td>
+                    <td>@m.VisitDate.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td>@m.Diagnosis</td>
+                    <td><small>@m.ChiefComplaint</small></td>
+                    <td>
+                        <a href="/bac-si-portal/ho-so/@m.Id" class="btn btn-xs btn-primary" title="Xem"><i class="fa fa-eye"></i> Xem</a>
+                    </td>
+                </tr>
+            }
+            @if (!Model.Any())
+            {
+                <tr>
+                    <td colspan="5" class="text-center text-muted" style="padding:30px;">
+                        Bạn chưa ký hồ sơ khám nào.
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+
+    <p class="text-muted">
+        <i class="fa fa-info-circle"></i>
+        Hiển thị tối đa 100 hồ sơ gần nhất do bạn ký. Quyền xoá thuộc Quản trị viên.
+    </p>
+</div>

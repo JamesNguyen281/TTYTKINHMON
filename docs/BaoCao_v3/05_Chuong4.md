@@ -230,16 +230,16 @@ Hệ thống được triển khai public qua Cloudflare Tunnel với tên miề
 | **STT** | **Loại kiểm thử** | **Phạm vi** | **Tổng số TC** | **Pass** | **Fail** | **Skip** | **Tỷ lệ Pass** |
 |:--:|:--|:--|:--:|:--:|:--:|:--:|:--:|
 | 1 | E2E Playwright — UI Testing | 9 trang public + 10 trang portal + 3 trang member trên 4 viewport | 78 | 78 | 0 | 0 | 100% |
-| 2 | E2E Playwright — Functional Testing | Đặt lịch, duyệt lịch, check-in, chẩn đoán, Q&A, audit | 92 | 86 | 0 | 6 | 100% |
-| 3 | E2E Playwright — Regression Testing | Re-run toàn bộ sau mỗi commit | 32 | 32 | 0 | 0 | 100% |
+| 2 | E2E Playwright — Functional Testing | Đặt lịch, duyệt lịch, check-in, chẩn đoán, Q&A, audit | 100 | 90 | 0 | 10 | 100% |
+| 3 | E2E Playwright — Regression Testing | Re-run toàn bộ sau mỗi commit | 42 | 39 | 0 | 3 | 100% |
 | 4 | Mobile Audit (iPhone X + iPhone SE) | Overflow, tap target, font size | 49 | 49 | 0 | 0 | 100% |
 | 5 | Postman Collection | 8 endpoint smoke test | 8 | 8 | 0 | 0 | 100% |
 | 6 | Manual | Luồng end-to-end + deploy public | 12 | 6 | 0 | 6 | 100% |
-| **Tổng** | | | **271** | **259** | **0** | **12** *(skip có lý do)* | **100%** |
+| **Tổng** | | | **289** | **270** | **0** | **19** *(skip có lý do)* | **100%** |
 
-> Trong tổng số 271 test case, **251 test case** được thực thi tự động bằng Playwright Test Runner (UI + Functional + Regression + Mobile Audit), còn lại 8 test Postman thủ công và 12 test manual. Toàn bộ test pass, 12 trường hợp skip có lý do (cần fixture nâng cao như PDF export, gửi email SMTP thật).
+> Trong tổng số 289 test case, **269 test case** được thực thi tự động bằng Playwright Test Runner (UI + Functional + Regression + Mobile Audit), còn lại 8 test Postman thủ công và 12 test manual. Toàn bộ test pass, 19 trường hợp skip có lý do (cần fixture nâng cao như PDF export, gửi email SMTP thật).
 
-![Hình 4.2. Báo cáo HTML Playwright Test Runner — toàn bộ 251 test pass, 12 skip, 0 fail](images/hinh-4-3.png){width=14cm}
+![Hình 4.2. Báo cáo HTML Playwright Test Runner — toàn bộ 256 test pass, 13 skip, 0 fail](images/hinh-4-3.png){width=14cm}
 
 ### 4.3.1. So sánh thời gian thực thi
 
@@ -247,12 +247,12 @@ Hệ thống được triển khai public qua Cloudflare Tunnel với tên miề
 
 | **Tiêu chí** | **Kiểm thử thủ công** | **Kiểm thử tự động Playwright** |
 |:--|:--:|:--:|
-| Thời gian một lần chạy đầy đủ | ≈ 157 phút | 4 phút 31 giây |
+| Thời gian một lần chạy đầy đủ | ≈ 157 phút | ≈ 12 phút |
 | Số nhân lực cần | 1 tester full-time | Có thể chạy headless trên CI |
 | Khả năng lặp lại | Khó nhất quán | Hoàn toàn nhất quán |
 | Phát hiện regression | Phụ thuộc trí nhớ | Tự động đầy đủ |
 | Ảnh chụp khi lỗi | Phải chủ động | Tự động kèm trace |
-| **Hệ số tiết kiệm** | – | **≈ 35×** |
+| **Hệ số tiết kiệm** | – | **≈ 13×** |
 
 ### 4.3.2. Vấn đề tồn tại
 
@@ -262,6 +262,6 @@ Hệ thống được triển khai public qua Cloudflare Tunnel với tên miề
 
 ### 4.3.3. Kết luận chương 4
 
-Bộ kịch bản kiểm thử tự động bằng **Playwright** đã bao quát đầy đủ ba loại kiểm thử theo định hướng đề cương — **UI Testing**, **Functional Testing** và **Regression Testing** — trên toàn bộ các nghiệp vụ chính của website TTYT phường Kinh Môn. Việc kết hợp Playwright (E2E tự động) + Postman (smoke test HTTP endpoint) + Manual (acceptance + deploy public) đem lại mức độ phủ test cao, phát hiện và khắc phục **18 lỗi** trong quá trình phát triển (2 critical, 9 high, 5 medium, 2 low). Đặc biệt, Playwright giúp rút ngắn thời gian kiểm thử **35 lần** so với manual — chứng minh tính ứng dụng cao của công cụ trong các dự án có nhiều vai trò người dùng và workflow phức tạp như hệ thống y tế.
+Bộ kịch bản kiểm thử tự động bằng **Playwright** đã bao quát đầy đủ ba loại kiểm thử theo định hướng đề cương — **UI Testing**, **Functional Testing** và **Regression Testing** — trên toàn bộ các nghiệp vụ chính của website TTYT phường Kinh Môn. Việc kết hợp Playwright (E2E tự động) + Postman (smoke test HTTP endpoint) + Manual (acceptance + deploy public) đem lại mức độ phủ test cao, phát hiện và khắc phục **18 lỗi** trong quá trình phát triển (2 critical, 9 high, 5 medium, 2 low). Đặc biệt, Playwright giúp rút ngắn thời gian kiểm thử **13 lần** so với manual — chứng minh tính ứng dụng cao của công cụ trong các dự án có nhiều vai trò người dùng và workflow phức tạp như hệ thống y tế.
 
 \newpage

@@ -1,0 +1,118 @@
+@using WebsiteCore.Data.Entities
+@{
+    ViewData["Title"] = "Khiếu nại — Quy trình giải quyết";
+    var news = ViewBag.News as News;
+    var isAdmin = (ViewBag.CurrentUser as WebsiteCore.Business.ViewModels.LoggedInUser)?.GroupId == "ADMIN";
+}
+
+@if (news != null && !string.IsNullOrWhiteSpace(news.DetailL))
+{
+    <div class="container" style="padding:24px 15px 60px;">
+        <h1 style="color:#0a3d62; margin-bottom:20px;"><i class="fa fa-balance-scale"></i> @news.TitleL</h1>
+        @if (isAdmin)
+        {
+            <a href="/AdminCP/News/Edit/@news.Id" class="btn btn-warning btn-sm" style="float:right; margin-top:-50px;"><i class="fa fa-edit"></i> Sửa nội dung</a>
+        }
+        @Html.Raw(news.DetailL)
+    </div>
+    return;
+}
+
+@if (isAdmin)
+{
+    <div class="container" style="padding-top:14px;">
+        <div class="alert alert-warning">
+            <i class="fa fa-info-circle"></i>
+            Đây là nội dung mặc định. Để admin sửa được qua UI, hãy tạo bài News với <strong>Alias = <code>khieu-nai</code></strong> tại
+            <a href="/AdminCP/News/Create" class="btn btn-xs btn-primary">+ Tạo bài News</a>
+        </div>
+    </div>
+}
+
+<div class="container" style="padding:24px 15px 60px;">
+    <h1 style="color:#0a3d62; margin-bottom:20px;">
+        <i class="fa fa-balance-scale"></i> Khiếu nại — Quy trình giải quyết
+    </h1>
+
+    <div class="alert alert-warning" style="border-left:4px solid #f39c12;">
+        <i class="fa fa-exclamation-triangle"></i>
+        Trung tâm Y tế phường Kinh Môn cam kết tiếp nhận và giải quyết mọi khiếu nại của bệnh nhân theo quy định pháp luật và <strong>Quyết định 4858/QĐ-BYT</strong> về Bộ tiêu chí chất lượng bệnh viện.
+    </div>
+
+    <h3 style="color:#0a3d62; margin-top:24px;">1. Phạm vi tiếp nhận khiếu nại</h3>
+    <ul style="line-height:1.8;">
+        <li>Chất lượng khám chữa bệnh — thái độ phục vụ của nhân viên y tế;</li>
+        <li>Quy trình tiếp nhận, đặt lịch, check-in tại quầy lễ tân;</li>
+        <li>Hồ sơ khám điện tử, đơn thuốc — sai sót về thông tin;</li>
+        <li>Bảo mật thông tin cá nhân và y tế;</li>
+        <li>Sai phạm về tài chính (thu phí ngoài bảng giá Bộ Y tế quy định);</li>
+        <li>Các vấn đề khác liên quan đến hoạt động khám chữa bệnh tại Trung tâm.</li>
+    </ul>
+
+    <h3 style="color:#0a3d62; margin-top:24px;">2. Quy trình tiếp nhận và giải quyết</h3>
+
+    <div class="row" style="margin-top:16px;">
+        <div class="col-md-12">
+            <div style="border-left:4px solid #0a3d62; padding:12px 18px; margin-bottom:14px; background:#f7f9fc;">
+                <h4 style="color:#0a3d62; margin-top:0;"><i class="fa fa-1"></i> Bước 1 — Tiếp nhận khiếu nại</h4>
+                <p style="margin:0;">
+                    Bệnh nhân gửi khiếu nại qua một trong các kênh:
+                    <strong>(a)</strong> Trực tiếp tại Phòng Tiếp dân của Trung tâm trong giờ hành chính;
+                    <strong>(b)</strong> Hotline <a href="tel:02203822205">0220.3.822.205</a>;
+                    <strong>(c)</strong> Email <a href="mailto:ttyt.kinhmon@haiphong.gov.vn">ttyt.kinhmon@haiphong.gov.vn</a>;
+                    <strong>(d)</strong> Form trực tuyến tại trang <a href="/lien-he">Liên hệ</a>.
+                </p>
+            </div>
+
+            <div style="border-left:4px solid #f39c12; padding:12px 18px; margin-bottom:14px; background:#fff5e0;">
+                <h4 style="color:#0a3d62; margin-top:0;"><i class="fa fa-2"></i> Bước 2 — Phân loại và xử lý</h4>
+                <p style="margin:0;">
+                    Trong vòng <strong>2 ngày làm việc</strong>, Phòng Tiếp dân phân loại khiếu nại và chuyển đến phòng/khoa liên quan.
+                    Bệnh nhân nhận thông báo (qua SĐT đã đăng ký) xác nhận đã tiếp nhận khiếu nại kèm mã theo dõi.
+                </p>
+            </div>
+
+            <div style="border-left:4px solid #16a085; padding:12px 18px; margin-bottom:14px; background:#e8f5e9;">
+                <h4 style="color:#0a3d62; margin-top:0;"><i class="fa fa-3"></i> Bước 3 — Điều tra và phản hồi</h4>
+                <p style="margin:0;">
+                    Trong vòng <strong>10 ngày làm việc</strong>, Trung tâm tiến hành điều tra, lấy ý kiến các bên liên quan và đưa ra phương án giải quyết.
+                    Bệnh nhân được mời họp đối thoại trực tiếp hoặc nhận văn bản trả lời chính thức.
+                </p>
+            </div>
+
+            <div style="border-left:4px solid #9b59b6; padding:12px 18px; margin-bottom:14px; background:#f4ecf7;">
+                <h4 style="color:#0a3d62; margin-top:0;"><i class="fa fa-4"></i> Bước 4 — Khắc phục và lưu hồ sơ</h4>
+                <p style="margin:0;">
+                    Sau khi đạt thoả thuận, Trung tâm thực hiện các biện pháp khắc phục đã cam kết và lưu hồ sơ khiếu nại tối thiểu 5 năm để phục vụ thanh tra/đánh giá chất lượng.
+                </p>
+            </div>
+
+            <div style="border-left:4px solid #e74c3c; padding:12px 18px; margin-bottom:14px; background:#fde7e9;">
+                <h4 style="color:#0a3d62; margin-top:0;"><i class="fa fa-5"></i> Bước 5 — Cơ chế khiếu nại tiếp</h4>
+                <p style="margin:0;">
+                    Trường hợp bệnh nhân không đồng ý với kết quả giải quyết, có thể khiếu nại tiếp lên:
+                    <strong>(a)</strong> Sở Y tế Thành phố Hải Phòng;
+                    <strong>(b)</strong> Bộ Y tế (đối với khiếu nại có tính chất nghiêm trọng);
+                    <strong>(c)</strong> Toà án nhân dân có thẩm quyền theo Luật Khám bệnh, chữa bệnh năm 2023.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <h3 style="color:#0a3d62; margin-top:24px;">3. Cam kết của Trung tâm</h3>
+    <ul style="line-height:1.8;">
+        <li>Tiếp nhận khiếu nại không phân biệt đối tượng, không ngăn cản quyền khiếu nại của bệnh nhân;</li>
+        <li>Đảm bảo bí mật thông tin người khiếu nại trong suốt quá trình xử lý;</li>
+        <li>Không trù dập, gây khó khăn cho bệnh nhân đã khiếu nại trong các lần khám tiếp theo;</li>
+        <li>Công khai kết quả xử lý khiếu nại định kỳ trên website (đã ẩn thông tin cá nhân) để minh bạch.</li>
+    </ul>
+
+    <h3 style="color:#0a3d62; margin-top:24px;">4. Liên hệ</h3>
+    <p>
+        <strong>Phòng Tiếp dân — Trung tâm Y tế phường Kinh Môn</strong><br>
+        Địa chỉ: Số 294 đường Trần Hưng Đạo, phường Kinh Môn, Thành phố Hải Phòng<br>
+        Giờ làm việc: 7:30 — 11:30 và 13:30 — 17:00 (Thứ Hai — Thứ Sáu)<br>
+        Hotline: <a href="tel:02203822205">0220.3.822.205</a><br>
+        Email: <a href="mailto:ttyt.kinhmon@haiphong.gov.vn">ttyt.kinhmon@haiphong.gov.vn</a>
+    </p>
+</div>

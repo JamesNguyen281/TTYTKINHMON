@@ -118,7 +118,14 @@ public class CategoryService : ICategoryService
     {
         var c = await _db.Categories.FirstOrDefaultAsync(x => x.Id == id);
         if (c == null) return;
-        c.ActiveFlag = 0;
-        await _db.SaveChangesAsync();
+        _db.Categories.Remove(c);
+        try { await _db.SaveChangesAsync(); }
+        catch (DbUpdateException)
+        {
+            _db.Entry(c).State = EntityState.Unchanged;
+            c.ActiveFlag = 0;
+            c.LuUpdated = DateTime.Now;
+            await _db.SaveChangesAsync();
+        }
     }
 }

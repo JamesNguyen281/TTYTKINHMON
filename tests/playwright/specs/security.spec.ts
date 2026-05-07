@@ -14,7 +14,6 @@ test.describe('Security regression', () => {
       form: {
         PatientName: 'Test',
         PatientPhone: '0987654321',
-        DepartmentId: '00000000-0000-0000-0000-000000000000',
         AppointmentDate: '2030-01-01',
         Session: 'morning',
       },

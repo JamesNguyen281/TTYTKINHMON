@@ -16,6 +16,7 @@ public class HomeController : BaseController
     private readonly IVideoService _videoService;
     private readonly IDoctorScheduleService _scheduleService;
     private readonly IQuotaService _quotaService;
+    private readonly IClinicRoomService _clinicRoomService;
     private readonly TtytlpDbContext _db;
 
     public HomeController(
@@ -27,6 +28,7 @@ public class HomeController : BaseController
         IVideoService videoService,
         IDoctorScheduleService scheduleService,
         IQuotaService quotaService,
+        IClinicRoomService clinicRoomService,
         TtytlpDbContext db) : base(siteService)
     {
         _deptService = deptService;
@@ -36,6 +38,7 @@ public class HomeController : BaseController
         _videoService = videoService;
         _scheduleService = scheduleService;
         _quotaService = quotaService;
+        _clinicRoomService = clinicRoomService;
         _db = db;
     }
 
@@ -315,4 +318,52 @@ public class HomeController : BaseController
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error() => View();
+
+    /// <summary>Giới thiệu Khoa Khám bệnh + 8 phòng khám chuyên môn (public).</summary>
+    [Route("phong-kham")]
+    public async Task<IActionResult> ClinicRoomList()
+    {
+        ViewBag.Title = "Phòng khám chuyên môn — Khoa Khám bệnh";
+        ViewBag.ClinicRooms = await _clinicRoomService.GetActiveBySiteAsync(CurrentSiteId);
+        return View();
+    }
+
+    /// <summary>Chi tiết một phòng khám: chuyên môn, triệu chứng, vị trí, BS đang trực.</summary>
+    [Route("phong-kham/{id:guid}")]
+    public async Task<IActionResult> ClinicRoomDetail(Guid id)
+    {
+        var room = await _clinicRoomService.GetByIdInSiteAsync(id, CurrentSiteId);
+        if (room == null) return NotFound();
+        ViewBag.Title = room.RoomName;
+        ViewBag.DoctorsOnDuty = await _clinicRoomService.CountDoctorsOnDutyAsync(
+            id, DateOnly.FromDateTime(DateTime.Today), Constants.SessionMorning);
+        return View(room);
+    }
+
+    /// <summary>Giới thiệu Trung tâm Y tế — admin sửa qua /AdminCP/News alias='gioi-thieu-trung-tam'.</summary>
+    [Route("gioi-thieu-trung-tam")]
+    public Task<IActionResult> AboutCenter() => RenderStaticPage("AboutCenter", "gioi-thieu-trung-tam", "Giới thiệu Trung tâm Y tế phường Kinh Môn");
+
+    /// <summary>
+    /// Trang nội dung tĩnh do admin quản lý qua /AdminCP/News.
+    /// Lấy News theo alias; nếu admin chưa tạo → fallback nội dung mặc định trong view.
+    /// Convention: alias = "cau-hoi-thuong-gap" / "dieu-khoan-su-dung" / "khieu-nai".
+    /// </summary>
+    private async Task<IActionResult> RenderStaticPage(string viewName, string alias, string title)
+    {
+        ViewBag.Title = title;
+        ViewBag.AdminEditUrl = "/AdminCP/News?type=complete";
+        ViewBag.PageAlias = alias;
+        ViewBag.News = await _newsService.GetByAliasAsync(alias);
+        return View(viewName);
+    }
+
+    [Route("cau-hoi-thuong-gap")]
+    public Task<IActionResult> Faq() => RenderStaticPage("Faq", "cau-hoi-thuong-gap", "Câu hỏi thường gặp");
+
+    [Route("dieu-khoan-su-dung")]
+    public Task<IActionResult> TermsOfUse() => RenderStaticPage("TermsOfUse", "dieu-khoan-su-dung", "Điều khoản sử dụng");
+
+    [Route("khieu-nai")]
+    public Task<IActionResult> Complaint() => RenderStaticPage("Complaint", "khieu-nai", "Khiếu nại — Quy trình giải quyết");
 }

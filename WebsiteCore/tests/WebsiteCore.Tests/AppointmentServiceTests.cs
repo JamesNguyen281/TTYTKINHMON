@@ -25,11 +25,10 @@ public class AppointmentServiceTests
         return (db, site, dept, staff, patient);
     }
 
-    private static BookingInputModel ValidInput(Guid deptId, DateTime? date = null) => new()
+    private static BookingInputModel ValidInput(DateTime? date = null) => new()
     {
         PatientName = "Nguyễn Văn A",
         PatientPhone = "0900000000",
-        DepartmentId = deptId,
         AppointmentDate = date ?? DateTime.Today.AddDays(2),
         Session = Constants.SessionMorning,
         Reason = "Khám tổng quát"
@@ -40,7 +39,7 @@ public class AppointmentServiceTests
     {
         var (db, site, dept, _, patient) = Seed();
         var svc = new AppointmentService(db);
-        var res = await svc.CreateAsync(ValidInput(dept.Id), patient.Id, site.Id);
+        var res = await svc.CreateAsync(ValidInput(), patient.Id, site.Id);
         Assert.True(res.Success);
         Assert.NotNull(res.AppointmentId);
         var saved = await db.Appointments.FindAsync(res.AppointmentId);
@@ -52,7 +51,7 @@ public class AppointmentServiceTests
     public async Task Create_PastDate_Rejected()
     {
         var (db, site, dept, _, patient) = Seed();
-        var input = ValidInput(dept.Id, DateTime.Today.AddDays(-1));
+        var input = ValidInput(DateTime.Today.AddDays(-1));
         var res = await new AppointmentService(db).CreateAsync(input, patient.Id, site.Id);
         Assert.False(res.Success);
         Assert.Contains("quá khứ", res.ErrorMessage);
@@ -62,7 +61,7 @@ public class AppointmentServiceTests
     public async Task Create_TooFarInFuture_Rejected()
     {
         var (db, site, dept, _, patient) = Seed();
-        var input = ValidInput(dept.Id, DateTime.Today.AddDays(Constants.MaxDaysAhead + 5));
+        var input = ValidInput(DateTime.Today.AddDays(Constants.MaxDaysAhead + 5));
         var res = await new AppointmentService(db).CreateAsync(input, patient.Id, site.Id);
         Assert.False(res.Success);
     }
@@ -71,7 +70,7 @@ public class AppointmentServiceTests
     public async Task Create_InvalidSession_Rejected()
     {
         var (db, site, dept, _, patient) = Seed();
-        var input = ValidInput(dept.Id);
+        var input = ValidInput();
         input.Session = "<script>alert(1)</script>"; // injection attempt
         var res = await new AppointmentService(db).CreateAsync(input, patient.Id, site.Id);
         Assert.False(res.Success);
@@ -84,7 +83,7 @@ public class AppointmentServiceTests
         var (db, site, dept, _, patient) = Seed();
         dept.ActiveFlag = 0;
         await db.SaveChangesAsync();
-        var res = await new AppointmentService(db).CreateAsync(ValidInput(dept.Id), patient.Id, site.Id);
+        var res = await new AppointmentService(db).CreateAsync(ValidInput(), patient.Id, site.Id);
         Assert.False(res.Success);
     }
 
@@ -93,9 +92,9 @@ public class AppointmentServiceTests
     {
         var (db, site, dept, _, patient) = Seed();
         var svc = new AppointmentService(db);
-        var first = await svc.CreateAsync(ValidInput(dept.Id), patient.Id, site.Id);
+        var first = await svc.CreateAsync(ValidInput(), patient.Id, site.Id);
         Assert.True(first.Success);
-        var second = await svc.CreateAsync(ValidInput(dept.Id), patient.Id, site.Id);
+        var second = await svc.CreateAsync(ValidInput(), patient.Id, site.Id);
         Assert.False(second.Success);
         Assert.Contains("đã có lịch", second.ErrorMessage, StringComparison.OrdinalIgnoreCase);
     }
@@ -104,7 +103,7 @@ public class AppointmentServiceTests
     public async Task Create_LongPatientName_Truncated()
     {
         var (db, site, dept, _, patient) = Seed();
-        var input = ValidInput(dept.Id);
+        var input = ValidInput();
         input.PatientName = new string('A', 500);
         var res = await new AppointmentService(db).CreateAsync(input, patient.Id, site.Id);
         Assert.True(res.Success);
@@ -117,7 +116,7 @@ public class AppointmentServiceTests
     {
         var (db, site, dept, staff, patient) = Seed();
         var svc = new AppointmentService(db);
-        var c = await svc.CreateAsync(ValidInput(dept.Id), patient.Id, site.Id);
+        var c = await svc.CreateAsync(ValidInput(), patient.Id, site.Id);
         var r = await svc.UpdateStatusAsync(c.AppointmentId!.Value, Constants.ApptConfirmed, null, staff.Id);
         Assert.True(r.Success);
         Assert.NotNull(r.BookingCode);
@@ -131,7 +130,7 @@ public class AppointmentServiceTests
     {
         var (db, site, dept, staff, patient) = Seed();
         var svc = new AppointmentService(db);
-        var c = await svc.CreateAsync(ValidInput(dept.Id), patient.Id, site.Id);
+        var c = await svc.CreateAsync(ValidInput(), patient.Id, site.Id);
         var r = await svc.UpdateStatusAsync(c.AppointmentId!.Value, Constants.ApptRejected, null, staff.Id);
         Assert.False(r.Success);
         Assert.Contains("lý do", r.ErrorMessage, StringComparison.OrdinalIgnoreCase);
@@ -142,7 +141,7 @@ public class AppointmentServiceTests
     {
         var (db, site, dept, staff, patient) = Seed();
         var svc = new AppointmentService(db);
-        var c = await svc.CreateAsync(ValidInput(dept.Id), patient.Id, site.Id);
+        var c = await svc.CreateAsync(ValidInput(), patient.Id, site.Id);
         var r = await svc.UpdateStatusAsync(c.AppointmentId!.Value, Constants.ApptRejected, "BS bận đột xuất", staff.Id);
         Assert.True(r.Success);
         var saved = await db.Appointments.FindAsync(c.AppointmentId);
@@ -157,7 +156,7 @@ public class AppointmentServiceTests
         // Trạng thái cuối — không được đổi nữa (chống leo trạng thái)
         var (db, site, dept, staff, patient) = Seed();
         var svc = new AppointmentService(db);
-        var c = await svc.CreateAsync(ValidInput(dept.Id), patient.Id, site.Id);
+        var c = await svc.CreateAsync(ValidInput(), patient.Id, site.Id);
         await svc.UpdateStatusAsync(c.AppointmentId!.Value, Constants.ApptRejected, "x", staff.Id);
         var r = await svc.UpdateStatusAsync(c.AppointmentId!.Value, Constants.ApptConfirmed, null, staff.Id);
         Assert.False(r.Success);
@@ -168,7 +167,7 @@ public class AppointmentServiceTests
     {
         var (db, site, dept, staff, patient) = Seed();
         var svc = new AppointmentService(db);
-        var c = await svc.CreateAsync(ValidInput(dept.Id), patient.Id, site.Id);
+        var c = await svc.CreateAsync(ValidInput(), patient.Id, site.Id);
         await svc.UpdateStatusAsync(c.AppointmentId!.Value, Constants.ApptConfirmed, null, staff.Id);
         await svc.UpdateStatusAsync(c.AppointmentId!.Value, Constants.ApptCompleted, null, staff.Id);
         var r = await svc.UpdateStatusAsync(c.AppointmentId!.Value, Constants.ApptCancelled, null, staff.Id);
@@ -181,7 +180,7 @@ public class AppointmentServiceTests
         // Chống URL/form tampering — newStatus phải nằm trong whitelist
         var (db, site, dept, staff, patient) = Seed();
         var svc = new AppointmentService(db);
-        var c = await svc.CreateAsync(ValidInput(dept.Id), patient.Id, site.Id);
+        var c = await svc.CreateAsync(ValidInput(), patient.Id, site.Id);
         var r = await svc.UpdateStatusAsync(c.AppointmentId!.Value, "DROP TABLE Users", null, staff.Id);
         Assert.False(r.Success);
     }
@@ -191,7 +190,7 @@ public class AppointmentServiceTests
     {
         var (db, site, dept, staff, patient) = Seed();
         var svc = new AppointmentService(db);
-        var c = await svc.CreateAsync(ValidInput(dept.Id), patient.Id, site.Id);
+        var c = await svc.CreateAsync(ValidInput(), patient.Id, site.Id);
         await svc.UpdateStatusAsync(c.AppointmentId!.Value, Constants.ApptConfirmed, null, staff.Id);
 
         var quota = db.AppointmentQuota.FirstOrDefault(q =>
@@ -207,7 +206,7 @@ public class AppointmentServiceTests
     {
         var (db, site, dept, staff, patient) = Seed();
         var svc = new AppointmentService(db);
-        var c = await svc.CreateAsync(ValidInput(dept.Id), patient.Id, site.Id);
+        var c = await svc.CreateAsync(ValidInput(), patient.Id, site.Id);
         await svc.UpdateStatusAsync(c.AppointmentId!.Value, Constants.ApptConfirmed, null, staff.Id);
         await svc.UpdateStatusAsync(c.AppointmentId!.Value, Constants.ApptCancelled, null, staff.Id);
 
@@ -235,7 +234,7 @@ public class AppointmentServiceTests
 
         var svc = new AppointmentService(db);
         // Patient walk-in (no userId)
-        var c = await svc.CreateAsync(ValidInput(dept.Id), null, site.Id);
+        var c = await svc.CreateAsync(ValidInput(), null, site.Id);
         var r = await svc.UpdateStatusAsync(c.AppointmentId!.Value, Constants.ApptConfirmed, null, staff.Id);
         Assert.False(r.Success);
         Assert.Contains("hết suất", r.ErrorMessage);
@@ -247,7 +246,7 @@ public class AppointmentServiceTests
         var (db, site, dept, staff, patient) = Seed();
         var svc = new AppointmentService(db);
         // Lịch chưa confirmed
-        var c = await svc.CreateAsync(ValidInput(dept.Id), patient.Id, site.Id);
+        var c = await svc.CreateAsync(ValidInput(), patient.Id, site.Id);
         Assert.False(await svc.MarkCheckedInAsync(c.AppointmentId!.Value, staff.Id));
 
         // Confirm rồi nhưng ngày khác
@@ -263,9 +262,9 @@ public class AppointmentServiceTests
         db.Users.Add(other);
         await db.SaveChangesAsync();
         var svc = new AppointmentService(db);
-        await svc.CreateAsync(ValidInput(dept.Id), patient.Id, site.Id);
+        await svc.CreateAsync(ValidInput(), patient.Id, site.Id);
         // Bệnh nhân khác đặt lịch khoa khác (giữa same dept ko được — rules ko cho)
-        var input2 = ValidInput(dept.Id);
+        var input2 = ValidInput();
         input2.AppointmentDate = DateTime.Today.AddDays(3);
         await svc.CreateAsync(input2, other.Id, site.Id);
 
@@ -288,7 +287,7 @@ public class AppointmentServiceTests
     {
         var (db, site, dept, staff, patient) = Seed();
         var svc = new AppointmentService(db);
-        var c = await svc.CreateAsync(ValidInput(dept.Id), patient.Id, site.Id);
+        var c = await svc.CreateAsync(ValidInput(), patient.Id, site.Id);
         var longNote = new string('x', 1000);
         var r = await svc.UpdateStatusAsync(c.AppointmentId!.Value, Constants.ApptRejected, longNote, staff.Id);
         Assert.True(r.Success);
@@ -302,7 +301,7 @@ public class AppointmentServiceTests
         // Phải qua confirmed trước; pending → completed không hợp lệ
         var (db, site, dept, staff, patient) = Seed();
         var svc = new AppointmentService(db);
-        var c = await svc.CreateAsync(ValidInput(dept.Id), patient.Id, site.Id);
+        var c = await svc.CreateAsync(ValidInput(), patient.Id, site.Id);
         var r = await svc.UpdateStatusAsync(c.AppointmentId!.Value, Constants.ApptCompleted, null, staff.Id);
         Assert.False(r.Success);
     }
@@ -313,9 +312,9 @@ public class AppointmentServiceTests
         var (db, site, dept, _, patient) = Seed();
         var svc = new AppointmentService(db);
         // Đặt 2 lịch cùng SĐT 0900000000 (member) + 1 lịch SĐT khác để verify filter
-        await svc.CreateAsync(ValidInput(dept.Id, DateTime.Today.AddDays(2)), patient.Id, site.Id);
-        await svc.CreateAsync(ValidInput(dept.Id, DateTime.Today.AddDays(5)), patient.Id, site.Id);
-        var anonInput = ValidInput(dept.Id, DateTime.Today.AddDays(3));
+        await svc.CreateAsync(ValidInput(DateTime.Today.AddDays(2)), patient.Id, site.Id);
+        await svc.CreateAsync(ValidInput(DateTime.Today.AddDays(5)), patient.Id, site.Id);
+        var anonInput = ValidInput(DateTime.Today.AddDays(3));
         anonInput.PatientPhone = "0911111111";
         await svc.CreateAsync(anonInput, null, site.Id);
 
@@ -329,7 +328,7 @@ public class AppointmentServiceTests
     {
         var (db, site, dept, _, patient) = Seed();
         var svc = new AppointmentService(db);
-        await svc.CreateAsync(ValidInput(dept.Id), patient.Id, site.Id);
+        await svc.CreateAsync(ValidInput(), patient.Id, site.Id);
         // Whitespace được trim
         var rs = await svc.GetByPhoneAsync("  0900000000  ", site.Id);
         Assert.Single(rs);
@@ -343,7 +342,7 @@ public class AppointmentServiceTests
     {
         var (db, site, dept, _, patient) = Seed();
         var svc = new AppointmentService(db);
-        await svc.CreateAsync(ValidInput(dept.Id), patient.Id, site.Id);
+        await svc.CreateAsync(ValidInput(), patient.Id, site.Id);
         // Site khác → 0 kết quả
         var otherSite = Guid.NewGuid();
         var rs = await svc.GetByPhoneAsync("0900000000", otherSite);
@@ -359,18 +358,18 @@ public class AppointmentServiceTests
         var otherDate  = DateTime.Today.AddDays(7);
 
         // 3 lịch cùng ngày targetDate (1 pending + 1 confirmed + 1 cancelled)
-        var c1 = await svc.CreateAsync(ValidInput(dept.Id, targetDate), patient.Id, site.Id);
-        var c2input = ValidInput(dept.Id, targetDate);
+        var c1 = await svc.CreateAsync(ValidInput(targetDate), patient.Id, site.Id);
+        var c2input = ValidInput(targetDate);
         c2input.Session = Constants.SessionAfternoon; // tránh trùng buổi
         var c2 = await svc.CreateAsync(c2input, null, site.Id);
         await svc.UpdateStatusAsync(c2.AppointmentId!.Value, Constants.ApptConfirmed, null, staff.Id);
-        var c3input = ValidInput(dept.Id, targetDate);
+        var c3input = ValidInput(targetDate);
         c3input.PatientPhone = "0922222222";
         var c3 = await svc.CreateAsync(c3input, null, site.Id);
         await svc.UpdateStatusAsync(c3.AppointmentId!.Value, Constants.ApptCancelled, null, staff.Id);
 
         // 1 lịch ngày khác để verify filter
-        await svc.CreateAsync(ValidInput(dept.Id, otherDate), patient.Id, site.Id);
+        await svc.CreateAsync(ValidInput(otherDate), patient.Id, site.Id);
 
         var rs = await svc.GetByDateAsync(DateOnly.FromDateTime(targetDate), site.Id);
         Assert.Equal(3, rs.Count);

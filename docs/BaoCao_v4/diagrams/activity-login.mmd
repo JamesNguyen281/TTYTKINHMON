@@ -1,0 +1,26 @@
+flowchart TD
+    Start([Bắt đầu]) --> A1[Truy cập /dang-nhap]
+    A1 --> A2[Nhập username/SĐT + mật khẩu]
+    A2 --> A3[Submit form - POST /dang-nhap]
+    A3 --> Q1{Anti-forgery token<br/>hợp lệ?}
+    Q1 -- Không --> E1[400 Bad Request]
+    Q1 -- Có --> Q2{User tồn tại<br/>trong site?}
+    Q2 -- Không --> E2[Lỗi: thông tin đăng nhập sai]
+    Q2 -- Có --> Q3{Tài khoản<br/>bị khóa?}
+    Q3 -- Có --> E3[Lỗi: tài khoản bị khóa<br/>do nhập sai 5 lần]
+    Q3 -- Không --> A4[Verify mật khẩu<br/>PBKDF2-SHA256]
+    A4 --> Q4{Mật khẩu đúng?}
+    Q4 -- Không --> A5[Tăng login_failed_count]
+    A5 --> Q5{Đã sai<br/>≥ 5 lần?}
+    Q5 -- Có --> A6[Khóa tài khoản 15 phút]
+    A6 --> E2
+    Q5 -- Không --> E2
+    Q4 -- Có --> A7[Reset login_failed_count = 0]
+    A7 --> Q6{must_change_password?}
+    Q6 -- Có --> A8[Redirect /doi-mat-khau]
+    Q6 -- Không --> A9[Set session + redirect home/portal]
+    A8 --> End([Kết thúc])
+    A9 --> End
+    E1 --> End
+    E2 --> A2
+    E3 --> End

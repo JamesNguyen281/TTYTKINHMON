@@ -180,20 +180,22 @@ label { font-weight: 600; color: #0a3d62; margin-bottom: 4px; }
 .header-top-left .address { padding-left: 18px !important; }
 
 /* Sub menu dropdown — 2-col layout, không truncate text */
+.menu_list li { position: relative; }
 .menu_list li:hover > .sub_menu { display: block; }
 .menu_list .sub_menu {
     position: absolute; background: white; padding: 10px 0; border-radius: 0 0 6px 6px;
     box-shadow: 0 6px 18px rgba(0,0,0,0.14); border-top: 3px solid #0a3d62;
-    min-width: 320px !important; max-height: 520px; overflow-y: auto; overflow-x: hidden;
+    min-width: 280px; width: max-content; max-width: 620px;
+    max-height: 520px; overflow-y: auto; overflow-x: hidden;
     z-index: 1000; left: 0;
 }
-.menu_list .col-li-2 .sub_menu { min-width: 760px !important; }
+.menu_list .col-li-2 .sub_menu { min-width: 560px; max-width: 620px; }
 .menu_list .sub_menu li { padding: 0 !important; margin: 0; box-sizing: border-box; border-bottom: 1px solid #f0f4f8; }
 .menu_list .col-li-2 .sub_menu li {
     float: left; width: 50% !important; border-right: 1px solid #f0f4f8;
 }
-/* Force mỗi cặp left+right thành 1 row → cột trái và phải align theo dòng (row N right không
-   chen lên row N+1 dù ngắn hơn), tránh lệch hàng trong layout 2-col float. */
+/* Auto-flip dropdown sang trái nếu menu sát cạnh phải viewport (3 mục cuối) — chống tràn ngang */
+.menu_list > li:nth-last-child(-n+3) > .sub_menu { left: auto; right: 0; }
 .menu_list .col-li-2 .sub_menu li:nth-child(odd) { clear: left; }
 .menu_list .col-li-2 .sub_menu li:nth-child(2n) { border-right: none; }
 .menu_list .sub_menu:after { content: ""; display: block; clear: both; }

@@ -1,0 +1,161 @@
+@using WebsiteCore.Data.Entities
+@{
+    ViewData["Title"] = "Câu hỏi thường gặp";
+    var news = ViewBag.News as News;
+    var isAdmin = (ViewBag.CurrentUser as WebsiteCore.Business.ViewModels.LoggedInUser)?.GroupId == "ADMIN";
+}
+
+@if (news != null && !string.IsNullOrWhiteSpace(news.DetailL))
+{
+    <div class="container" style="padding:24px 15px 60px;">
+        <h1 style="color:#0a3d62; margin-bottom:20px;"><i class="fa fa-question-circle"></i> @news.TitleL</h1>
+        @if (isAdmin)
+        {
+            <a href="/AdminCP/News/Edit/@news.Id" class="btn btn-warning btn-sm" style="float:right; margin-top:-50px;"><i class="fa fa-edit"></i> Sửa nội dung</a>
+        }
+        @Html.Raw(news.DetailL)
+    </div>
+    return;
+}
+
+@if (isAdmin)
+{
+    <div class="container" style="padding-top:14px;">
+        <div class="alert alert-warning">
+            <i class="fa fa-info-circle"></i>
+            Đây là nội dung mặc định. Để admin sửa được qua UI, hãy tạo bài News với <strong>Alias = <code>cau-hoi-thuong-gap</code></strong> tại
+            <a href="/AdminCP/News/Create" class="btn btn-xs btn-primary">+ Tạo bài News</a>
+        </div>
+    </div>
+}
+
+<style>
+    .faq-list { max-width: 980px; margin: 0 auto; }
+    .faq-item {
+        background: white; border: 1px solid #e5e9ee; border-radius: 6px;
+        margin-bottom: 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+        overflow: hidden; transition: all 0.2s;
+    }
+    .faq-item[open] { border-color: #0a3d62; box-shadow: 0 4px 12px rgba(10,61,98,0.12); }
+    .faq-item summary {
+        padding: 14px 18px 14px 44px; cursor: pointer;
+        font-weight: 600; color: #0a3d62; font-size: 15px;
+        list-style: none; position: relative;
+        outline: none; user-select: none;
+    }
+    .faq-item summary::-webkit-details-marker { display: none; }
+    .faq-item summary::before {
+        content: "+"; position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
+        width: 22px; height: 22px; line-height: 20px; text-align: center;
+        background: #0a3d62; color: white; border-radius: 50%; font-size: 16px;
+        transition: transform 0.2s;
+    }
+    .faq-item[open] summary::before { content: "–"; }
+    .faq-item summary:hover { background: #f7f9fc; }
+    .faq-item .faq-answer {
+        padding: 0 20px 16px 44px; line-height: 1.7; color: #444;
+        border-top: 1px solid #eef0f3; padding-top: 14px;
+    }
+    .faq-answer p { margin: 0 0 8px; }
+</style>
+
+<div class="container" style="padding:24px 15px 60px;">
+    <h1 style="color:#0a3d62; margin-bottom:20px;">
+        <i class="fa fa-question-circle"></i> Câu hỏi thường gặp
+    </h1>
+
+    <div class="alert alert-info" style="border-left:4px solid #0992e8;">
+        <i class="fa fa-info-circle"></i>
+        Tổng hợp các câu hỏi thường gặp về quy trình đặt lịch, khám bệnh, hồ sơ điện tử và sử dụng website.
+        Nếu chưa tìm thấy câu trả lời, vui lòng liên hệ <a href="/lien-he">Phòng Hỏi đáp</a> hoặc gọi hotline <strong>0220.3.822.205</strong>.
+    </div>
+
+    <div class="faq-list">
+
+        <details class="faq-item" open>
+            <summary>Bệnh nhân có cần đăng ký tài khoản để đặt lịch khám không?</summary>
+            <div class="faq-answer">
+                <p>Không bắt buộc. Bệnh nhân có thể đặt lịch ở chế độ khách vãng lai chỉ với họ tên và số điện thoại.
+                Tuy nhiên, đăng ký tài khoản giúp lưu lịch sử khám, xem lại đơn thuốc, đặt câu hỏi cho bác sĩ và theo dõi trạng thái lịch realtime.</p>
+            </div>
+        </details>
+
+        <details class="faq-item">
+            <summary>Vì sao tôi không chọn được khoa hoặc bác sĩ cụ thể khi đặt lịch?</summary>
+            <div class="faq-answer">
+                <p>Theo quy trình ngoại trú chuẩn, mọi bệnh nhân đặt lịch đều được tiếp nhận tại <strong>Khoa Khám bệnh</strong> — đầu mối sàng lọc đa khoa.
+                Sau khi tiếp nhận triệu chứng tại quầy lễ tân, bệnh nhân sẽ được phân vào một trong tám phòng khám chuyên môn:
+                Nội — Ngoại — Tiểu đường — Sản — Truyền nhiễm — Nhi — Đông y — Răng Hàm Mặt.</p>
+                <p>Cách này giúp bệnh nhân được khám sàng lọc tổng quát trước, tránh đặt sai chuyên khoa.</p>
+            </div>
+        </details>
+
+        <details class="faq-item">
+            <summary>Sau khi đặt lịch, tôi cần làm gì tiếp theo?</summary>
+            <div class="faq-answer">
+                <p>Lịch khám sẽ ở trạng thái <em>"Chờ duyệt"</em>. Lễ tân sẽ liên hệ qua số điện thoại đã đăng ký trong vòng 24 giờ
+                để xác nhận và cấp <strong>mã booking</strong> dạng <code>KMyymmdd...</code>.</p>
+                <p>Vui lòng đến Trung tâm trước giờ khám 15 phút và mang theo CCCD/BHYT.</p>
+            </div>
+        </details>
+
+        <details class="faq-item">
+            <summary>Tôi có thể huỷ hoặc đổi lịch khám không?</summary>
+            <div class="faq-answer">
+                <p>Có. Bệnh nhân đã đăng nhập có thể huỷ trong mục <a href="/lich-cua-toi">Lịch của tôi</a> trước giờ khám ít nhất 2 giờ.
+                Khách vãng lai vui lòng gọi hotline để được lễ tân hỗ trợ huỷ. Việc huỷ hoặc đổi lịch không phát sinh chi phí.</p>
+            </div>
+        </details>
+
+        <details class="faq-item">
+            <summary>Đặt lịch online có mất phí không?</summary>
+            <div class="faq-answer">
+                <p>Hoàn toàn miễn phí. Trung tâm Y tế phường Kinh Môn là cơ sở y tế công lập — không thu phí đặt lịch.
+                Phí khám và xét nghiệm áp dụng theo bảng giá Bộ Y tế quy định, có thể được thanh toán bằng BHYT hoặc tiền mặt tại quầy.</p>
+            </div>
+        </details>
+
+        <details class="faq-item">
+            <summary>Hồ sơ khám của tôi được lưu trữ như thế nào?</summary>
+            <div class="faq-answer">
+                <p>Hồ sơ khám điện tử được lưu trên hệ thống theo quy định <strong>Thông tư 13/2025/TT-BYT</strong> về bệnh án điện tử.
+                Bệnh nhân đã đăng nhập có thể xem hồ sơ, đơn thuốc trong mục <em>"Lịch sử khám"</em>.
+                Mọi thay đổi đều được lưu vết audit log để truy vết khi cần.</p>
+            </div>
+        </details>
+
+        <details class="faq-item">
+            <summary>Trung tâm có các dịch vụ khám gì?</summary>
+            <div class="faq-answer">
+                <p>Khoa Khám bệnh có 8 phòng khám chuyên môn — xem chi tiết tại <a href="/phong-kham">trang Phòng khám chuyên môn</a>.
+                Ngoài ra, Trung tâm có Khoa Cấp cứu (24/7), Khoa Xét nghiệm, Khoa Dược, Khoa Y tế công cộng và Phòng Dân số.</p>
+            </div>
+        </details>
+
+        <details class="faq-item">
+            <summary>Thông tin cá nhân của tôi có an toàn không?</summary>
+            <div class="faq-answer">
+                <p>Có. Hệ thống áp dụng đầy đủ chuẩn bảo mật <strong>OWASP Top 10</strong>:
+                mật khẩu mã hoá PBKDF2-SHA256 (600.000 vòng), chống CSRF, sanitize XSS, kiểm soát truy cập IDOR,
+                khoá tài khoản sau 5 lần đăng nhập sai.</p>
+                <p>Mọi truy cập hồ sơ y tế đều có audit log và chỉ bác sĩ phụ trách trực tiếp mới xem được hồ sơ chẩn đoán.</p>
+            </div>
+        </details>
+
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    // Accordion: mở 1 → tự đóng các cái khác
+    document.querySelectorAll('.faq-list details').forEach(el => {
+        el.addEventListener('toggle', function () {
+            if (this.open) {
+                document.querySelectorAll('.faq-list details').forEach(other => {
+                    if (other !== this) other.removeAttribute('open');
+                });
+            }
+        });
+    });
+</script>
+}

@@ -1,0 +1,62 @@
+@model WebsiteCore.Data.Entities.MedicalRecord
+@{
+    ViewData["Title"] = "Hồ sơ " + Model.RecordNo;
+    var prescriptions = ViewBag.Prescriptions as List<WebsiteCore.Data.Entities.Prescription> ?? new();
+}
+
+<div class="container" style="padding:20px 0 40px;">
+    <h2 style="color:#0a3d62;">
+        <i class="fa fa-file-text-o"></i> Hồ sơ <code>@Model.RecordNo</code>
+    </h2>
+
+    <a href="/bac-si-portal/ho-so-da-kham" class="btn btn-default" style="margin-bottom:12px;">
+        <i class="fa fa-arrow-left"></i> Quay lại danh sách
+    </a>
+
+    <div class="panel panel-primary">
+        <div class="panel-heading"><strong>Thông tin khám</strong></div>
+        <div class="panel-body">
+            <dl class="dl-horizontal">
+                <dt>Mã hồ sơ</dt><dd><code>@Model.RecordNo</code></dd>
+                <dt>Ngày khám</dt><dd>@Model.VisitDate.ToString("dd/MM/yyyy HH:mm")</dd>
+                <dt>Lý do</dt><dd>@Model.ChiefComplaint</dd>
+                <dt>Chẩn đoán</dt><dd><strong>@Model.Diagnosis</strong></dd>
+                <dt>Phác đồ điều trị</dt><dd>@Model.TreatmentPlan</dd>
+                <dt>Ghi chú</dt><dd>@Model.Notes</dd>
+                <dt>Tái khám</dt><dd>@(Model.FollowUpDate?.ToString("dd/MM/yyyy") ?? "—")</dd>
+            </dl>
+        </div>
+    </div>
+
+    @if (prescriptions.Any())
+    {
+        <div class="panel panel-success">
+            <div class="panel-heading"><strong>Đơn thuốc</strong></div>
+            <div class="panel-body">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Thuốc</th>
+                            <th>Liều</th>
+                            <th>Tần suất</th>
+                            <th>Thời gian</th>
+                            <th>Ghi chú</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var p in prescriptions)
+                    {
+                        <tr>
+                            <td><strong>@p.DrugName</strong></td>
+                            <td>@p.Dosage</td>
+                            <td>@p.Frequency</td>
+                            <td>@p.Duration</td>
+                            <td>@p.Note</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>

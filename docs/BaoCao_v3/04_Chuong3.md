@@ -148,7 +148,16 @@ Giao diện đặt lịch được thiết kế dạng *step-by-step* gồm 4 b�
 
 ![Hình 3.13. Giao diện Danh sách bệnh nhân hôm nay](images/hinh-3-16.png){width=14cm}
 
-### 3.6.3. Đặc tả chức năng
+### 3.6.3. Trang Hồ sơ đã chẩn đoán
+
+Trang `/bac-si-portal/ho-so-da-kham` hiển thị danh sách hồ sơ khám bệnh do chính bác sĩ đăng nhập đã ký, sắp xếp giảm dần theo thời gian khám. Trang này được tách hoàn toàn khỏi cổng quản trị (`/AdminCP/MedicalRecords`) để đảm bảo nguyên tắc *least privilege*: bác sĩ chỉ thao tác trong giao diện cổng bác sĩ, không truy cập được layout AdminCP.
+
+Cơ chế bảo mật được triển khai theo mô hình *defense-in-depth* gồm hai lớp:
+
+- **Lớp định tuyến:** controller `MedicalRecordsController` thuộc khu vực AdminCP được giới hạn chỉ cho nhóm `ADMIN`. Nếu tài khoản bác sĩ cố truy cập trực tiếp URL admin, bộ lọc `StaffAuthorize` sẽ tự động chuyển hướng về cổng bác sĩ;
+- **Lớp truy vấn:** phương thức `MedicalRecordService.GetByDoctorAsync(doctorId, siteId)` mã hóa cứng bộ lọc `DoctorId == CurrentUser.DoctorId` kết hợp join `Appointment.SiteId == CurrentSiteId`, đảm bảo bác sĩ chỉ nhìn thấy hồ sơ chính mình ký trong site của họ. Trang chi tiết bổ sung kiểm tra lần thứ ba ở action `HoSoChiTiet`, từ chối truy cập nếu `record.DoctorId` lệch.
+
+### 3.6.4. Đặc tả chức năng
 
 **Bảng 3.6. Đặc tả chức năng Cổng Bác sĩ**
 
@@ -160,7 +169,9 @@ Giao diện đặt lịch được thiết kế dạng *step-by-step* gồm 4 b�
 | 4 | Auto-save | Lưu nháp mỗi 30 giây vào localStorage chống mất khi refresh |
 | 5 | Nút Lưu hồ sơ | Sinh `record_no` tự động, ghi audit, chuyển trạng thái → Done |
 | 6 | Lịch trực | Hiển thị lịch của bác sĩ trong tháng hiện tại |
-| 7 | Cross-doctor guard | BS A không được mở chẩn đoán bệnh nhân của BS B (chặn từ controller) |
+| 7 | Hồ sơ đã chẩn đoán | Tìm kiếm theo mã hồ sơ / chẩn đoán; bác sĩ chỉ thấy hồ sơ chính mình ký |
+| 8 | Cross-doctor guard | BS A không được mở chẩn đoán bệnh nhân của BS B (chặn từ controller) |
+| 9 | Quyền xóa | Bác sĩ không có quyền xoá hồ sơ; quyền xoá thuộc về Quản trị viên |
 
 ## 3.7. Cổng Quản trị (AdminCP)
 

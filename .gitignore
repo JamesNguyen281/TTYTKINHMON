@@ -10,6 +10,13 @@ appsettings.Production.json
 
 scripts/
 full_test.sh
+.run-logs/
+run-public.ps1
+run-public.cmd
+.claude/
+.postman/
+WebsiteCore/.github/
+dotnet.log
 
 docs/04_TestPlan.md
 docs/05_TestCases.md

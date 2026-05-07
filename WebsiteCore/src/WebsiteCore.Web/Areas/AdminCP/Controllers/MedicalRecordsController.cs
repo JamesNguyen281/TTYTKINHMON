@@ -9,11 +9,10 @@ using WebsiteCore.Web.Helpers;
 namespace WebsiteCore.Web.Areas.AdminCP.Controllers;
 
 /// <summary>
-/// Hồ sơ khám bệnh — clinical exception: cho ADMIN + DOCTOR + RECEPTION truy cập.
-/// (Khác với các module CMS khác chỉ cho ADMIN.)
+/// Hồ sơ khám bệnh — chỉ ADMIN. Bác sĩ xem hồ sơ chính mình ký qua /bac-si-portal/ho-so-da-kham.
 /// </summary>
 [Area("AdminCP")]
-[StaffAuthorize(Constants.AdminGroup, Constants.DoctorGroup, Constants.ReceptionGroup)]
+[StaffAuthorize(Constants.AdminGroup)]
 public class MedicalRecordsController : BaseController
 {
     private readonly TtytlpDbContext _db;

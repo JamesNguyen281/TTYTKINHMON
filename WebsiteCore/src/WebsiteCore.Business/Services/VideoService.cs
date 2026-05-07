@@ -60,7 +60,13 @@ public class VideoService : IVideoService
     {
         var v = await _db.Videos.FirstOrDefaultAsync(x => x.VideoId == id);
         if (v == null) return;
-        v.Status = 0;
-        await _db.SaveChangesAsync();
+        _db.Videos.Remove(v);
+        try { await _db.SaveChangesAsync(); }
+        catch (DbUpdateException)
+        {
+            _db.Entry(v).State = EntityState.Unchanged;
+            v.Status = 0;
+            await _db.SaveChangesAsync();
+        }
     }
 }

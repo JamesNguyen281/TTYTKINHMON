@@ -30,11 +30,12 @@ internal static class InMemoryDb
         var dept = new Department
         {
             Id = Guid.NewGuid(),
-            NameL = "Khoa Nhi",
-            Alias = "khoa-nhi",
+            NameL = "Khoa Khám bệnh",
+            Alias = "khoa-kham-benh",
             ActiveFlag = 1,
             Ord = 1,
-            SiteId = site.Id
+            SiteId = site.Id,
+            IsClinicalDept = false
         };
         db.Departments.Add(dept);
 

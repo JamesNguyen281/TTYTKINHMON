@@ -1,0 +1,100 @@
+@using WebsiteCore.Data.Entities
+@{
+    ViewData["Title"] = "Điều khoản sử dụng";
+    var news = ViewBag.News as News;
+    var isAdmin = (ViewBag.CurrentUser as WebsiteCore.Business.ViewModels.LoggedInUser)?.GroupId == "ADMIN";
+}
+
+@if (news != null && !string.IsNullOrWhiteSpace(news.DetailL))
+{
+    <div class="container" style="padding:24px 15px 60px;">
+        <h1 style="color:#0a3d62; margin-bottom:20px;"><i class="fa fa-gavel"></i> @news.TitleL</h1>
+        @if (isAdmin)
+        {
+            <a href="/AdminCP/News/Edit/@news.Id" class="btn btn-warning btn-sm" style="float:right; margin-top:-50px;"><i class="fa fa-edit"></i> Sửa nội dung</a>
+        }
+        @Html.Raw(news.DetailL)
+    </div>
+    return;
+}
+
+@if (isAdmin)
+{
+    <div class="container" style="padding-top:14px;">
+        <div class="alert alert-warning">
+            <i class="fa fa-info-circle"></i>
+            Đây là nội dung mặc định. Để admin sửa được qua UI, hãy tạo bài News với <strong>Alias = <code>dieu-khoan-su-dung</code></strong> tại
+            <a href="/AdminCP/News/Create" class="btn btn-xs btn-primary">+ Tạo bài News</a>
+        </div>
+    </div>
+}
+
+<div class="container" style="padding:24px 15px 60px;">
+    <h1 style="color:#0a3d62; margin-bottom:20px;">
+        <i class="fa fa-gavel"></i> Điều khoản sử dụng
+    </h1>
+
+    <p class="text-muted" style="margin-bottom:24px;">
+        <em>Cập nhật lần cuối: 07/05/2026</em>
+    </p>
+
+    <div class="content-block" style="line-height:1.8; font-size:14.5px;">
+
+        <h3 style="color:#0a3d62; margin-top:24px;">1. Giới thiệu chung</h3>
+        <p>
+            Trang web của Trung tâm Y tế phường Kinh Môn (sau đây gọi tắt là <strong>"Trung tâm"</strong>) cung cấp dịch vụ đặt lịch khám trực tuyến, tra cứu thông tin y tế công cộng và hỏi đáp với bác sĩ.
+            Khi sử dụng website này, người dùng (sau đây gọi tắt là <strong>"Bệnh nhân"</strong>) đồng ý tuân thủ các điều khoản dưới đây.
+        </p>
+
+        <h3 style="color:#0a3d62; margin-top:24px;">2. Phạm vi áp dụng</h3>
+        <ul>
+            <li>Các điều khoản này áp dụng cho tất cả các tính năng của website, bao gồm: đặt lịch khám, tra cứu thông tin bác sĩ, đặt câu hỏi cho bác sĩ, xem lịch sử khám.</li>
+            <li>Việc tiếp tục sử dụng website đồng nghĩa với việc bệnh nhân chấp nhận toàn bộ điều khoản này. Trung tâm có quyền cập nhật điều khoản bất kỳ lúc nào — phiên bản mới sẽ có hiệu lực ngay khi đăng tải.</li>
+        </ul>
+
+        <h3 style="color:#0a3d62; margin-top:24px;">3. Trách nhiệm của bệnh nhân</h3>
+        <ul>
+            <li><strong>Cung cấp thông tin chính xác:</strong> họ tên, số điện thoại, CCCD/BHYT phải đúng và đầy đủ. Việc khai báo sai có thể ảnh hưởng đến quá trình khám chữa bệnh và pháp lý;</li>
+            <li><strong>Bảo mật tài khoản:</strong> bệnh nhân chịu trách nhiệm về tính bảo mật của tên đăng nhập và mật khẩu. Trung tâm không chịu trách nhiệm cho các thiệt hại do tài khoản bị lộ thông tin;</li>
+            <li><strong>Đến đúng giờ hẹn:</strong> bệnh nhân nên đến trước giờ khám 15 phút để làm thủ tục check-in. Quá 15 phút sau giờ hẹn, lịch khám có thể bị huỷ và phải đặt lại;</li>
+            <li><strong>Không gian lận:</strong> không được sử dụng tài khoản của người khác, không được tạo nhiều lịch giả mạo nhằm mục đích trục lợi.</li>
+        </ul>
+
+        <h3 style="color:#0a3d62; margin-top:24px;">4. Trách nhiệm của Trung tâm</h3>
+        <ul>
+            <li><strong>Bảo mật thông tin:</strong> Trung tâm áp dụng các biện pháp bảo mật theo OWASP Top 10 và Thông tư 13/2025/TT-BYT về bệnh án điện tử để bảo vệ thông tin cá nhân và y tế của bệnh nhân;</li>
+            <li><strong>Chất lượng dịch vụ:</strong> đảm bảo bác sĩ có chứng chỉ hành nghề hợp pháp, trang thiết bị y tế đạt chuẩn Bộ Y tế;</li>
+            <li><strong>Phản hồi kịp thời:</strong> lễ tân liên hệ xác nhận lịch trong vòng 24 giờ. Khiếu nại được tiếp nhận trong giờ hành chính qua hotline 0220.3.822.205;</li>
+            <li><strong>Lưu trữ dữ liệu y tế:</strong> hồ sơ khám điện tử được lưu trữ theo quy định pháp luật, có audit log đầy đủ.</li>
+        </ul>
+
+        <h3 style="color:#0a3d62; margin-top:24px;">5. Quy định về đặt lịch và huỷ lịch</h3>
+        <ul>
+            <li>Đặt lịch khám miễn phí. Phí khám và xét nghiệm áp dụng theo bảng giá Bộ Y tế quy định, được thanh toán tại quầy hoặc qua BHYT;</li>
+            <li>Bệnh nhân có thể huỷ lịch trước giờ khám ít nhất <strong>2 giờ</strong> qua mục <em>"Lịch của tôi"</em> hoặc gọi hotline;</li>
+            <li>Lịch huỷ trong vòng 2 giờ trước giờ khám sẽ ảnh hưởng đến lượt đặt tiếp theo (cảnh báo, không phạt tiền);</li>
+            <li>Bệnh nhân không đến khám nhiều lần liên tiếp có thể bị tạm khoá tính năng đặt lịch online.</li>
+        </ul>
+
+        <h3 style="color:#0a3d62; margin-top:24px;">6. Quyền sở hữu trí tuệ</h3>
+        <p>
+            Toàn bộ nội dung, hình ảnh, mã nguồn của website thuộc sở hữu của Trung tâm Y tế phường Kinh Môn.
+            Người dùng không được sao chép, phân phối hoặc sử dụng cho mục đích thương mại nếu không có sự cho phép bằng văn bản.
+        </p>
+
+        <h3 style="color:#0a3d62; margin-top:24px;">7. Giải quyết tranh chấp</h3>
+        <p>
+            Mọi tranh chấp phát sinh sẽ được giải quyết theo nguyên tắc thương lượng, hoà giải.
+            Trường hợp không đạt được thoả thuận, vụ việc sẽ được giải quyết tại cơ quan có thẩm quyền của Việt Nam theo pháp luật hiện hành.
+            Chi tiết quy trình tiếp nhận khiếu nại xem tại <a href="/khieu-nai">trang Khiếu nại</a>.
+        </p>
+
+        <h3 style="color:#0a3d62; margin-top:24px;">8. Liên hệ</h3>
+        <p>
+            <strong>Trung tâm Y tế phường Kinh Môn</strong><br>
+            Địa chỉ: Số 294 đường Trần Hưng Đạo, phường Kinh Môn, Thành phố Hải Phòng<br>
+            Hotline: <a href="tel:02203822205">0220.3.822.205</a> — Cấp cứu 24/7: <a href="tel:0964801616">0964.801.616</a><br>
+            Trang Liên hệ: <a href="/lien-he">/lien-he</a>
+        </p>
+    </div>
+</div>

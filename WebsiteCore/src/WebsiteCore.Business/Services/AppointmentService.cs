@@ -56,9 +56,6 @@ public class AppointmentService : IAppointmentService
         if (string.IsNullOrWhiteSpace(input.PatientName) || string.IsNullOrWhiteSpace(input.PatientPhone))
             return new BookingResult { Success = false, ErrorMessage = "Vui lòng nhập đầy đủ họ tên và SĐT." };
 
-        if (!input.DepartmentId.HasValue)
-            return new BookingResult { Success = false, ErrorMessage = "Vui lòng chọn chuyên khoa." };
-
         if (input.Session != Constants.SessionMorning && input.Session != Constants.SessionAfternoon)
             return new BookingResult { Success = false, ErrorMessage = "Buổi khám không hợp lệ." };
 
@@ -69,16 +66,19 @@ public class AppointmentService : IAppointmentService
         if ((aDate.DayNumber - today.DayNumber) > Constants.MaxDaysAhead)
             return new BookingResult { Success = false, ErrorMessage = $"Ngày khám không vượt quá {Constants.MaxDaysAhead} ngày." };
 
-        var dept = await _db.Departments.FindAsync(input.DepartmentId.Value);
-        if (dept == null || dept.ActiveFlag != 1)
-            return new BookingResult { Success = false, ErrorMessage = "Chuyên khoa không tồn tại hoặc đã ngừng tiếp nhận." };
+        // Quy trình chuẩn TTYT phường: mọi BN đặt lịch tổng quát vào "Khoa Khám bệnh"
+        // (sàng lọc đa khoa). Lễ tân tiếp nhận sẽ phân BN vào ClinicRoom phù hợp dựa
+        // trên triệu chứng. BN không chọn khoa/phòng cụ thể.
+        var khoaKhamBenh = await _db.Departments.FirstOrDefaultAsync(d =>
+            d.SiteId == siteId && d.Alias == "khoa-kham-benh" && d.ActiveFlag == 1);
+        if (khoaKhamBenh == null)
+            return new BookingResult { Success = false, ErrorMessage = "Hệ thống chưa khởi tạo Khoa Khám bệnh — liên hệ quản trị viên." };
 
         // Chống đặt lịch trùng cùng buổi cùng ngày — bệnh nhân đã login
         if (patientUserId.HasValue)
         {
             var dup = await _db.Appointments.AnyAsync(a =>
                 a.PatientUserId == patientUserId &&
-                a.DepartmentId  == input.DepartmentId &&
                 a.AppointmentDate == aDate &&
                 a.Session == input.Session &&
                 (a.Status == Constants.ApptPending || a.Status == Constants.ApptConfirmed));
@@ -93,8 +93,9 @@ public class AppointmentService : IAppointmentService
             PatientName     = SafeTrim(input.PatientName, 150),
             PatientPhone    = SafeTrim(input.PatientPhone, 50),
             PatientEmail    = string.IsNullOrWhiteSpace(input.PatientEmail) ? null : SafeTrim(input.PatientEmail, 100),
-            DepartmentId    = input.DepartmentId,
-            DepartmentName  = dept.NameL,
+            DepartmentId    = khoaKhamBenh.Id,
+            DepartmentName  = khoaKhamBenh.NameL,
+            ClinicRoomId    = null, // Lễ tân sẽ phân phòng sau khi tiếp nhận triệu chứng
             AppointmentDate = aDate,
             Session         = input.Session,
             Reason          = SafeTrim(input.Reason, 500),

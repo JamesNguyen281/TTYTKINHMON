@@ -41,11 +41,8 @@ test.describe('UC07 — Đặt lịch khám', () => {
     await page.fill('input[name="PatientPhone"]', '0987654321');
     await page.fill('input[name="PatientEmail"]', 'guest@test.local');
 
-    // Chọn dept đầu tiên (skip option rỗng)
-    const deptSelect = page.locator('select[name="DepartmentId"]');
-    const deptOptions = await deptSelect.locator('option').all();
-    expect(deptOptions.length, 'phải có ít nhất 1 chuyên khoa active').toBeGreaterThan(1);
-    await deptSelect.selectOption({ index: 1 });
+    // BN không chọn khoa/phòng — quy trình chuẩn TTYT phường: lễ tân tiếp nhận sẽ phân phòng
+    expect(await page.locator('select[name="DepartmentId"]').count()).toBe(0);
 
     await page.fill('input[name="AppointmentDate"]', fmtDate(addDays(today, 3)));
     await page.locator('select[name="Session"]').selectOption('morning');
@@ -66,8 +63,6 @@ test.describe('UC07 — Đặt lịch khám', () => {
     // Form yêu cầu PatientName + PatientPhone kể cả khi đã login (server cho phép member nhập hộ người thân)
     await page.fill('input[name="PatientName"]', 'Member01 Self');
     await page.fill('input[name="PatientPhone"]', '0987654321');
-    const deptSelect = page.locator('select[name="DepartmentId"]');
-    await deptSelect.selectOption({ index: 1 });
     await page.fill('input[name="AppointmentDate"]', fmtDate(addDays(today, 5)));
     await page.locator('select[name="Session"]').selectOption('afternoon');
     await page.fill('textarea[name="Reason"]', 'Test E2E member booking');
@@ -92,8 +87,6 @@ test.describe('UC07 — Đặt lịch khám', () => {
       const input = document.querySelector('input[name="AppointmentDate"]') as HTMLInputElement;
       if (input) input.removeAttribute('min');
     });
-    const deptSelect = page.locator('select[name="DepartmentId"]');
-    await deptSelect.selectOption({ index: 1 });
     await page.fill('input[name="AppointmentDate"]', fmtDate(addDays(today, -1)));
     await page.click('button[type="submit"]');
 
@@ -109,8 +102,6 @@ test.describe('UC07 — Đặt lịch khám', () => {
       const input = document.querySelector('input[name="AppointmentDate"]') as HTMLInputElement;
       if (input) input.removeAttribute('max');
     });
-    const deptSelect = page.locator('select[name="DepartmentId"]');
-    await deptSelect.selectOption({ index: 1 });
     await page.fill('input[name="AppointmentDate"]', fmtDate(addDays(today, 31)));
     await page.click('button[type="submit"]');
 

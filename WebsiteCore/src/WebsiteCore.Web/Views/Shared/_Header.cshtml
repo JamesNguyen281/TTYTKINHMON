@@ -49,8 +49,78 @@
             var prefix = m.AliasL == "doi-ngu-bac-si" ? "/bac-si/" : "/chuyen-khoa/";
             return depts.Select(d => (LocalizeStr(d.NameL, d.NameE), prefix + (d.Alias ?? ""))).ToArray();
         }
-        var children = await CategoryService.GetChildrenAsync(m.Id);
-        return children.Select(c => (LocalizeStr(c.NameL, c.NameE), "/" + (c.Link ?? ""))).ToArray();
+        // Mục "Giới thiệu" — gộp các sub Category từ DB + 1 trang tĩnh "Phòng khám chuyên môn".
+        if (m.AliasL == "gioi-thieu" || (m.AliasL ?? "").StartsWith("gioi-thieu"))
+        {
+            var children = await CategoryService.GetChildrenAsync(m.Id);
+            var dyn = children.Select(c => {
+                var alias = (c.AliasL ?? "").ToLowerInvariant();
+                string url;
+                if (alias == "gioi-thieu-chung" || alias.Contains("gioi-thieu-chung"))
+                    url = "/gioi-thieu-trung-tam";
+                else if (alias == "doi-ngu-bac-sy" || alias == "doi-ngu-bac-si" || alias.Contains("bac-si") || alias.Contains("bac-sy"))
+                    url = "/bac-si";
+                else if (alias == "phong-kham-chuyen-mon" || alias == "phong-kham" || alias.Contains("phong-kham"))
+                    url = "/phong-kham";
+                else if (alias == "co-cau-to-chuc" || alias == "mo-hinh-to-chuc")
+                    url = "/gioi-thieu-trung-tam#co-cau-to-chuc";
+                else
+                    url = "/" + (c.Link ?? "");
+                return (label: LocalizeStr(c.NameL, c.NameE), url, alias);
+            }).ToList();
+
+            var staticItems = new (string label, string url, string alias)[]
+            {
+                (isEn ? "Specialty Clinics" : "Phòng khám chuyên môn", "/phong-kham", "phong-kham-chuyen-mon"),
+            };
+
+            int Priority(string a) => a switch
+            {
+                "gioi-thieu-chung"        => 1,
+                "mo-hinh-to-chuc"         => 2,
+                "co-cau-to-chuc"          => 2,
+                "co-so-vat-chat"          => 3,
+                "co-so-ha-tang"           => 4,
+                "doi-ngu-bac-sy"          => 5,
+                "doi-ngu-bac-si"          => 5,
+                "phong-kham-chuyen-mon"   => 6,
+                _                         => 50
+            };
+
+            return dyn.Concat(staticItems)
+                      .OrderBy(x => Priority(x.alias))
+                      .ThenBy(x => x.label)
+                      .Select(x => (x.label, x.url))
+                      .ToArray();
+        }
+        // Mục "Liên hệ" — Q&A + hỗ trợ + pháp lý (dedupe theo URL với Category con từ DB)
+        if (m.AliasL == "lien-he" || (m.AliasL ?? "").Contains("lien-he"))
+        {
+            var children = await CategoryService.GetChildrenAsync(m.Id);
+            var dyn = children.Select(c => (label: LocalizeStr(c.NameL, c.NameE), url: "/" + (c.Link ?? ""))).ToList();
+            var existingUrls = new HashSet<string>(dyn.Select(x => x.url.ToLowerInvariant()));
+
+            var staticItems = new List<(string label, string url)>
+            {
+                (isEn ? "Q&A with Doctors"  : "Hỏi đáp với bác sĩ",   "/hoi-dap"),
+                (isEn ? "Ask a Question"    : "Đặt câu hỏi",          "/dat-cau-hoi"),
+            };
+            if (loggedUser != null && loggedUser.GroupId == "MEMBER")
+            {
+                staticItems.Add((isEn ? "My Questions" : "Câu hỏi của tôi", "/cau-hoi-cua-toi"));
+            }
+            staticItems.AddRange(new (string label, string url)[]
+            {
+                (isEn ? "FAQ"          : "Câu hỏi thường gặp",   "/cau-hoi-thuong-gap"),
+                (isEn ? "Terms of Use" : "Điều khoản sử dụng",   "/dieu-khoan-su-dung"),
+                (isEn ? "Complaints"   : "Quy trình khiếu nại",  "/khieu-nai"),
+            });
+            // Skip static items có URL trùng với Category con đã có
+            var unique = staticItems.Where(s => !existingUrls.Contains(s.url.ToLowerInvariant())).ToArray();
+            return dyn.Concat(unique).ToArray();
+        }
+        var defaultChildren = await CategoryService.GetChildrenAsync(m.Id);
+        return defaultChildren.Select(c => (LocalizeStr(c.NameL, c.NameE), "/" + (c.Link ?? ""))).ToArray();
     }
 }
 <header class="header full-section">
@@ -118,8 +188,17 @@
                         @foreach (var m in dynamicMenu)
                         {
                             var subs = await GetSubmenuAsync(m);
+                            // Override parent URL: trỏ tới trang chuyên dụng thay vì NewList rỗng
+                            string parentUrl;
+                            var aliasL = (m.AliasL ?? "").ToLowerInvariant();
+                            if (aliasL == "gioi-thieu" || aliasL.StartsWith("gioi-thieu"))
+                                parentUrl = "/gioi-thieu-trung-tam";
+                            else if (aliasL == "lien-he" || aliasL.Contains("lien-he"))
+                                parentUrl = "/lien-he";
+                            else
+                                parentUrl = "/" + m.Link;
                             <li class="col-li-2">
-                                <a href="/@m.Link">@LocalizeStr(m.NameL, m.NameE)</a>
+                                <a href="@parentUrl">@LocalizeStr(m.NameL, m.NameE)</a>
                                 @if (subs.Length > 0)
                                 {
                                     <ul class="sub_menu">

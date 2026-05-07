@@ -1,0 +1,103 @@
+@model WebsiteCore.Data.Entities.ClinicRoom
+@{
+    ViewData["Title"] = Model.RoomName;
+    var doctorsOnDuty = (int)(ViewBag.DoctorsOnDuty ?? 0);
+}
+
+<div class="container" style="padding:24px 15px 60px;">
+    <a href="/phong-kham" class="btn btn-default btn-sm" style="margin-bottom:14px;">
+        <i class="fa fa-arrow-left"></i> Quay lại danh sách phòng khám
+    </a>
+
+    <div style="background:linear-gradient(135deg,#0a3d62 0%,#1d5688 100%); color:white; padding:24px 28px; border-radius:8px; margin-bottom:24px; box-shadow:0 4px 14px rgba(10,61,98,0.18);">
+        <h1 style="margin:0; font-size:26px; font-weight:600;">
+            <i class="fa fa-stethoscope"></i> @Model.RoomName
+        </h1>
+        <div style="font-size:14px; margin-top:8px; opacity:0.9;">
+            <span style="margin-right:18px;"><i class="fa fa-bookmark-o"></i> Mã phòng: <strong>@Model.RoomCode</strong></span>
+            @if (!string.IsNullOrEmpty(Model.Floor))
+            {
+                <span style="margin-right:18px;"><i class="fa fa-map-marker"></i> @Model.Floor</span>
+            }
+            @if (!string.IsNullOrEmpty(Model.SpecialtyL))
+            {
+                <span><i class="fa fa-medkit"></i> Chuyên môn: <strong>@Model.SpecialtyL</strong></span>
+            }
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="panel panel-default">
+                <div class="panel-heading" style="background:#0a3d62; color:white;">
+                    <strong><i class="fa fa-info-circle"></i> Phạm vi tiếp nhận</strong>
+                </div>
+                <div class="panel-body" style="line-height:1.8;">
+                    @if (!string.IsNullOrEmpty(Model.CommonSymptoms))
+                    {
+                        <p>Phòng khám <strong>@Model.RoomName</strong> tại Khoa Khám bệnh tiếp nhận các trường hợp:</p>
+                        <ul>
+                            @foreach (var s in Model.CommonSymptoms.Split(',', StringSplitOptions.RemoveEmptyEntries))
+                            {
+                                <li>@s.Trim()</li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <p class="text-muted">Phạm vi tiếp nhận đang được cập nhật.</p>
+                    }
+                </div>
+            </div>
+
+            <div class="panel panel-default">
+                <div class="panel-heading" style="background:#0a3d62; color:white;">
+                    <strong><i class="fa fa-list-ol"></i> Quy trình khám tại phòng</strong>
+                </div>
+                <div class="panel-body" style="line-height:1.8;">
+                    <ol>
+                        <li>Bệnh nhân <a href="/dat-lich-kham">đặt lịch online</a> hoặc đến trực tiếp lấy số tại quầy lễ tân Khoa Khám bệnh;</li>
+                        <li>Lễ tân tiếp nhận thông tin + triệu chứng → phân BN vào phòng <strong>@Model.RoomName</strong> nếu phù hợp chuyên môn;</li>
+                        <li>Bác sĩ tại phòng tiến hành khám sàng lọc + chẩn đoán ban đầu;</li>
+                        <li>Nếu cần xét nghiệm hoặc chẩn đoán hình ảnh, BS chỉ định BN sang Khoa Xét nghiệm;</li>
+                        <li>Có kết quả → BN quay lại @Model.RoomName để BS kê đơn thuốc và lưu hồ sơ điện tử.</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="panel panel-default">
+                <div class="panel-heading" style="background:#16a085; color:white;">
+                    <strong><i class="fa fa-user-md"></i> Bác sĩ trực hôm nay</strong>
+                </div>
+                <div class="panel-body" style="text-align:center;">
+                    <div style="font-size:48px; color:#16a085; font-weight:600;">@doctorsOnDuty</div>
+                    <div style="color:#7f8c8d; font-size:13px;">bác sĩ đang trực ca sáng</div>
+                    <hr>
+                    <small class="text-muted" style="line-height:1.6; display:block;">
+                        Bao gồm BS đa khoa của Khoa Khám bệnh và BS chuyên môn từ các khoa khác luân phiên hỗ trợ.
+                    </small>
+                </div>
+            </div>
+
+            <div class="panel panel-default">
+                <div class="panel-heading" style="background:#0a3d62; color:white;">
+                    <strong><i class="fa fa-info-circle"></i> Liên hệ</strong>
+                </div>
+                <div class="panel-body" style="line-height:1.8; font-size:13px;">
+                    <p style="margin:0;">
+                        <strong>Trung tâm Y tế phường Kinh Môn</strong><br>
+                        Địa chỉ: 294 Trần Hưng Đạo<br>
+                        Hotline: <a href="tel:02203822205">0220.3.822.205</a><br>
+                        Cấp cứu 24/7: <a href="tel:0964801616">0964.801.616</a>
+                    </p>
+                </div>
+            </div>
+
+            <a href="/dat-lich-kham" class="btn btn-success btn-block btn-lg" style="margin-top:14px;">
+                <i class="fa fa-calendar-plus-o"></i> Đặt lịch khám ngay
+            </a>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,29 @@
+flowchart TD
+    Start([Bắt đầu]) --> A1[Truy cập /dat-lich-kham]
+    A1 --> Q1{CurrentUser != null?}
+    Q1 -- Có --> A2[Auto-fill họ tên, SĐT, email từ session]
+    Q1 -- Không --> A3[Hiển thị banner gợi ý đăng nhập + form rỗng]
+    A2 --> A4[Chọn chuyên khoa, ngày, buổi sáng/chiều, lý do]
+    A3 --> A4
+    A4 --> A5[Submit form - POST /dat-lich-kham]
+    A5 --> Q2{Anti-forgery token hợp lệ?}
+    Q2 -- Không --> E1[400 Bad Request]
+    Q2 -- Có --> A6[Validate input ở Service]
+    A6 --> Q3{Họ tên + SĐT đầy đủ?}
+    Q3 -- Không --> E2[Flash error: thiếu thông tin bắt buộc]
+    Q3 -- Có --> Q4{Ngày khám hợp lệ?<br/>today ≤ date ≤ today+30?}
+    Q4 -- Không --> E3[Flash error: ngày không hợp lệ]
+    Q4 -- Có --> Q5{Department active?}
+    Q5 -- Không --> E4[Flash error: chuyên khoa không khả dụng]
+    Q5 -- Có --> Q6{Member đã có lịch trùng buổi?}
+    Q6 -- Có --> E5[Flash error: bạn đã có lịch buổi này]
+    Q6 -- Không --> A7[Tạo Appointment status=pending, CheckedIn=false]
+    A7 --> A8[Lưu DB]
+    A8 --> A9[Audit log: APPOINTMENT_CREATED]
+    A9 --> A10[Redirect /lich-cua-toi với flash success]
+    A10 --> End([Kết thúc])
+    E1 --> End
+    E2 --> A4
+    E3 --> A4
+    E4 --> A4
+    E5 --> A4

@@ -86,9 +86,20 @@ public class DepartmentService : IDepartmentService
     {
         var d = await _db.Departments.FirstOrDefaultAsync(x => x.Id == id);
         if (d == null) return false;
-        d.ActiveFlag = 0;  // soft delete
-        d.LuUpdated = DateTime.Now;
-        await _db.SaveChangesAsync();
-        return true;
+        // Hard delete neu khong co rang buoc; neu vuong FK -> fallback soft delete
+        _db.Departments.Remove(d);
+        try
+        {
+            await _db.SaveChangesAsync();
+            return true;
+        }
+        catch (DbUpdateException)
+        {
+            _db.Entry(d).State = EntityState.Unchanged;
+            d.ActiveFlag = 0;
+            d.LuUpdated = DateTime.Now;
+            await _db.SaveChangesAsync();
+            return true;
+        }
     }
 }

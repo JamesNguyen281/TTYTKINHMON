@@ -1,0 +1,16 @@
+flowchart TD
+    Start([Bắt đầu]) --> A1[BN login → /dat-cau-hoi]
+    A1 --> Q1{CurrentUser != null?}
+    Q1 -- Không --> E0[Redirect /dang-nhap]
+    Q1 -- Có --> A2[Form: title, body, topic, is_public]
+    A2 --> A3[Submit POST /dat-cau-hoi]
+    A3 --> A4[QnaService.CreateAsync — status=pending, approved=false]
+    A4 --> A5[Redirect /cau-hoi-cua-toi flash success]
+    A5 --> A6[Bác sĩ /bac-si-portal/duyet-cau-hoi]
+    A6 --> A7[GetPendingAsync]
+    A7 --> A8[Trả lời body + approve]
+    A8 --> A9[QnaService.AnswerAsync]
+    A9 --> A10[INSERT Answer + UPDATE Question.approved=true]
+    A10 --> A11[Audit log: QUESTION_ANSWERED]
+    A11 --> A12[BN xem /cau-hoi-cua-toi → thấy câu trả lời<br/>Public xem /hoi-dap nếu is_public=true]
+    A12 --> End([Kết thúc])

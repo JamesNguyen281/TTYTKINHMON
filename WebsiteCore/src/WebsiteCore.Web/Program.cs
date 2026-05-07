@@ -72,7 +72,7 @@ app.Use(async (ctx, next) =>
             "style-src  'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; " +
             "font-src   'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com; " +
             "img-src    'self' data: https: http:; " +
-            "frame-src  https://www.google.com https://www.youtube.com https://www.youtube-nocookie.com; " +
+            "frame-src  https://www.google.com https://maps.google.com https://*.google.com https://www.youtube.com https://www.youtube-nocookie.com; " +
             "connect-src 'self'; " +
             "frame-ancestors 'self'; " +
             "form-action 'self';";
@@ -136,6 +136,8 @@ app.MapControllerRoute("DocChanDoan",     "bac-si-portal/chan-doan/{apptId}",  n
 app.MapControllerRoute("DocCounts",       "bac-si-portal/counts",              new { controller = "DoctorPortal", action = "TodayCounts" });
 app.MapControllerRoute("DocLichTruc",     "bac-si-portal/lich-truc",           new { controller = "DoctorPortal", action = "LichTruc" });
 app.MapControllerRoute("DocYeuCauDL",     "bac-si-portal/yeu-cau-doi-lich",    new { controller = "DoctorPortal", action = "YeuCauDoiLich" });
+app.MapControllerRoute("DocHoSoList",     "bac-si-portal/ho-so-da-kham",       new { controller = "DoctorPortal", action = "HoSoDaKham" });
+app.MapControllerRoute("DocHoSoDetail",   "bac-si-portal/ho-so/{id}",          new { controller = "DoctorPortal", action = "HoSoChiTiet" });
 app.MapControllerRoute("ChuyenKhoa","chuyen-khoa",        new { controller = "Home",  action = "DepartmentList" });
 app.MapControllerRoute("NewList",   "chuyen-muc/{alias}", new { controller = "Home",  action = "NewList" });
 app.MapControllerRoute("NewDetail", "tin-tuc/{alias}",    new { controller = "Home",  action = "NewDetail" });

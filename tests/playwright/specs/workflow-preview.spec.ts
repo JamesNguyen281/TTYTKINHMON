@@ -3,24 +3,20 @@ import { loginStaff } from '../fixtures/auth';
 
 /**
  * Smoke test cho workflow Phase 2.B/C/D:
- *  - Form đặt lịch chỉ hiện các khoa khám (filter IsClinicalDept)
+ *  - Form đặt lịch không có dropdown khoa (mọi BN vào "Khoa Khám bệnh", lễ tân phân phòng sau)
  *  - Trang LichTruc của BS hiển thị label ScheduleType (Khám / Cấp cứu / Quản lý)
  *  - Form ChanDoan có panel "Hướng xử trí" 2 nhánh outpatient/inpatient
  */
 
-test('TC-P2D: Form đặt lịch — dropdown chỉ hiện khoa khám', async ({ page }) => {
+test('TC-P2D: Form đặt lịch — không có dropdown khoa (BN vào Khoa Khám bệnh)', async ({ page }) => {
   await page.goto('http://localhost:5050/dat-lich-kham', { waitUntil: 'networkidle' });
-  const dropdown = page.locator('select[name="DepartmentId"]');
-  await expect(dropdown).toBeVisible();
-  const options = await dropdown.locator('option').allTextContents();
-  // Loại trừ rõ các khoa không phải khám
-  expect(options.join(' ')).not.toContain('Khoa Khám bệnh');
-  expect(options.join(' ')).not.toContain('Khoa Xét nghiệm');
-  expect(options.join(' ')).not.toContain('Khoa Dược');
-  expect(options.join(' ')).not.toContain('Khoa Cấp cứu');
-  // Phải có các khoa khám
-  expect(options.join(' ')).toMatch(/Khoa Nội|Khoa Nhi/);
-  console.log(`TC-P2D: ${options.length} options còn lại sau filter`);
+  // BN không chọn khoa — quy trình chuẩn TTYT phường: lễ tân phân phòng sau khi tiếp nhận triệu chứng
+  expect(await page.locator('select[name="DepartmentId"]').count()).toBe(0);
+  expect(await page.locator('select[name="ClinicRoomId"]').count()).toBe(0);
+  // Trang phải có hint nhắc "Khoa Khám bệnh" + "phòng khám chuyên môn"
+  const html = await page.content();
+  expect(html).toMatch(/Khoa Khám bệnh/i);
+  expect(html).toMatch(/phòng khám/i);
 });
 
 test('TC-P2B: Trang LichTruc BS load được', async ({ page }) => {

@@ -141,7 +141,7 @@ Trong quá trình triển khai bộ test End-to-End cho website TTYT phường K
 
 - **Code generation:** công cụ `npx playwright codegen` ghi nhận thao tác trên trình duyệt và sinh ra mã TypeScript tương đương, hữu ích trong giai đoạn làm quen API ban đầu trước khi tổ chức lại theo Page Object;
 
-- **Thực thi song song:** mặc định mỗi tệp spec chạy trong một worker riêng. Trên máy phát triển 8 lõi, bộ 251 test case hoàn thành trong khoảng 4 phút 31 giây — rút ngắn đáng kể so với phương án tuần tự.
+- **Thực thi song song:** mặc định mỗi tệp spec chạy trong một worker riêng. Trên máy phát triển 8 lõi, bộ 269 test case hoàn thành trong khoảng 12 phút — rút ngắn đáng kể so với phương án tuần tự.
 
 ### 1.4.3. Tổ chức bộ test theo Page Object Model
 
@@ -162,7 +162,7 @@ Các thành phần kỹ thuật chính của Playwright được tham chiếu tr
 
 **Ưu điểm:**
 
-- Tốc độ thực thi cao — bộ 251 test E2E hoàn thành trong dưới 5 phút trên máy phát triển cá nhân;
+- Tốc độ thực thi cao — bộ 269 test E2E hoàn thành trong khoảng 12 phút trên máy phát triển cá nhân;
 - Cú pháp test ngắn gọn nhờ cơ chế auto-wait, không cần khai báo `WebDriverWait` rườm rà như Selenium;
 - TypeScript strict mode phát hiện sớm các lỗi gõ sai locator ngay tại bước biên dịch, không phải chờ đến lúc chạy;
 - Trace Viewer cung cấp tư liệu debug đầy đủ cho từng test fail, đặc biệt giá trị khi xảy ra lỗi giao diện do phần tử bị che phủ (overlay, loading spinner);

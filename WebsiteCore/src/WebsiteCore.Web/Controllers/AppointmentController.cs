@@ -11,25 +11,19 @@ namespace WebsiteCore.Web.Controllers;
 /// </summary>
 public class AppointmentController : BaseController
 {
-    private readonly IDepartmentService _deptService;
     private readonly IAppointmentService _apptService;
 
     public AppointmentController(
         ISiteService siteService,
-        IDepartmentService deptService,
         IAppointmentService apptService) : base(siteService)
     {
-        _deptService = deptService;
         _apptService = apptService;
     }
 
     [HttpGet]
-    public async Task<IActionResult> DatLichKham()
+    public IActionResult DatLichKham()
     {
         ViewBag.Title = "Đặt lịch khám";
-        // P2.D — chỉ hiển thị khoa nhận BN khám (loại Khoa Xét nghiệm/Dược/KS bệnh tật/
-        // Khoa Cấp cứu (đến trực tiếp)/Khoa Khám bệnh wrapper)
-        ViewBag.Departments = await _deptService.GetClinicalBySiteAsync(CurrentSiteId);
         ViewBag.MaxDaysAhead = Constants.MaxDaysAhead;
 
         var u = CurrentUser;
@@ -48,9 +42,6 @@ public class AppointmentController : BaseController
     public async Task<IActionResult> DatLichKham(BookingInputModel vm)
     {
         ViewBag.Title = "Đặt lịch khám";
-        // P2.D — chỉ hiển thị khoa nhận BN khám (loại Khoa Xét nghiệm/Dược/KS bệnh tật/
-        // Khoa Cấp cứu (đến trực tiếp)/Khoa Khám bệnh wrapper)
-        ViewBag.Departments = await _deptService.GetClinicalBySiteAsync(CurrentSiteId);
         ViewBag.MaxDaysAhead = Constants.MaxDaysAhead;
 
         if (!ModelState.IsValid) return View(vm);
