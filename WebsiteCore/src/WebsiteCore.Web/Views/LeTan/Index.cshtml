@@ -5,6 +5,7 @@
     var checkedIn = (int)(ViewBag.CheckedInCount ?? 0);
     var unassigned = (int)(ViewBag.UnassignedCount ?? 0);
     int notArrived = today - checkedIn;
+    int purged = (int)(ViewBag.PurgedCount ?? 0);
 }
 
 <style>
@@ -59,6 +60,13 @@
             <a href="/le-tan/lich-hen?status=pending">Xem ngay →</a>
         </div>
     </div>
+
+    @if (purged > 0)
+    {
+        <div class="alert alert-info" style="padding:8px 14px; margin-bottom:14px; font-size:13px;">
+            <i class="fa fa-info-circle"></i> Hệ thống vừa tự dọn <strong>@purged</strong> lịch khách vãng lai chờ duyệt đã quá hạn (no-show hoặc tạo &gt; @WebsiteCore.Business.Constants.PendingWalkInTtlDays ngày).
+        </div>
+    }
 
     <div class="kpi-row">
         <a href="/le-tan/lich-hen?status=pending" class="kpi pending">

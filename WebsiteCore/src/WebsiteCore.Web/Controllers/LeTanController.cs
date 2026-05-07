@@ -44,6 +44,9 @@ public class LeTanController : BaseController
     public async Task<IActionResult> Index()
     {
         ViewBag.Title = "Trang lễ tân";
+        // Tự động dọn lịch chờ duyệt của khách vãng lai đã quá hạn (no-show / >3 ngày)
+        // mỗi lần lễ tân vào trang tổng quan → hàng đợi luôn sạch, không tích bụi.
+        ViewBag.PurgedCount = await _apptService.PurgeStaleWalkInPendingAsync(CurrentSiteId);
         var pending = await _apptService.GetByStatusAsync(Constants.ApptPending, CurrentSiteId);
         var today   = await _apptService.GetTodayConfirmedAsync(CurrentSiteId);
         ViewBag.PendingCount    = pending.Count;
@@ -74,6 +77,10 @@ public class LeTanController : BaseController
     {
         ViewBag.Title = "Hàng đợi lịch hẹn";
         ViewBag.Status = status;
+        // Trước khi đọc danh sách "pending": purge lịch khách vãng lai quá hạn để
+        // hàng đợi không lẫn rác và đếm số đúng.
+        if (status == Constants.ApptPending)
+            ViewBag.PurgedCount = await _apptService.PurgeStaleWalkInPendingAsync(CurrentSiteId);
         var list = await _apptService.GetByStatusAsync(status, CurrentSiteId);
         return View(list);
     }

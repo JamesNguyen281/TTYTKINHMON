@@ -55,6 +55,12 @@ public static class Constants
     public const int MaxDaysAhead = 30;
 
     /// <summary>
+    /// Số ngày lưu trữ lịch chờ duyệt của khách vãng lai (không có account).
+    /// Quá thời gian này lễ tân chưa duyệt → tự động hard-delete để hàng đợi sạch.
+    /// </summary>
+    public const int PendingWalkInTtlDays = 3;
+
+    /// <summary>
     /// Số phút BN cần đến phòng khám TRƯỚC giờ hẹn để làm thủ tục check-in.
     /// Hiển thị trên trang xác nhận đặt lịch + lịch của tôi.
     /// </summary>

@@ -32,7 +32,7 @@
     <link href="~/assets/admin/css/ace-skins.min.css" rel="stylesheet" />
     <link href="~/assets/admin/css/custom.css" rel="stylesheet" />
     <link href="~/assets/client/css/custom-ux.css?v=5" rel="stylesheet" />
-    <link href="~/assets/client/css/responsive-fixes.css?v=20260502h" rel="stylesheet" />
+    <link href="~/assets/client/css/responsive-fixes.css?v=20260507a" rel="stylesheet" />
     <style>
         :root {
             --admin-primary: #0a3d62;
@@ -156,6 +156,25 @@
         .list-scroll table { margin: 0; }
         .list-scroll thead th { position: sticky; top: 0; z-index: 5;
             background: var(--admin-primary) !important; color: white !important; }
+
+        /* ==== Auto-injected limit + scroll cho moi list page (xem adm-list-limit.js) ==== */
+        .adm-scroll { max-height: calc(100vh - 320px); overflow-y: auto; overflow-x: auto;
+            background: white; border: 1px solid var(--admin-border); border-radius: 4px; }
+        .adm-scroll table { margin: 0; }
+        .adm-scroll thead th { position: sticky; top: 0; z-index: 5;
+            background: var(--admin-primary) !important; color: white !important; }
+        .adm-list-toolbar { display: flex; justify-content: space-between; align-items: center;
+            gap: 12px; flex-wrap: wrap;
+            background: white; border: 1px solid var(--admin-border); border-radius: 4px;
+            padding: 8px 12px; margin: 8px 0; font-size: 13px; }
+        .adm-list-toolbar .adm-list-left,
+        .adm-list-toolbar .adm-list-right { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+        .adm-list-toolbar select { width: 90px; height: 28px; padding: 2px 6px; display: inline-block; }
+        .adm-list-toolbar .adm-list-info { color: var(--admin-muted); margin-left: 4px; }
+        .adm-list-toolbar .adm-list-page-input { width: 56px; height: 28px; padding: 2px 4px;
+            display: inline-block; text-align: center; }
+        .adm-list-toolbar .adm-list-of { color: var(--admin-muted); }
+        .adm-list-toolbar .btn[disabled] { opacity: 0.4; cursor: not-allowed; }
     </style>
     <script src="~/assets/admin/js/ace-extra.min.js"></script>
     @await RenderSectionAsync("Styles", required: false)
@@ -217,6 +236,7 @@
     <script src="~/assets/admin/js/ace-elements.min.js"></script>
     <script src="~/assets/admin/js/ace.min.js"></script>
     <script src="~/assets/client/js/password-eye.js?v=2"></script>
+    <script src="~/assets/admin/js/adm-list-limit.js?v=2"></script>
     @* ACE Admin (ace.min.js) tự handle 100%:
        - Toggle #sidebar-collapse: bind tự động qua ace.click_event trên ".sidebar-collapse" → toggle .menu-min
        - Submenu open/close: ace.min.js bind li.hsub > a.dropdown-toggle
