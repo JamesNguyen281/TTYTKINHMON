@@ -8,7 +8,7 @@ Sau bốn tháng thực hiện đồ án tốt nghiệp dưới sự hướng d�
 
 - Hoàn thiện website y tế trên nền tảng ASP.NET Core 8 + EF Core 8 + SQL Server với kiến trúc 3 tầng (Web — Business — Data) phục vụ bốn vai trò: Bệnh nhân, Lễ tân, Bác sĩ, Quản trị;
 
-- Triển khai 23 bảng cơ sở dữ liệu code-first phục vụ đầy đủ các nghiệp vụ ngoại trú: đặt lịch — duyệt — check-in — chẩn đoán — kê đơn — Q&A;
+- Triển khai 25 bảng cơ sở dữ liệu code-first phục vụ đầy đủ các nghiệp vụ ngoại trú: đặt lịch — duyệt — check-in — chẩn đoán — kê đơn — Q&A;
 
 - Áp dụng đầy đủ bảy lớp bảo mật theo OWASP Top 10: PBKDF2-SHA256 600 000 vòng, anti-CSRF, sanitize XSS, lockout sau 5 lần đăng nhập sai, IDOR guard qua site scoping, audit log toàn bộ thay đổi state, kiểm soát độ dài chuỗi chống DoS;
 

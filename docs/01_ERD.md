@@ -1,6 +1,6 @@
 # Cây Dữ Liệu (ERD) — TTYT Kinh Môn
 
-Sơ đồ thực thể–quan hệ của 23 bảng trong CSDL `ttytlp`. Chia 2 cụm: (a) Nghiệp vụ y tế và (b) CMS / quản trị.
+Sơ đồ thực thể–quan hệ của 25 bảng trong CSDL `ttytlp`. Chia 2 cụm: (a) Nghiệp vụ y tế và (b) CMS / quản trị.
 
 ## Cụm 1 — Nghiệp vụ y tế (core)
 
@@ -14,9 +14,14 @@ erDiagram
     Doctor ||--o{ DoctorSchedule : "có lịch trực"
     Doctor ||--o{ MedicalRecord : "lập hồ sơ"
     Doctor ||--o{ Answer : "trả lời"
+    Doctor ||--o{ ScheduleChangeRequest : "yêu cầu đổi lịch"
     Doctor }o--|| Department : "thuộc khoa"
     Department ||--o{ Appointment : "tiếp nhận"
     Department ||--o{ AppointmentQuota : "có quota"
+    Department ||--o{ ClinicRoom : "có phòng khám"
+    ClinicRoom ||--o{ DoctorSchedule : "luân phiên BS"
+    ClinicRoom ||--o{ Appointment : "phân BN vào phòng"
+    DoctorSchedule ||--o{ ScheduleChangeRequest : "đổi lịch trực"
     Appointment ||--o| MedicalRecord : "phát sinh hồ sơ"
     MedicalRecord ||--o{ Prescription : "có đơn thuốc"
     Question ||--o| Answer : "được trả lời"
@@ -53,9 +58,38 @@ erDiagram
     DoctorSchedule {
         Guid id PK
         Guid doctor_id FK
-        DateTime work_date
+        Guid department_id FK
+        Guid clinic_room_id FK "nullable"
+        byte weekday "1..7"
         string session "morning/afternoon"
-        string room
+        string schedule_type "clinic/emergency/management"
+        int max_patients
+        DateOnly valid_from
+        DateOnly valid_to
+    }
+    ClinicRoom {
+        Guid id PK
+        Guid department_id FK "Khoa Khám bệnh"
+        string room_code UK "P101, P201..."
+        string room_name
+        string specialty_l "Tim mạch, Nhi..."
+        string floor
+        string common_symptoms
+        int ord
+        int active_flag
+    }
+    ScheduleChangeRequest {
+        Guid id PK
+        Guid doctor_id FK
+        Guid schedule_id FK "nullable"
+        DateOnly requested_date
+        string requested_session
+        string request_type "change/cancel/swap"
+        string reason
+        string status "pending/approved/rejected"
+        string admin_response
+        Guid created_by FK
+        Guid processed_by FK
     }
     Appointment {
         Guid id PK
