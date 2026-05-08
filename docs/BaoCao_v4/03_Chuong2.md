@@ -290,7 +290,7 @@ Sơ đồ tổng quát mô tả bốn actor cùng các nhóm nghiệp vụ chín
 
 ## 2.5. Đặc tả cơ sở dữ liệu
 
-Hệ thống sử dụng SQL Server, schema `ttytlp` được sinh tự động từ Entity Framework Core 8 với mô hình code-first. Toàn bộ cơ sở dữ liệu gồm **23 bảng** chia thành 6 nhóm chức năng. Bảng 2.9 mô tả cấu trúc các bảng quan trọng nhất.
+Hệ thống sử dụng SQL Server, schema `ttytlp` được sinh tự động từ Entity Framework Core 8 với mô hình code-first. Toàn bộ cơ sở dữ liệu gồm **25 bảng** chia thành 6 nhóm chức năng. Bảng 2.9 mô tả cấu trúc các bảng quan trọng nhất.
 
 ### 2.5.1. Bảng `customer` — Hồ sơ bệnh nhân
 
@@ -381,7 +381,7 @@ Hệ thống sử dụng SQL Server, schema `ttytlp` được sinh tự động 
 | 7 | IpAddress | NVARCHAR(45) | IP người dùng |
 | 8 | CreatedAt | DATETIME2 | Thời điểm sự kiện |
 
-Ngoài năm bảng nêu trên, hệ thống còn **18 bảng phụ trợ** khác phục vụ các nghiệp vụ: `site` (cấu hình cơ sở), `system_user` + `system_user_group` (quản lý nhân viên + phân quyền), `doctor`, `department`, `service`, `news`, `qna_topic` + `qna_post`, `prescription_drug`, `bank_holiday`, `ip_blacklist`, `customer_address`, `notification`, `attachment`, `setting`, `migration_history`. Chi tiết đầy đủ được mô tả trong sơ đồ ERD ở mục 2.5.
+Ngoài năm bảng nêu trên, hệ thống còn **20 bảng phụ trợ** khác phục vụ các nghiệp vụ: `site` (cấu hình cơ sở), `system_user` + `system_user_group` (quản lý nhân viên + phân quyền), `doctor`, `department`, `clinic_room` (phòng khám trong Khoa Khám bệnh), `schedule_change_request` (yêu cầu đổi lịch trực của bác sĩ), `service`, `news`, `qna_topic` + `qna_post`, `prescription_drug`, `bank_holiday`, `ip_blacklist`, `customer_address`, `notification`, `attachment`, `setting`, `migration_history`. Chi tiết đầy đủ được mô tả trong sơ đồ ERD ở mục 2.5.
 
 ## 2.6. Sơ đồ quan hệ thực thể (ERD)
 
@@ -389,7 +389,7 @@ Ngoài năm bảng nêu trên, hệ thống còn **18 bảng phụ trợ** khác
 
 *(xem ảnh đính kèm — file `docs/diagrams/erd_full.png`)*
 
-Sơ đồ ERD thể hiện 23 thực thể và các quan hệ một-nhiều, nhiều-nhiều giữa chúng. Một số quan hệ chính:
+Sơ đồ ERD thể hiện 25 thực thể và các quan hệ một-nhiều, nhiều-nhiều giữa chúng. Một số quan hệ chính:
 
 - **`customer` 1 — N `appointment`:** Một bệnh nhân có thể có nhiều lịch hẹn (lịch sử khám);
 - **`appointment` 1 — 1 `medical_record`:** Mỗi lịch hẹn (đã khám) có một hồ sơ khám tương ứng;
