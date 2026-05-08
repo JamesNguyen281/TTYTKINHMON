@@ -8,7 +8,7 @@
 
 - **Backend**: ASP.NET Core 8 MVC + EF Core 8
 - **Frontend**: Razor View + Bootstrap 3 + jQuery
-- **Database**: SQL Server Express (`.\SQLEXPRESS`, schema `ttytlp`, 24 bảng)
+- **Database**: SQL Server Express (`.\SQLEXPRESS`, schema `ttytlp`, 25 bảng)
 
 ## Cấu trúc
 
@@ -35,9 +35,9 @@ SourceCodeTTYTKM/
 
 ### 3 surface chính
 
-- **Public** (`/`): trang chủ, tin tức, đặt lịch khám, đặt câu hỏi Q&A, xem bác sĩ + lịch trực
-- **AdminCP** (`/AdminCP`): quản trị Site / Department / Doctor / News / Category / Slide / Video / Partner / Document / Quota / DoctorSchedule / ScheduleRequest
-- **Portals**: Lễ tân (`/le-tan`) — duyệt lịch, check-in, phân BS · Bác sĩ (`/bac-si-portal`) — bệnh nhân hôm nay, chẩn đoán, lịch trực, gửi yêu cầu đổi lịch
+- **Public** (`/`): trang chủ, tin tức, đặt lịch khám (Khoa Khám bệnh + 7 phòng khám), đặt câu hỏi Q&A, xem bác sĩ + lịch trực
+- **AdminCP** (`/AdminCP`): quản trị Site / Department / ClinicRoom / Doctor / News / Category / Slide / Video / Partner / Document / Quota / DoctorSchedule / ScheduleRequest — có pagination 10/20/50/100/1000/All
+- **Portals**: Lễ tân (`/le-tan`) — duyệt lịch (auto-purge khách vãng lai > 3 ngày), check-in, phân BS theo slot · Bác sĩ (`/bac-si-portal`) — bệnh nhân hôm nay, chẩn đoán 2 nhánh, hẹn khám lại auto, lịch trực, gửi yêu cầu đổi lịch
 
 ### Workflow HIS chuẩn
 
@@ -119,12 +119,12 @@ Bệnh nhân đăng ký tài khoản qua `/dang-ky`.
 
 ## Database schema
 
-24 bảng entity:
+25 bảng entity:
 
 | Nhóm | Bảng |
 |---|---|
 | Authn / Authz | `User`, `UserGroup`, `Role`, `Credential` |
-| Hồ sơ y tế | `Doctor`, `Department`, `MedicalRecord`, `Prescription`, `Appointment`, `AppointmentQuota`, `DoctorSchedule`, `ScheduleChangeRequest` |
+| Hồ sơ y tế | `Doctor`, `Department`, `ClinicRoom`, `MedicalRecord`, `Prescription`, `Appointment`, `AppointmentQuota`, `DoctorSchedule`, `ScheduleChangeRequest` |
 | Q&A | `Question`, `Answer` |
 | CMS | `News`, `Category`, `Page`, `Document`, `Comment` |
 | Marketing | `Slide`, `Video`, `Partner` |
