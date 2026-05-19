@@ -1,3 +1,4 @@
+@using WebsiteCore.Web.Helpers
 @model WebsiteCore.Data.Entities.User
 @{
     ViewData["Title"] = "Hồ sơ cá nhân — cán bộ";
@@ -9,13 +10,7 @@
         WebsiteCore.Business.Constants.ReceptionGroup => "Lễ tân",
         _ => "Cán bộ"
     };
-    string portalHome = u?.GroupId switch
-    {
-        WebsiteCore.Business.Constants.AdminGroup     => "/AdminCP/Default",
-        WebsiteCore.Business.Constants.DoctorGroup    => "/bac-si-portal",
-        WebsiteCore.Business.Constants.ReceptionGroup => "/le-tan",
-        _ => "/"
-    };
+    string portalHome = PortalUrls.HomeFor(u?.GroupId);
     string memberSince = Model?.CreatedDate?.ToString("dd/MM/yyyy") ?? "—";
     string lastLogin   = Model?.LastLogin?.ToString("dd/MM/yyyy HH:mm") ?? "—";
     string roleColor = u?.GroupId switch
@@ -167,7 +162,7 @@
             <a href="/le-tan/lich-hen?status=pending"><i class="fa fa-calendar-check-o"></i> Lịch chờ duyệt</a>
             <a href="/le-tan/check-in"><i class="fa fa-id-card-o"></i> Check-in</a>
         }
-        <a href="/AdminCP/Login/Logout" style="color:#c0392b;"><i class="fa fa-sign-out"></i> Đăng xuất</a>
+        <a href="@PortalUrls.StaffLogout" style="color:#c0392b;"><i class="fa fa-sign-out"></i> Đăng xuất</a>
     </div>
     }
 

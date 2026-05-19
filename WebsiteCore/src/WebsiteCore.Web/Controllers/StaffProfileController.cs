@@ -34,8 +34,8 @@ public class StaffProfileController : BaseController
     public async Task<IActionResult> Index()
     {
         var u = CurrentUser;
-        if (u == null) return Redirect("~/AdminCP/Login");
-        if (!IsStaff(u.GroupId)) return Redirect("~/ho-so");
+        if (u == null) return Redirect("~" + PortalUrls.StaffLogin);
+        if (!IsStaff(u.GroupId)) return Redirect("~" + PortalUrls.MemberHome);
 
         var fullUser = await _userService.GetByIdAsync(u.Id);
         ViewBag.Title = "Hồ sơ cá nhân";
@@ -47,8 +47,8 @@ public class StaffProfileController : BaseController
     public async Task<IActionResult> Update(string? FullName, string? Phone, string? Email, int? Gender)
     {
         var u = CurrentUser;
-        if (u == null) return Redirect("~/AdminCP/Login");
-        if (!IsStaff(u.GroupId)) return Redirect("~/ho-so");
+        if (u == null) return Redirect("~" + PortalUrls.StaffLogin);
+        if (!IsStaff(u.GroupId)) return Redirect("~" + PortalUrls.MemberHome);
 
         if (string.IsNullOrWhiteSpace(FullName) || string.IsNullOrWhiteSpace(Phone))
         {

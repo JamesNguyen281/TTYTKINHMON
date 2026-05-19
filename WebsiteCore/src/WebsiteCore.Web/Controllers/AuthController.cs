@@ -148,10 +148,9 @@ public class AuthController : BaseController
         var grp = u?.GroupId;
         HttpContext.Session.Clear();
 
-        // MEMBER (hoặc anon) → trang chủ.
-        // Cán bộ (ADMIN/DOCTOR/RECEPTION) → /AdminCP/Login.
+        // MEMBER (hoặc anon) → trang chủ. Cán bộ → /AdminCP/Login.
         if (grp == Constants.AdminGroup || grp == Constants.DoctorGroup || grp == Constants.ReceptionGroup)
-            return Redirect("~/AdminCP/Login");
+            return Redirect("~" + PortalUrls.StaffLogin);
         return Redirect("~/");
     }
 
@@ -159,12 +158,6 @@ public class AuthController : BaseController
     {
         var u = CurrentUser;
         if (u == null) return Redirect("~/");
-        return u.GroupId switch
-        {
-            Constants.AdminGroup     => Redirect("~/"),                // AdminCP area chưa build
-            Constants.DoctorGroup    => Redirect("~/"),                // DoctorPortal chưa build
-            Constants.ReceptionGroup => Redirect("~/"),                // LeTan chưa build
-            _                        => Redirect("~/ho-so")
-        };
+        return Redirect("~" + PortalUrls.HomeFor(u.GroupId));
     }
 }

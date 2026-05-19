@@ -85,13 +85,6 @@ public class AccountController : BaseController
             isForced ? $"{CurrentUser.UserName} đổi mật khẩu (bắt buộc lần đầu)" : $"{CurrentUser.UserName} tự đổi mật khẩu");
 
         TempData["Success"] = "Đã đổi mật khẩu. Vui lòng dùng mật khẩu mới cho lần đăng nhập tiếp theo.";
-        // Redirect theo role
-        return CurrentUser.GroupId switch
-        {
-            Constants.AdminGroup     => Redirect("~/AdminCP/Default"),
-            Constants.ReceptionGroup => Redirect("~/le-tan"),
-            Constants.DoctorGroup    => Redirect("~/bac-si-portal"),
-            _                        => Redirect("~/ho-so")
-        };
+        return Redirect("~" + PortalUrls.HomeFor(CurrentUser.GroupId));
     }
 }

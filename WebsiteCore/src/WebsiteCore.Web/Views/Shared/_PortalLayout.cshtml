@@ -1,5 +1,6 @@
 ﻿@using WebsiteCore.Business.ViewModels
 @using WebsiteCore.Data.Entities
+@using WebsiteCore.Web.Helpers
 @{
     var site = ViewBag.Site as Site;
     var u = ViewBag.CurrentUser as LoggedInUser;
@@ -20,13 +21,7 @@
         "bacsi" => "Cổng Bác sĩ",
         _       => "Trang cá nhân"
     };
-    string portalHomeUrl = portalKind switch
-    {
-        "admin" => "/AdminCP/Default",
-        "letan" => "/le-tan",
-        "bacsi" => "/bac-si-portal",
-        _       => "/ho-so"
-    };
+    string portalHomeUrl = PortalUrls.HomeFor(u?.GroupId);
     bool isStaff = portalKind == "admin" || portalKind == "letan" || portalKind == "bacsi";
 }
 <!DOCTYPE html>
@@ -72,7 +67,7 @@
                     }
                     else
                     {
-                        <a href="/AdminCP/Login/Logout" class="portal-link"><i class="fa fa-sign-out"></i> Đăng xuất</a>
+                        <a href="@PortalUrls.StaffLogout" class="portal-link"><i class="fa fa-sign-out"></i> Đăng xuất</a>
                     }
                 }
             </div>

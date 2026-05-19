@@ -1,6 +1,7 @@
 ﻿@using WebsiteCore.Business.ViewModels
 @using WebsiteCore.Data.Entities
 @using WebsiteCore.Business.Services
+@using WebsiteCore.Web.Helpers
 @inject ICategoryService CategoryService
 @inject IDepartmentService DepartmentService
 @{
@@ -30,13 +31,7 @@
     var lblLogin   = isEn ? "Sign in"        : "Đăng nhập";
     var lblLogout  = isEn ? "Sign out"       : "Đăng xuất";
     var lblAddrPrefix = isEn ? "Address:" : "Địa chỉ:";
-    string portalUrl = loggedUser?.GroupId switch
-    {
-        "ADMIN"     => "/AdminCP/Default",
-        "RECEPTION" => "/le-tan",
-        "DOCTOR"    => "/bac-si-portal",
-        _           => "/ho-so"
-    };
+    string portalUrl = PortalUrls.HomeFor(loggedUser?.GroupId);
 
     // Auto-sync submenu: với menu cha có alias chuyen-khoa / doi-ngu-bac-si,
     // children lấy từ bảng Department thay vì Category — để dropdown luôn đồng bộ

@@ -101,19 +101,13 @@ public class LoginController : BaseController
         if (u != null)
             await _auditService.LogAsync(u.Id, "Đăng xuất", $"{u.UserName} đăng xuất");
         HttpContext.Session.Clear();
-        return Redirect("~/AdminCP/Login");
+        return Redirect("~" + PortalUrls.StaffLogin);
     }
 
     private IActionResult RedirectByRole()
     {
         var u = CurrentUser;
-        if (u == null) return Redirect("~/AdminCP/Login");
-        return u.GroupId switch
-        {
-            Constants.AdminGroup     => Redirect("~/AdminCP/Default"),
-            Constants.DoctorGroup    => Redirect("~/bac-si-portal"),
-            Constants.ReceptionGroup => Redirect("~/le-tan"),
-            _                        => Redirect("~/")
-        };
+        if (u == null) return Redirect("~" + PortalUrls.StaffLogin);
+        return Redirect("~" + PortalUrls.HomeFor(u.GroupId));
     }
 }
