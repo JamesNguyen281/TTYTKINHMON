@@ -9,7 +9,6 @@ appsettings.Production.json
 !.env.example
 
 scripts/
-full_test.sh
 .run-logs/
 run-public.ps1
 run-public.cmd
