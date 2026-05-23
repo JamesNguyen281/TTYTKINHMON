@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using WebsiteCore.Business.ViewModels;
 using WebsiteCore.Data;
 using WebsiteCore.Data.Entities;
@@ -54,7 +55,12 @@ public interface IAppointmentService
 public class AppointmentService : IAppointmentService
 {
     private readonly TtytlpDbContext _db;
-    public AppointmentService(TtytlpDbContext db) => _db = db;
+    private readonly ILogger<AppointmentService>? _logger;
+    public AppointmentService(TtytlpDbContext db, ILogger<AppointmentService>? logger = null)
+    {
+        _db = db;
+        _logger = logger;
+    }
 
     public async Task<BookingResult> CreateAsync(BookingInputModel input, Guid? patientUserId, Guid siteId)
     {
@@ -163,6 +169,10 @@ public class AppointmentService : IAppointmentService
         if (stale.Count == 0) return 0;
         _db.Appointments.RemoveRange(stale);
         await _db.SaveChangesAsync();
+        // System cleanup — log để truy vết, không ghi audit (audit table dành cho user action)
+        _logger?.LogInformation(
+            "PurgeStaleWalkInPending: removed {Count} walk-in pending appointments for site {SiteId} (TTL {TtlDays} days)",
+            stale.Count, siteId, Constants.PendingWalkInTtlDays);
         return stale.Count;
     }
 

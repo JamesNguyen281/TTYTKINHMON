@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using WebsiteCore.Business;
 using WebsiteCore.Business.Services;
 using WebsiteCore.Data;
@@ -16,13 +17,15 @@ public class DefaultController : BaseController
     private readonly IWebHostEnvironment _env;
     private readonly IAuditService _audit;
     private readonly VisitorCounter _counter;
+    private readonly ILogger<DefaultController> _logger;
 
-    public DefaultController(ISiteService siteService, TtytlpDbContext db, IWebHostEnvironment env, IAuditService audit, VisitorCounter counter) : base(siteService)
+    public DefaultController(ISiteService siteService, TtytlpDbContext db, IWebHostEnvironment env, IAuditService audit, VisitorCounter counter, ILogger<DefaultController> logger) : base(siteService)
     {
         _db = db;
         _env = env;
         _audit = audit;
         _counter = counter;
+        _logger = logger;
     }
 
     private string NotificationPath  => Path.Combine(_env.WebRootPath, "assets", "admin", "notification", "notification.txt");
@@ -88,7 +91,11 @@ public class DefaultController : BaseController
             }
             TempData["Success"] = "Đã reset counter.";
         }
-        catch (Exception ex) { TempData["Error"] = "Lỗi reset: " + ex.Message; }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "ResetCounter failed for command {Which} by user {UserId}", which, CurrentUser?.Id);
+            TempData["Error"] = "Không reset được counter — vui lòng thử lại hoặc kiểm tra log.";
+        }
         return RedirectToAction(nameof(Index));
     }
 
