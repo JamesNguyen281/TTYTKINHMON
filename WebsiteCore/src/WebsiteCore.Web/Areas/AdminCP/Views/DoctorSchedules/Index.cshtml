@@ -22,12 +22,18 @@
     Guid? selDeptId = ViewBag.SelectedDeptId as Guid?;
     byte? selWd     = ViewBag.SelectedWeekday as byte?;
     string? selSession = ViewBag.SelectedSession as string;
+    string? selYm     = ViewBag.SelectedYm as string;
+    string? selYmLabel = ViewBag.SelectedYmLabel as string;
+    string  prevYm    = ViewBag.PrevYm as string ?? "";
+    string  nextYm    = ViewBag.NextYm as string ?? "";
+    string  thisYm    = DateTime.Today.ToString("yyyy-MM");
 
     int totalCount = Model.Count;
     bool filterActive = (selDocId.HasValue && selDocId.Value != Guid.Empty)
                      || (selDeptId.HasValue && selDeptId.Value != Guid.Empty)
                      || selWd.HasValue
-                     || !string.IsNullOrEmpty(selSession);
+                     || !string.IsNullOrEmpty(selSession)
+                     || !string.IsNullOrEmpty(selYm);
 }
 
 <style>
@@ -42,11 +48,44 @@
     .badge-afternoon { background:#e3f2fd; color:#1d5688; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:600; }
     .badge-cycle { background:#e8f5e9; color:#2f7a5e; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:600; }
     .ds-table tr.dept-row { background:#f7f9fc; font-weight:600; color:#0a3d62; }
+
+    .ds-month-nav { background:white; border:1px solid #e5e9ee; border-radius:8px; padding:10px 14px; margin-bottom:12px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; box-shadow:0 1px 3px rgba(0,0,0,0.04); }
+    .ds-month-nav .btn-month { background:#f7f9fc; border:1px solid #d0d7de; color:#0a3d62; padding:6px 12px; border-radius:6px; text-decoration:none; font-weight:500; font-size:13px; }
+    .ds-month-nav .btn-month:hover { background:#0a3d62; color:white; border-color:#0a3d62; }
+    .ds-month-nav .btn-month.active { background:#0a3d62; color:white; border-color:#0a3d62; }
+    .ds-month-nav .ym-label { font-weight:700; color:#0a3d62; font-size:15px; padding:0 6px; }
+    .ds-month-nav input[type=month] { border:1px solid #d0d7de; border-radius:6px; padding:5px 8px; font-size:13px; }
+    .ds-month-nav .btn-go { background:#43aa8b; color:white; border:none; padding:6px 12px; border-radius:6px; font-weight:600; cursor:pointer; font-size:13px; }
 </style>
 
 <div class="ds-hero">
     <h2><i class="fa fa-calendar-o"></i> Lịch trực bác sĩ</h2>
-    <div class="meta">Tổng @totalCount ca trực active@(filterActive ? " (sau lọc)" : "")</div>
+    <div class="meta">
+        Tổng @totalCount ca trực active@(filterActive ? " (sau lọc)" : "")
+        @if (!string.IsNullOrEmpty(selYmLabel))
+        {
+            <span> · Tháng <strong>@selYmLabel</strong></span>
+        }
+    </div>
+</div>
+
+<div class="ds-month-nav">
+    <strong style="color:#0a3d62;"><i class="fa fa-calendar"></i> Xem theo tháng:</strong>
+    @if (!string.IsNullOrEmpty(selYm))
+    {
+        <a href="/AdminCP/DoctorSchedules?ym=@prevYm" class="btn-month"><i class="fa fa-chevron-left"></i> @prevYm</a>
+        <span class="ym-label">@selYmLabel</span>
+        <a href="/AdminCP/DoctorSchedules?ym=@nextYm" class="btn-month">@nextYm <i class="fa fa-chevron-right"></i></a>
+    }
+    <a href="/AdminCP/DoctorSchedules?ym=@thisYm" class="btn-month@(selYm == thisYm ? " active" : "")">Tháng này</a>
+    <form method="get" action="/AdminCP/DoctorSchedules" style="display:flex; gap:6px; align-items:center;">
+        <input type="month" name="ym" value="@(selYm ?? "")" min="2024-01" max="2030-12" />
+        <button type="submit" class="btn-go"><i class="fa fa-search"></i> Xem</button>
+    </form>
+    @if (!string.IsNullOrEmpty(selYm))
+    {
+        <a href="/AdminCP/DoctorSchedules" class="btn-month" title="Xem toàn bộ (không lọc tháng)"><i class="fa fa-list"></i> Tất cả</a>
+    }
 </div>
 
 <div style="margin-bottom:12px;">
@@ -59,6 +98,10 @@
 
 <div class="ds-filter">
     <form method="get" action="/AdminCP/DoctorSchedules" class="row-flex">
+        @if (!string.IsNullOrEmpty(selYm))
+        {
+            <input type="hidden" name="ym" value="@selYm" />
+        }
         <div>
             <label>Bác sĩ</label>
             <select name="doctorId" class="form-control">

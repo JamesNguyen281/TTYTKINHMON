@@ -24,7 +24,7 @@ public interface IDoctorScheduleService
     /// Sort: BS đang rảnh nhất (BookedSlots ASC) → giúp lễ tân phân bổ đều.
     /// Filter theo deptId nếu khác null (chỉ BS thuộc khoa đó).
     /// </summary>
-    Task<List<DoctorAvailabilityVm>> GetAvailableDoctorsAsync(Guid siteId, Guid? deptId, DateOnly date, string session);
+    Task<List<DoctorAvailabilityVm>> GetAvailableDoctorsAsync(Guid siteId, Guid? deptId, DateOnly date, string session, Guid? clinicRoomId = null);
 
     /// <summary>
     /// Trả overview slot của một khoa tại (date, session): tổng quota khoa + chi tiết từng BS.
@@ -200,7 +200,7 @@ public class DoctorScheduleService : IDoctorScheduleService
         d.DayOfWeek == DayOfWeek.Sunday ? (byte)1 : (byte)((int)d.DayOfWeek + 1);
 
     public async Task<List<DoctorAvailabilityVm>> GetAvailableDoctorsAsync(
-        Guid siteId, Guid? deptId, DateOnly date, string session)
+        Guid siteId, Guid? deptId, DateOnly date, string session, Guid? clinicRoomId = null)
     {
         if (string.IsNullOrEmpty(session)) return new();
         var weekday = ToDbWeekday(date);
@@ -211,6 +211,8 @@ public class DoctorScheduleService : IDoctorScheduleService
         //   - emergency: BS trực cấp cứu, ở chuyên khoa, không tiếp nhận BN khám thường
         //   - management: Ban Giám đốc trực xử lý công việc, không khám
         // Backward compat: ScheduleType IS NULL → coi như clinic (data cũ trước Phase 2.B).
+        // clinicRoomId: nếu set, chỉ trả BS có lịch trực tại đúng phòng đó (P2.B — lễ tân
+        // đã phân BN vào ClinicRoom cụ thể → chọn BS đang trực phòng đó để check-in).
         var rows = await (from s in _db.DoctorSchedules
                           join d in _db.Doctors on s.DoctorId equals d.Id
                           join dep in _db.Departments on d.DepartmentId equals dep.Id
@@ -224,6 +226,7 @@ public class DoctorScheduleService : IDoctorScheduleService
                              && dep.SiteId == siteId
                              && dep.ActiveFlag == 1
                              && (deptId == null || d.DepartmentId == deptId)
+                             && (clinicRoomId == null || s.ClinicRoomId == clinicRoomId)
                           select new
                           {
                               Schedule = s, Doctor = d, Dept = dep

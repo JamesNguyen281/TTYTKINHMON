@@ -148,11 +148,23 @@ public class LeTanController : BaseController
         // Sort: BS đang rảnh nhất (BookedSlots ASC) lên đầu → gợi ý phân bổ đều.
         var availabilities = new List<WebsiteCore.Business.ViewModels.DoctorAvailabilityVm>();
         WebsiteCore.Business.ViewModels.DepartmentSlotOverviewVm? deptOverview = null;
+        bool roomFilteredEmpty = false;  // true = lễ tân chọn phòng nhưng phòng đó chưa có BS phân
         if (a.AppointmentDate.HasValue && !string.IsNullOrEmpty(a.Session))
         {
             var date = DateOnly.FromDateTime(a.AppointmentDate.Value);
+            // Nếu BN đã được phân vào ClinicRoom cụ thể → lọc BS trực đúng phòng đó.
+            // Nếu chưa phân room → hiển thị toàn bộ BS của khoa (current behavior).
             availabilities = await _scheduleService.GetAvailableDoctorsAsync(
-                CurrentSiteId, a.DepartmentId, date, a.Session);
+                CurrentSiteId, a.DepartmentId, date, a.Session, a.ClinicRoomId);
+
+            // Fallback: nếu lọc theo phòng ra rỗng → load lại không lọc phòng + đánh dấu cờ
+            // để view show banner "phòng này chưa có BS trực — hiển thị toàn bộ BS khoa".
+            if (availabilities.Count == 0 && a.ClinicRoomId.HasValue)
+            {
+                roomFilteredEmpty = true;
+                availabilities = await _scheduleService.GetAvailableDoctorsAsync(
+                    CurrentSiteId, a.DepartmentId, date, a.Session);
+            }
 
             if (a.DepartmentId.HasValue)
             {
@@ -161,8 +173,10 @@ public class LeTanController : BaseController
             }
         }
 
-        ViewBag.Availabilities  = availabilities;
-        ViewBag.DeptOverview    = deptOverview;
+        ViewBag.Availabilities      = availabilities;
+        ViewBag.DeptOverview        = deptOverview;
+        ViewBag.RoomFilteredEmpty   = roomFilteredEmpty;
+        ViewBag.IsFilteredByRoom    = a.ClinicRoomId.HasValue && !roomFilteredEmpty;
 
         // P2.A: load list ClinicRoom của site để lễ tân route BN vào phòng khám phù hợp.
         // Workflow: BN trình bày triệu chứng → lễ tân pick room (phòng khám trong khoa "Khám bệnh"
@@ -185,11 +199,11 @@ public class LeTanController : BaseController
     /// </summary>
     [HttpGet]
     [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
-    public async Task<IActionResult> AvailableDoctors(DateTime date, string session, Guid? deptId)
+    public async Task<IActionResult> AvailableDoctors(DateTime date, string session, Guid? deptId, Guid? clinicRoomId)
     {
         if (string.IsNullOrEmpty(session)) return BadRequest("Thiếu session.");
         var d = DateOnly.FromDateTime(date.Date);
-        var list = await _scheduleService.GetAvailableDoctorsAsync(CurrentSiteId, deptId, d, session);
+        var list = await _scheduleService.GetAvailableDoctorsAsync(CurrentSiteId, deptId, d, session, clinicRoomId);
         return Json(list.Select(x => new
         {
             doctorId       = x.DoctorId,

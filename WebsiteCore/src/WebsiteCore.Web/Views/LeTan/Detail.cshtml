@@ -172,6 +172,22 @@
                 <small style="font-weight:normal; opacity:.85; margin-left:8px;">— hệ thống đã filter chỉ BS có lịch trực + còn slot, sort BS rảnh nhất lên đầu</small>
             </div>
             <div class="panel-body">
+                @if ((bool?)ViewBag.IsFilteredByRoom == true && assignedRoom != null)
+                {
+                    <div class="alert" style="background:#e8f5e9; border:1px solid #c8e6c9; color:#2e7d32; margin-bottom:16px;">
+                        <i class="fa fa-filter"></i>
+                        <strong>Đang lọc theo phòng <span style="background:#2e7d32; color:white; padding:2px 8px; border-radius:10px;">@assignedRoom.RoomCode @assignedRoom.RoomName</span></strong>
+                        — chỉ hiển thị BS có lịch trực phòng này. Đổi phòng ở trên để xem BS khác.
+                    </div>
+                }
+                else if ((bool?)ViewBag.RoomFilteredEmpty == true && assignedRoom != null)
+                {
+                    <div class="alert alert-warning" style="margin-bottom:16px;">
+                        <i class="fa fa-warning"></i>
+                        <strong>Phòng @assignedRoom.RoomCode @assignedRoom.RoomName chưa có BS được phân lịch trực</strong> cho ngày + ca này.
+                        Hệ thống chuyển sang hiển thị toàn bộ BS của khoa <strong>@Model.DepartmentName</strong> để bạn chọn thủ công.
+                    </div>
+                }
                 @if (deptOverview != null)
                 {
                     int deptPercent = deptOverview.DeptMaxSlots > 0

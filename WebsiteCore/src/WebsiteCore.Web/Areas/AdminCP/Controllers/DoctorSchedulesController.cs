@@ -29,10 +29,29 @@ public class DoctorSchedulesController : BaseController
         _audit = audit;
     }
 
-    public async Task<IActionResult> Index(Guid? doctorId, Guid? departmentId, byte? weekday, string? session)
+    public async Task<IActionResult> Index(Guid? doctorId, Guid? departmentId, byte? weekday, string? session, string? ym)
     {
         ViewBag.Title = "Lịch trực bác sĩ";
         var list = await _service.GetAllActiveAsync();
+
+        // Month filter (ym=yyyy-MM) — lọc schedule có hiệu lực overlap với tháng đó
+        DateOnly? mFirst = null, mLast = null;
+        if (!string.IsNullOrWhiteSpace(ym)
+            && DateTime.TryParseExact(ym + "-01", "yyyy-MM-dd",
+                System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.None, out var mParsed))
+        {
+            mFirst = new DateOnly(mParsed.Year, mParsed.Month, 1);
+            mLast  = mFirst.Value.AddMonths(1).AddDays(-1);
+            list = list.Where(s => s.ValidFrom <= mLast
+                                && (s.ValidTo == null || s.ValidTo >= mFirst))
+                       .ToList();
+            ViewBag.SelectedYm    = ym;
+            ViewBag.SelectedYmLabel = mParsed.ToString("MM/yyyy");
+            ViewBag.PrevYm        = mParsed.AddMonths(-1).ToString("yyyy-MM");
+            ViewBag.NextYm        = mParsed.AddMonths(1).ToString("yyyy-MM");
+        }
+
         // Filter
         if (doctorId.HasValue && doctorId.Value != Guid.Empty)
             list = list.Where(s => s.DoctorId == doctorId.Value).ToList();
@@ -183,6 +202,7 @@ public class DoctorSchedulesController : BaseController
         else
             TempData["Success"] = $"Đã tạo {rs.Created} lịch cho {rs.DoctorsProcessed - rs.SkippedExisting} BS (skip {rs.SkippedExisting} BS đã có lịch).";
 
-        return RedirectToAction(nameof(Index));
+        // Redirect kèm ym để admin thấy ngay tháng vừa tạo
+        return RedirectToAction(nameof(Index), new { ym = $"{year:0000}-{month:00}" });
     }
 }

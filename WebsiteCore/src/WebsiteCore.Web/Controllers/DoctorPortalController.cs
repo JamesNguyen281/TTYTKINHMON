@@ -134,6 +134,21 @@ public class DoctorPortalController : BaseController
             .ToList();
         ViewBag.Schedules = schedules;
 
+        // Banner: nếu đang xem tháng hiện tại và tháng kế tiếp đã có lịch, gợi ý chuyển sang xem
+        var todayFirst = new DateOnly(DateTime.Today.Year, DateTime.Today.Month, 1);
+        if (firstDay == todayFirst)
+        {
+            var nextFirst = firstDay.AddMonths(1);
+            var nextLast  = nextFirst.AddMonths(1).AddDays(-1);
+            bool hasNext = all.Any(s => s.ValidFrom <= nextLast
+                                     && (s.ValidTo == null || s.ValidTo >= nextFirst));
+            if (hasNext)
+            {
+                ViewBag.ShowNextMonthBanner = true;
+                ViewBag.NextMonthLabel = nextFirst.ToString("MM/yyyy");
+            }
+        }
+
         // Đếm số ca khám thực tế trong tháng (Appointment đã confirmed/completed)
         var apptList = await _apptService.GetByDoctorAsync(
             u.DoctorId.Value,

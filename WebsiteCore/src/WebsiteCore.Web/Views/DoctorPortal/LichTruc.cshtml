@@ -119,6 +119,20 @@
         </div>
     }
 
+    @if ((bool?)ViewBag.ShowNextMonthBanner == true)
+    {
+        var nextMonthLabel = ViewBag.NextMonthLabel as string ?? "";
+        <div class="alert-warn print-hide" style="background:#e3f2fd; color:#1d5688; border-left-color:#4d96ff; display:flex; align-items:center; justify-content:space-between; gap:12px;">
+            <span>
+                <i class="fa fa-info-circle"></i>
+                Lịch trực tháng <strong>@nextMonthLabel</strong> đã được Quản trị viên tạo sẵn.
+            </span>
+            <a href="/bac-si-portal/lich-truc?ym=@nextYm" class="btn-month" style="background:#4d96ff; color:white; border-color:#4d96ff; white-space:nowrap;">
+                <i class="fa fa-arrow-right"></i> Xem lịch tháng @nextMonthLabel
+            </a>
+        </div>
+    }
+
     <div class="lt-month-nav">
         <a href="/bac-si-portal/lich-truc?ym=@prevYm" class="btn-month"><i class="fa fa-chevron-left"></i> @prevYm</a>
         <span class="month-label">Tháng @cycleLabel</span>
