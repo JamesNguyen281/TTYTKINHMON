@@ -1,59 +1,116 @@
-graph TB
-    subgraph "Public / Khách"
-        UC01[Xem trang chủ]
-        UC02[Xem chuyên khoa / bác sĩ]
-        UC03[Tra cứu tin tức / văn bản]
-        UC04[Đăng ký tài khoản]
-        UC05[Đăng nhập]
-        UC06[Đặt lịch khám với tư cách khách]
+---
+config:
+    theme: default
+    themeVariables:
+        fontSize: 15px
+        primaryColor: "#D6E9FF"
+        primaryBorderColor: "#1F4E79"
+    flowchart:
+        nodeSpacing: 30
+        rankSpacing: 70
+        curve: linear
+        padding: 12
+        useMaxWidth: false
+---
+%% =======================================================================
+%% Biểu đồ Use Case TỔNG QUÁT — Website TTYT Kinh Môn (UML 2.x)
+%%   Layout: 4 actor xếp HÀNG TRÊN — System ngay dưới với 4 nhóm UC cùng hàng
+%%   Quan hệ: association (─) | include/extend (-. .->) | generalization (===)
+%% =======================================================================
+flowchart TB
+    %% ===================== ACTORS (hàng trên) =====================
+    BN(["👤<br/><b>Bệnh nhân</b>"]):::actor
+    LT(["👤<br/><b>Lễ tân</b>"]):::actor
+    BS(["👤<br/><b>Bác sĩ</b>"]):::actor
+    QT(["👤<br/><b>Quản trị</b>"]):::actor
+
+    %% ===================== HỆ THỐNG =====================
+    subgraph SYS["🖥 HỆ THỐNG WEBSITE TTYT KINH MÔN"]
+        direction LR
+
+        subgraph G_BN["━ Bệnh nhân ━"]
+            direction TB
+            UC01((UC-01<br/>Đăng ký)):::ucBN
+            UC02((UC-02<br/>Đăng nhập)):::ucBN
+            UC03((UC-03<br/>Đặt lịch khám)):::ucBN
+            UC04((UC-04<br/>Lịch của tôi)):::ucBN
+            UC05((UC-05<br/>Đặt câu hỏi)):::ucBN
+            UC06((UC-06<br/>Lịch sử khám)):::ucBN
+            UC07((UC-07<br/>Cập nhật hồ sơ)):::ucBN
+        end
+
+        subgraph G_LT["━ Lễ tân ━"]
+            direction TB
+            UC10((UC-10<br/>Xem lịch hẹn)):::ucLT
+            UC11((UC-11<br/>Duyệt + xác nhận)):::ucLT
+            UC12((UC-12<br/>Từ chối lịch)):::ucLT
+            UC13((UC-13<br/>Check-in BN)):::ucLT
+            UC14((UC-14<br/>Phân phòng + BS)):::ucLT
+            UC15((UC-15<br/>Quản lý quota)):::ucLT
+            UC16((UC-16<br/>Lịch trực BS)):::ucLT
+        end
+
+        subgraph G_BS["━ Bác sĩ ━"]
+            direction TB
+            UC20((UC-20<br/>BN hôm nay)):::ucBS
+            UC21((UC-21<br/>Tạo hồ sơ<br/>+ chẩn đoán)):::ucBS
+            UC22((UC-22<br/>Kê đơn thuốc)):::ucBS
+            UC23((UC-23<br/>Hoàn tất khám)):::ucBS
+            UC24((UC-24<br/>Trả lời Q&A)):::ucBS
+        end
+
+        subgraph G_QT["━ Quản trị ━"]
+            direction TB
+            UC30((UC-30<br/>Cấu hình site)):::ucQT
+            UC31((UC-31<br/>News/Khoa)):::ucQT
+            UC32((UC-32<br/>Doctor/User)):::ucQT
+            UC33((UC-33<br/>Tài liệu)):::ucQT
+            UC34((UC-34<br/>Audit log)):::ucQT
+            UC35((UC-35<br/>Reset pwd)):::ucQT
+        end
     end
 
-    subgraph "Bệnh nhân (Member đã đăng nhập)"
-        UC07[Đặt lịch khám]
-        UC08[Xem Lịch của tôi]
-        UC09[Theo dõi trạng thái real-time]
-        UC10[Xem lý do từ chối/đổi lịch]
-        UC11[Đặt câu hỏi cho bác sĩ]
-        UC12[Xem Câu hỏi của tôi]
-        UC13[Xem lịch sử khám]
-        UC14[Đổi mật khẩu]
-        UC15[Cập nhật hồ sơ cá nhân]
-    end
+    %% ===================== QUAN HỆ =====================
 
-    subgraph "Lễ tân (Reception)"
-        UC20[Xem danh sách lịch hẹn]
-        UC21[Xác nhận lịch → sinh mã khám]
-        UC22[Từ chối lịch + lý do bắt buộc]
-        UC23[Đề nghị đổi lịch]
-        UC24[Check-in bệnh nhân ngày khám]
-        UC25[Quản lý quota suất khám]
-        UC26[Xem lịch trực bác sĩ]
-        UC27[Polling stat real-time]
-    end
+    %% --- Association: actor → use case của mình ---
+    BN --- UC01
+    BN --- UC02
+    BN --- UC03
+    BN --- UC04
+    BN --- UC05
+    BN --- UC06
+    BN --- UC07
+    LT --- UC10
+    LT --- UC11
+    LT --- UC12
+    LT --- UC13
+    LT --- UC14
+    LT --- UC15
+    LT --- UC16
+    BS --- UC20
+    BS --- UC21
+    BS --- UC22
+    BS --- UC23
+    BS --- UC24
+    QT --- UC30
+    QT --- UC31
+    QT --- UC32
+    QT --- UC33
+    QT --- UC34
+    QT --- UC35
 
-    subgraph "Bác sĩ (Doctor)"
-        UC30[Xem bệnh nhân hôm nay]
-        UC31[Tạo hồ sơ khám + chẩn đoán]
-        UC32[Kê đơn thuốc]
-        UC33[Đánh dấu lịch hoàn tất]
-        UC34[Duyệt + trả lời câu hỏi]
-    end
+    %% --- Generalization: QT kế thừa LT + BS ---
+    LT === QT
+    BS === QT
 
-    subgraph "Admin"
-        UC40[Cấu hình site logo/favicon]
-        UC41[Quản lý News/Category/Department]
-        UC42[Quản lý Doctor/User/Role]
-        UC43[Quản lý Slide/Video/Document]
-        UC44[Xem audit log]
-        UC45[Force change password cho user]
-    end
-
-    Patient((Bệnh nhân))
-    Reception((Lễ tân))
-    Doctor((Bác sĩ))
-    Admin((Admin))
-
-    Patient --> UC04 & UC05 & UC06 & UC07 & UC08 & UC09 & UC10 & UC11 & UC12 & UC13 & UC14 & UC15
-    Reception --> UC20 & UC21 & UC22 & UC23 & UC24 & UC25 & UC26 & UC27
-    Doctor --> UC30 & UC31 & UC32 & UC33 & UC34
-    Admin --> UC40 & UC41 & UC42 & UC43 & UC44 & UC45
+    %% ===================== STYLES =====================
+    classDef actor fill:#FFD27F,stroke:#000,stroke-width:3px,font-weight:bold,color:#000
+    classDef ucBN fill:#E3F2FD,stroke:#1976D2,stroke-width:1.5px,color:#000
+    classDef ucLT fill:#E8F5E9,stroke:#2E7D32,stroke-width:1.5px,color:#000
+    classDef ucBS fill:#FFF3E0,stroke:#E65100,stroke-width:1.5px,color:#000
+    classDef ucQT fill:#FCE4EC,stroke:#AD1457,stroke-width:1.5px,color:#000
+    style SYS fill:#F8FAFC,stroke:#1F4E79,stroke-width:3px,color:#1F4E79
+    style G_BN fill:#F3F8FE,stroke:#1976D2,stroke-dasharray:5 3
+    style G_LT fill:#F1F8F2,stroke:#2E7D32,stroke-dasharray:5 3
+    style G_BS fill:#FFF8F0,stroke:#E65100,stroke-dasharray:5 3
+    style G_QT fill:#FCF3F6,stroke:#AD1457,stroke-dasharray:5 3

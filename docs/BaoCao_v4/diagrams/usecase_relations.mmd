@@ -1,0 +1,52 @@
+---
+config:
+    theme: default
+    themeVariables:
+        fontSize: 16px
+    flowchart:
+        nodeSpacing: 50
+        rankSpacing: 90
+        curve: linear
+        padding: 15
+        useMaxWidth: false
+---
+%% =======================================================================
+%% Quan hệ «include» / «extend» giữa các use case
+%%   - <<include>>: bắt buộc thực hiện
+%%   - <<extend>>: nhánh tùy chọn / có điều kiện
+%% =======================================================================
+flowchart LR
+    %% ===== Use case nghiệp vụ liên quan =====
+    UC02((UC-02<br/>Đăng nhập)):::uc
+    UC03((UC-03<br/>Đặt lịch khám)):::uc
+    UC11((UC-11<br/>Duyệt + xác nhận lịch)):::uc
+    UC12((UC-12<br/>Từ chối lịch)):::uc
+    UC14((UC-14<br/>Phân phòng + BS)):::uc
+    UC21((UC-21<br/>Tạo hồ sơ + chẩn đoán)):::uc
+    UC22((UC-22<br/>Kê đơn thuốc)):::uc
+    UC23((UC-23<br/>Hoàn tất khám)):::uc
+
+    %% ===== Use case nội bộ (target của include/extend) =====
+    UCS1(("Sinh mã booking<br/>KMyymmdd-XXXXXX")):::sysuc
+    UCS2(("Kiểm tra quota<br/>khoa + BS")):::sysuc
+    UCS3(("Cấp số hồ sơ<br/>NextRecordNo")):::sysuc
+    UCS4(("Ghi audit log")):::sysuc
+    UCS5(("Đổi mật khẩu<br/>lần đầu")):::sysuc
+
+    %% ===== <<include>> (dashed → bắt buộc) =====
+    UC03 -. "«include»" .-> UCS2
+    UC11 -. "«include»" .-> UCS1
+    UC11 -. "«include»" .-> UCS4
+    UC21 -. "«include»" .-> UCS3
+    UC21 -. "«include»" .-> UCS4
+    UC22 -. "«include»" .-> UC21
+    UC23 -. "«include»" .-> UC21
+
+    %% ===== <<extend>> (dashed → tuỳ chọn) =====
+    UC12 -. "«extend»" .-> UC11
+    UC14 -. "«extend»" .-> UC11
+    UCS5 -. "«extend»" .-> UC02
+
+    %% ===== Styles =====
+    classDef uc fill:#D6E9FF,stroke:#1F4E79,stroke-width:1.5px,color:#000
+    classDef sysuc fill:#FFF8E1,stroke:#B87908,stroke-width:1.5px,color:#000,font-style:italic

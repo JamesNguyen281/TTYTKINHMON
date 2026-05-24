@@ -143,11 +143,28 @@ Vì website lưu trữ thông tin sức khỏe của người dân — thuộc d
 
 ### 2.3.1. Biểu đồ use case tổng quát
 
+Biểu đồ use case được xây dựng theo chuẩn UML 2.x với đầy đủ ba thành phần: (1) các tác nhân (actor) đứng ngoài hệ thống, (2) ranh giới hệ thống chứa các use case nghiệp vụ, (3) các quan hệ giữa tác nhân và use case. Để bảo đảm tính rõ ràng, các quan hệ *«include»* và *«extend»* — vốn xuất hiện giữa các use case bên trong hệ thống — được tách ra trình bày trong sơ đồ phụ (Hình 2.2).
+
 Hệ thống có **bốn vai trò người dùng (actor)**: Bệnh nhân (Member), Lễ tân (Reception), Bác sĩ (Doctor), Quản trị viên (Admin). Mỗi vai trò có một tập quyền riêng, được kiểm soát thông qua bảng `system_user_group`.
 
-![Hình 2.1. Biểu đồ use case tổng quát của hệ thống](images/hinh-2-1.png){width=15cm}
+![Hình 2.1. Biểu đồ use case tổng quát của hệ thống](images/hinh-2-1.png){width=25cm}
 
-Sơ đồ tổng quát mô tả bốn actor cùng các nhóm nghiệp vụ chính: Đặt lịch, Duyệt lịch, Khám, Q&A, Quản trị. Các chi tiết từng use case được mô tả trong các mục từ 2.3.2 đến 2.3.7.
+Các thành phần trong sơ đồ Hình 2.1:
+
+- **Tác nhân (Actor) — ngoài hệ thống:** Bệnh nhân, Lễ tân, Bác sĩ, Quản trị viên. Tác nhân Quản trị viên có quan hệ tổng quát hoá (*generalization*) kế thừa toàn bộ quyền của Lễ tân và Bác sĩ — đóng vai trò super-user (thể hiện bằng đường nối nét đậm).
+- **Hệ thống xử lý (System):** ranh giới hệ thống được chia thành bốn nhóm nghiệp vụ theo từng tác nhân, bao quát toàn bộ chức năng từ đăng ký – đặt lịch của bệnh nhân, duyệt lịch – check-in – phân phòng của lễ tân, chẩn đoán – kê đơn của bác sĩ, đến cấu hình – quản trị nội dung và audit log của quản trị viên.
+- **Liên kết (association):** đường nét liền nối tác nhân với các use case mà tác nhân có quyền thực hiện.
+
+Hình 2.2 trình bày **các quan hệ giữa use case với use case**, gồm hai loại do hệ thống tự kích hoạt:
+
+![Hình 2.2. Quan hệ «include» và «extend» giữa các use case](images/hinh-2-2.png){width=15cm}
+
+- *«include»* — quan hệ bao hàm, use case nguồn bắt buộc gọi tới use case đích mỗi khi thực thi. Ví dụ: *UC-11 Duyệt và xác nhận lịch* «include» *Sinh mã booking* + *Ghi audit log*; *UC-22 Kê đơn thuốc* «include» *UC-21 Tạo hồ sơ + chẩn đoán*; *UC-03 Đặt lịch khám* «include» *Kiểm tra quota khoa và bác sĩ*.
+- *«extend»* — quan hệ mở rộng, use case mở rộng chỉ thực hiện khi điều kiện kích hoạt được thoả mãn. Ví dụ: *Đổi mật khẩu lần đầu* «extend» *UC-02 Đăng nhập* khi `must_change_password = 1`; *UC-12 Từ chối lịch* «extend» *UC-11 Duyệt và xác nhận lịch* khi bác sĩ bận hoặc hết suất; *UC-14 Phân phòng + BS* «extend» *UC-11 Duyệt và xác nhận lịch* sau khi lễ tân xác nhận.
+
+Năm use case nội bộ — *Sinh mã booking* (`KMyymmdd-XXXXXX`), *Kiểm tra quota khoa và bác sĩ*, *Cấp số hồ sơ* (`NextRecordNoAsync()`), *Ghi audit log*, *Đổi mật khẩu lần đầu* — không có tác nhân gọi trực tiếp mà chỉ là đích của các quan hệ «include»/«extend» nêu trên.
+
+Các chi tiết kịch bản từng use case được mô tả ở các mục 2.3.2 đến 2.3.7.
 
 ### 2.3.2. Use case Đặt lịch khám
 
@@ -229,7 +246,7 @@ Sơ đồ tổng quát mô tả bốn actor cùng các nhóm nghiệp vụ chín
 
 ### 2.4.1. Biểu đồ hoạt động Đăng ký tài khoản
 
-![Hình 2.2. Biểu đồ hoạt động Đăng ký tài khoản](images/hinh-2-2.png){width=12cm}
+![Hình 2.2. Biểu đồ hoạt động Đăng ký tài khoản](images/hinh-2-2.png){width=16cm}
 
 **Mô tả luồng:**
 
@@ -240,7 +257,7 @@ Sơ đồ tổng quát mô tả bốn actor cùng các nhóm nghiệp vụ chín
 
 ### 2.4.2. Biểu đồ hoạt động Đăng nhập
 
-![Hình 2.3. Biểu đồ hoạt động Đăng nhập](images/hinh-2-3.png){width=12cm}
+![Hình 2.3. Biểu đồ hoạt động Đăng nhập](images/hinh-2-3.png){width=16cm}
 
 **Mô tả luồng:**
 
@@ -252,7 +269,7 @@ Sơ đồ tổng quát mô tả bốn actor cùng các nhóm nghiệp vụ chín
 
 ### 2.4.3. Biểu đồ hoạt động Đặt lịch khám
 
-![Hình 2.4. Biểu đồ hoạt động Đặt lịch khám](images/hinh-2-4.png){width=12cm}
+![Hình 2.4. Biểu đồ hoạt động Đặt lịch khám](images/hinh-2-4.png){width=16cm}
 
 **Mô tả luồng (3 swimlane: Bệnh nhân – Hệ thống – Lễ tân):**
 
@@ -266,7 +283,7 @@ Sơ đồ tổng quát mô tả bốn actor cùng các nhóm nghiệp vụ chín
 
 ### 2.4.4. Biểu đồ hoạt động Check-in và Khám bệnh
 
-![Hình 2.5. Biểu đồ hoạt động Check-in và Khám bệnh](images/hinh-2-5.png){width=12cm}
+![Hình 2.5. Biểu đồ hoạt động Check-in và Khám bệnh](images/hinh-2-5.png){width=16cm}
 
 **Mô tả luồng:**
 
@@ -278,7 +295,7 @@ Sơ đồ tổng quát mô tả bốn actor cùng các nhóm nghiệp vụ chín
 
 ### 2.4.5. Biểu đồ hoạt động Hỏi đáp với bác sĩ
 
-![Hình 2.6. Biểu đồ hoạt động Hỏi đáp](images/hinh-2-6.png){width=12cm}
+![Hình 2.6. Biểu đồ hoạt động Hỏi đáp](images/hinh-2-6.png){width=16cm}
 
 **Mô tả luồng:**
 
@@ -385,7 +402,7 @@ Ngoài năm bảng nêu trên, hệ thống còn **20 bảng phụ trợ** khác
 
 ## 2.6. Sơ đồ quan hệ thực thể (ERD)
 
-![Hình 2.7. Sơ đồ quan hệ thực thể (ERD) của hệ thống TTYT phường Kinh Môn](images/hinh-2-7.png){width=15cm}
+![Hình 2.7. Sơ đồ quan hệ thực thể (ERD) của hệ thống TTYT phường Kinh Môn](images/hinh-2-7.png){width=16cm}
 
 *(xem ảnh đính kèm — file `docs/diagrams/erd_full.png`)*
 

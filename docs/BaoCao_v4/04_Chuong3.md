@@ -10,9 +10,9 @@ Trang chủ được thiết kế theo bố cục chuẩn của các website y t
 
 ### 3.1.2. Giao diện thực tế
 
-![Hình 3.1. Giao diện Trang chủ trên desktop 1366 × 768](images/hinh-3-2.png){width=14cm}
+![Hình 3.1. Giao diện Trang chủ trên desktop 1366 × 768](images/hinh-3-2.png){width=16cm}
 
-![Hình 3.2. Giao diện Trang chủ trên iPhone X 375 × 812](images/hinh-3-3.png){width=7.5cm}
+![Hình 3.2. Giao diện Trang chủ trên iPhone X 375 × 812](images/hinh-3-3.png){width=9cm}
 
 ### 3.1.3. Đặc tả chức năng
 
@@ -39,9 +39,9 @@ Theo quy trình ngoại trú chuẩn của Trung tâm Y tế phường, mọi b�
 
 ### 3.2.2. Giao diện thực tế
 
-![Hình 3.3. Giao diện Đặt lịch khám trên desktop](images/hinh-3-5.png){width=14cm}
+![Hình 3.3. Giao diện Đặt lịch khám trên desktop](images/hinh-3-5.png){width=16cm}
 
-![Hình 3.4. Giao diện Đặt lịch khám trên iPhone SE 320 × 568](images/hinh-3-6.png){width=7cm}
+![Hình 3.4. Giao diện Đặt lịch khám trên iPhone SE 320 × 568](images/hinh-3-6.png){width=9cm}
 
 ### 3.2.3. Đặc tả chức năng
 
@@ -65,11 +65,11 @@ Theo quy trình ngoại trú chuẩn của Trung tâm Y tế phường, mọi b�
 
 ### 3.3.1. Giao diện Đăng ký
 
-![Hình 3.5. Giao diện trang Đăng ký](images/hinh-3-7.png){width=14cm}
+![Hình 3.5. Giao diện trang Đăng ký](images/hinh-3-7.png){width=16cm}
 
 ### 3.3.2. Giao diện Đăng nhập
 
-![Hình 3.6. Giao diện trang Đăng nhập](images/hinh-3-8.png){width=14cm}
+![Hình 3.6. Giao diện trang Đăng nhập](images/hinh-3-8.png){width=16cm}
 
 ### 3.3.3. Đặc tả chức năng
 
@@ -92,7 +92,7 @@ Theo quy trình ngoại trú chuẩn của Trung tâm Y tế phường, mọi b�
 
 ### 3.4.1. Giao diện
 
-![Hình 3.7. Giao diện trang Lịch của tôi](images/hinh-3-9.png){width=14cm}
+![Hình 3.7. Giao diện trang Lịch của tôi](images/hinh-3-9.png){width=16cm}
 
 ### 3.4.2. Đặc tả chức năng
 
@@ -111,19 +111,19 @@ Theo quy trình ngoại trú chuẩn của Trung tâm Y tế phường, mọi b�
 
 ### 3.5.1. Trang chủ Cổng Lễ tân
 
-![Hình 3.8. Giao diện Trang chủ Cổng Lễ tân](images/hinh-3-11.png){width=14cm}
+![Hình 3.8. Giao diện Trang chủ Cổng Lễ tân](images/hinh-3-11.png){width=16cm}
 
 ### 3.5.2. Trang Lịch hẹn (Chờ duyệt)
 
-![Hình 3.9. Giao diện Lịch hẹn — Chờ duyệt](images/hinh-3-12.png){width=14cm}
+![Hình 3.9. Giao diện Lịch hẹn — Chờ duyệt](images/hinh-3-12.png){width=16cm}
 
 ### 3.5.3. Trang Tìm theo SĐT
 
-![Hình 3.10. Giao diện Tìm lịch theo số điện thoại](images/hinh-3-13.png){width=14cm}
+![Hình 3.10. Giao diện Tìm lịch theo số điện thoại](images/hinh-3-13.png){width=16cm}
 
 ### 3.5.4. Trang Lịch theo ngày
 
-![Hình 3.11. Giao diện Tra cứu lịch theo ngày](images/hinh-3-14.png){width=14cm}
+![Hình 3.11. Giao diện Tra cứu lịch theo ngày](images/hinh-3-14.png){width=16cm}
 
 ### 3.5.5. Đặc tả chức năng
 
@@ -143,11 +143,11 @@ Theo quy trình ngoại trú chuẩn của Trung tâm Y tế phường, mọi b�
 
 ### 3.6.1. Trang chủ Cổng Bác sĩ
 
-![Hình 3.12. Giao diện trang chủ Cổng Bác sĩ](images/hinh-3-15.png){width=14cm}
+![Hình 3.12. Giao diện trang chủ Cổng Bác sĩ](images/hinh-3-15.png){width=16cm}
 
 ### 3.6.2. Trang Bệnh nhân hôm nay
 
-![Hình 3.13. Giao diện Danh sách bệnh nhân hôm nay](images/hinh-3-16.png){width=14cm}
+![Hình 3.13. Giao diện Danh sách bệnh nhân hôm nay](images/hinh-3-16.png){width=16cm}
 
 ### 3.6.3. Trang Hồ sơ đã chẩn đoán
 
@@ -178,15 +178,15 @@ Cơ chế bảo mật được triển khai theo mô hình *defense-in-depth* g�
 
 ### 3.7.1. Dashboard
 
-![Hình 3.14. Giao diện Dashboard AdminCP](images/hinh-3-18.png){width=14cm}
+![Hình 3.14. Giao diện Dashboard AdminCP](images/hinh-3-18.png){width=16cm}
 
 ### 3.7.2. Trang Quản lý Lịch trực bác sĩ
 
-![Hình 3.15. Giao diện Quản lý Lịch trực bác sĩ](images/hinh-3-19.png){width=14cm}
+![Hình 3.15. Giao diện Quản lý Lịch trực bác sĩ](images/hinh-3-19.png){width=16cm}
 
 ### 3.7.3. Trang Tự động phân lịch tháng
 
-![Hình 3.16. Giao diện Tự động phân lịch tháng](images/hinh-3-20.png){width=14cm}
+![Hình 3.16. Giao diện Tự động phân lịch tháng](images/hinh-3-20.png){width=16cm}
 
 ### 3.7.4. Đặc tả chức năng
 

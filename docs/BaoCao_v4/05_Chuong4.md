@@ -205,7 +205,7 @@ Một số kịch bản nghiệp vụ phức tạp khó tự động hóa hoàn 
 
 Toàn bộ collection trên được lưu thành tệp `TTYTKM.postman_collection.json` đặt trong thư mục `postman/` của repository. Khi cần chạy lại nhanh, có hai phương án: (1) mở ứng dụng Postman, sử dụng chức năng "Import" để nạp tệp collection; (2) sử dụng dòng lệnh `newman run TTYTKM.postman_collection.json`. Newman là CLI runner đi kèm Postman, phù hợp khi tích hợp vào pipeline tự động hoặc khi không cần đến giao diện đồ họa.
 
-![Hình 4.1. Báo cáo HTML từ Newman — chạy 8 request, 12 assertion, 0 fail trong 829 ms](images/hinh-4-4.png){width=14cm}
+![Hình 4.1. Báo cáo HTML từ Newman — chạy 8 request, 12 assertion, 0 fail trong 829 ms](images/hinh-4-4.png){width=16cm}
 
 ### 4.2.3. Kiểm thử triển khai public qua Cloudflare Tunnel
 
@@ -241,7 +241,7 @@ Hệ thống được triển khai public qua Cloudflare Tunnel với tên miề
 
 > Trong tổng số 289 test case, **269 test case** được thực thi tự động bằng Playwright Test Runner (UI + Functional + Regression + Mobile Audit), còn lại 8 test Postman thủ công và 12 test manual. Toàn bộ test pass, 19 trường hợp skip có lý do (cần fixture nâng cao như PDF export, gửi email SMTP thật).
 
-![Hình 4.2. Báo cáo HTML Playwright Test Runner — toàn bộ 256 test pass, 13 skip, 0 fail](images/hinh-4-3.png){width=14cm}
+![Hình 4.2. Báo cáo HTML Playwright Test Runner — toàn bộ 256 test pass, 13 skip, 0 fail](images/hinh-4-3.png){width=16cm}
 
 ### 4.3.1. So sánh thời gian thực thi
 

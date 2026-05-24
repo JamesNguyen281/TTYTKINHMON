@@ -1,0 +1,124 @@
+@startuml usecase
+' ========================================================================
+' Biểu đồ Use Case tổng quát — Website TTYT Kinh Môn
+' Chuẩn UML 2.x — Actors, Use Cases, <<include>>, <<extend>>, generalization
+' ========================================================================
+left to right direction
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+skinparam shadowing false
+skinparam defaultFontSize 13
+skinparam defaultFontName Arial
+skinparam usecase {
+    BackgroundColor #D6E9FF
+    BorderColor #1F4E79
+    ArrowColor #1F4E79
+    FontColor #000
+}
+skinparam actor {
+    BackgroundColor #FFD27F
+    BorderColor #000
+    FontStyle bold
+}
+
+' ===== Actors (ngoài hệ thống) =====
+actor "Bệnh nhân" as BN
+actor "Lễ tân" as LT
+actor "Bác sĩ" as BS
+actor "Quản trị" as QT
+
+' ===== Generalization giữa actor (Admin = super-user) =====
+LT <|-- QT
+BS <|-- QT
+
+' ===== System boundary =====
+rectangle "Hệ thống Website TTYT Kinh Môn" {
+
+    ' --- Bệnh nhân ---
+    usecase "UC-01\nĐăng ký tài khoản" as UC01
+    usecase "UC-02\nĐăng nhập" as UC02
+    usecase "UC-03\nĐặt lịch khám" as UC03
+    usecase "UC-04\nXem lịch của tôi" as UC04
+    usecase "UC-05\nĐặt câu hỏi" as UC05
+    usecase "UC-06\nXem lịch sử khám" as UC06
+    usecase "UC-07\nCập nhật hồ sơ" as UC07
+
+    ' --- Lễ tân ---
+    usecase "UC-10\nXem danh sách lịch hẹn" as UC10
+    usecase "UC-11\nDuyệt và xác nhận lịch" as UC11
+    usecase "UC-12\nTừ chối lịch" as UC12
+    usecase "UC-13\nCheck-in bệnh nhân" as UC13
+    usecase "UC-14\nPhân phòng khám + BS" as UC14
+    usecase "UC-15\nQuản lý quota khám" as UC15
+    usecase "UC-16\nXem lịch trực BS" as UC16
+
+    ' --- Bác sĩ ---
+    usecase "UC-20\nXem BN hôm nay" as UC20
+    usecase "UC-21\nTạo hồ sơ + chẩn đoán" as UC21
+    usecase "UC-22\nKê đơn thuốc" as UC22
+    usecase "UC-23\nHoàn tất khám" as UC23
+    usecase "UC-24\nTrả lời câu hỏi BN" as UC24
+
+    ' --- Quản trị ---
+    usecase "UC-30\nCấu hình site" as UC30
+    usecase "UC-31\nQuản lý News/Khoa" as UC31
+    usecase "UC-32\nQuản lý Doctor/User" as UC32
+    usecase "UC-33\nQuản lý tài liệu" as UC33
+    usecase "UC-34\nXem audit log" as UC34
+    usecase "UC-35\nForce change pwd" as UC35
+
+    ' --- Use cases nội bộ (chỉ làm target của include/extend) ---
+    usecase "Sinh mã booking\n(KMyymmdd-XXXXXX)" as UCI_CODE
+    usecase "Kiểm tra quota\nkhoa + BS" as UCI_QUOTA
+    usecase "Cấp số hồ sơ\n(NextRecordNo)" as UCI_RECNO
+    usecase "Ghi audit log" as UCI_AUDIT
+    usecase "Đổi mật khẩu\nlần đầu" as UCE_PWDFIRST
+}
+
+' ============== ASSOCIATIONS ==============
+BN -- UC01
+BN -- UC02
+BN -- UC03
+BN -- UC04
+BN -- UC05
+BN -- UC06
+BN -- UC07
+
+LT -- UC10
+LT -- UC11
+LT -- UC12
+LT -- UC13
+LT -- UC14
+LT -- UC15
+LT -- UC16
+
+BS -- UC20
+BS -- UC21
+BS -- UC22
+BS -- UC23
+BS -- UC24
+
+QT -- UC30
+QT -- UC31
+QT -- UC32
+QT -- UC33
+QT -- UC34
+QT -- UC35
+
+' ============== <<INCLUDE>> — bắt buộc thực hiện ==============
+UC03 ..> UCI_QUOTA : <<include>>
+UC11 ..> UCI_CODE  : <<include>>
+UC11 ..> UCI_AUDIT : <<include>>
+UC12 ..> UCI_AUDIT : <<include>>
+UC13 ..> UCI_AUDIT : <<include>>
+UC21 ..> UCI_RECNO : <<include>>
+UC21 ..> UCI_AUDIT : <<include>>
+UC22 ..> UC21      : <<include>>
+UC23 ..> UC21      : <<include>>
+
+' ============== <<EXTEND>> — nhánh tùy chọn / điều kiện ==============
+UC12 .[#red].> UC11           : <<extend>>\n(khi BS bận / hết suất)
+UCE_PWDFIRST .[#red].> UC02   : <<extend>>\n(khi must_change=1)
+UC14 .[#red].> UC11           : <<extend>>\n(sau xác nhận)
+
+@enduml
