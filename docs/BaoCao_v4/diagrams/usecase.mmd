@@ -1,5 +1,6 @@
 ---
 config:
+    layout: elk
     theme: default
     themeVariables:
         fontSize: 15px
@@ -11,35 +12,42 @@ config:
         curve: linear
         padding: 12
         useMaxWidth: false
+    elk:
+        algorithm: layered
+        mergeEdges: true
+        nodePlacement.strategy: NETWORK_SIMPLEX
+        spacing.nodeNode: 40
+        spacing.edgeEdge: 25
+        layered.spacing.nodeNodeBetweenLayers: 60
 ---
 %% =======================================================================
 %% Biểu đồ Use Case TỔNG QUÁT — Website TTYT Kinh Môn (UML 2.x)
-%%   Layout: 4 actor xếp HÀNG TRÊN — System ngay dưới với 4 nhóm UC cùng hàng
-%%   Quan hệ: association (─) | include/extend (-. .->) | generalization (===)
+%%   Layout HORIZONTAL: BS/LT/QT TRÁI — System GIỮA — Bệnh nhân PHẢI
+%%   3 thành phần: Actor + System + Quan hệ (association/include/extend/generalization)
 %% =======================================================================
-flowchart TB
-    %% ===================== ACTORS (hàng trên) =====================
-    BN(["👤<br/><b>Bệnh nhân</b>"]):::actor
-    LT(["👤<br/><b>Lễ tân</b>"]):::actor
-    BS(["👤<br/><b>Bác sĩ</b>"]):::actor
-    QT(["👤<br/><b>Quản trị</b>"]):::actor
+flowchart LR
+    %% ===================== ACTORS TRÁI =====================
+    subgraph LEFT_ACTORS[" "]
+        direction TB
+        BS(["👤<br/><b>Bác sĩ</b>"]):::actor
+        LT(["👤<br/><b>Lễ tân</b>"]):::actor
+        QT(["👤<br/><b>Quản trị</b>"]):::actor
+    end
 
-    %% ===================== HỆ THỐNG =====================
+    %% ===================== HỆ THỐNG (giữa) =====================
     subgraph SYS["🖥 HỆ THỐNG WEBSITE TTYT KINH MÔN"]
-        direction LR
+        direction TB
 
-        subgraph G_BN["━ Bệnh nhân ━"]
+        subgraph G_BS["━ Nghiệp vụ Bác sĩ ━"]
             direction TB
-            UC01((UC-01<br/>Đăng ký)):::ucBN
-            UC02((UC-02<br/>Đăng nhập)):::ucBN
-            UC03((UC-03<br/>Đặt lịch khám)):::ucBN
-            UC04((UC-04<br/>Lịch của tôi)):::ucBN
-            UC05((UC-05<br/>Đặt câu hỏi)):::ucBN
-            UC06((UC-06<br/>Lịch sử khám)):::ucBN
-            UC07((UC-07<br/>Cập nhật hồ sơ)):::ucBN
+            UC20((UC-20<br/>BN hôm nay)):::ucBS
+            UC21((UC-21<br/>Tạo hồ sơ<br/>+ chẩn đoán)):::ucBS
+            UC22((UC-22<br/>Kê đơn thuốc)):::ucBS
+            UC23((UC-23<br/>Hoàn tất khám)):::ucBS
+            UC24((UC-24<br/>Trả lời Q&A)):::ucBS
         end
 
-        subgraph G_LT["━ Lễ tân ━"]
+        subgraph G_LT["━ Nghiệp vụ Lễ tân ━"]
             direction TB
             UC10((UC-10<br/>Xem lịch hẹn)):::ucLT
             UC11((UC-11<br/>Duyệt + xác nhận)):::ucLT
@@ -50,16 +58,7 @@ flowchart TB
             UC16((UC-16<br/>Lịch trực BS)):::ucLT
         end
 
-        subgraph G_BS["━ Bác sĩ ━"]
-            direction TB
-            UC20((UC-20<br/>BN hôm nay)):::ucBS
-            UC21((UC-21<br/>Tạo hồ sơ<br/>+ chẩn đoán)):::ucBS
-            UC22((UC-22<br/>Kê đơn thuốc)):::ucBS
-            UC23((UC-23<br/>Hoàn tất khám)):::ucBS
-            UC24((UC-24<br/>Trả lời Q&A)):::ucBS
-        end
-
-        subgraph G_QT["━ Quản trị ━"]
+        subgraph G_QT["━ Nghiệp vụ Quản trị ━"]
             direction TB
             UC30((UC-30<br/>Cấu hình site)):::ucQT
             UC31((UC-31<br/>News/Khoa)):::ucQT
@@ -68,18 +67,42 @@ flowchart TB
             UC34((UC-34<br/>Audit log)):::ucQT
             UC35((UC-35<br/>Reset pwd)):::ucQT
         end
+
+        subgraph G_SYS["━ Use case nội bộ ━"]
+            direction TB
+            UCS1((Sinh mã booking<br/>KMyymmdd-XXXXXX)):::ucSYS
+            UCS2((Kiểm tra quota<br/>khoa + BS)):::ucSYS
+            UCS3((Cấp số hồ sơ<br/>NextRecordNo)):::ucSYS
+            UCS4((Ghi audit log)):::ucSYS
+            UCS5((Đổi mật khẩu<br/>lần đầu)):::ucSYS
+        end
+
+        subgraph G_BN["━ Nghiệp vụ Bệnh nhân ━"]
+            direction TB
+            UC01((UC-01<br/>Đăng ký)):::ucBN
+            UC02((UC-02<br/>Đăng nhập)):::ucBN
+            UC03((UC-03<br/>Đặt lịch khám)):::ucBN
+            UC04((UC-04<br/>Lịch của tôi)):::ucBN
+            UC05((UC-05<br/>Đặt câu hỏi)):::ucBN
+            UC06((UC-06<br/>Lịch sử khám)):::ucBN
+            UC07((UC-07<br/>Cập nhật hồ sơ)):::ucBN
+        end
+    end
+
+    %% ===================== ACTOR PHẢI =====================
+    subgraph RIGHT_ACTORS[" "]
+        direction TB
+        BN(["👤<br/><b>Bệnh nhân</b>"]):::actor
     end
 
     %% ===================== QUAN HỆ =====================
 
-    %% --- Association: actor → use case của mình ---
-    BN --- UC01
-    BN --- UC02
-    BN --- UC03
-    BN --- UC04
-    BN --- UC05
-    BN --- UC06
-    BN --- UC07
+    %% --- Association: BS/LT/QT (trái) → UC ---
+    BS --- UC20
+    BS --- UC21
+    BS --- UC22
+    BS --- UC23
+    BS --- UC24
     LT --- UC10
     LT --- UC11
     LT --- UC12
@@ -87,11 +110,6 @@ flowchart TB
     LT --- UC14
     LT --- UC15
     LT --- UC16
-    BS --- UC20
-    BS --- UC21
-    BS --- UC22
-    BS --- UC23
-    BS --- UC24
     QT --- UC30
     QT --- UC31
     QT --- UC32
@@ -99,9 +117,32 @@ flowchart TB
     QT --- UC34
     QT --- UC35
 
+    %% --- Association: UC → BN (phải) ---
+    UC01 --- BN
+    UC02 --- BN
+    UC03 --- BN
+    UC04 --- BN
+    UC05 --- BN
+    UC06 --- BN
+    UC07 --- BN
+
     %% --- Generalization: QT kế thừa LT + BS ---
     LT === QT
     BS === QT
+
+    %% --- «include»: bắt buộc thực hiện ---
+    UC03 -. "«include»" .-> UCS2
+    UC11 -. "«include»" .-> UCS1
+    UC11 -. "«include»" .-> UCS4
+    UC21 -. "«include»" .-> UCS3
+    UC21 -. "«include»" .-> UCS4
+    UC22 -. "«include»" .-> UC21
+    UC23 -. "«include»" .-> UC21
+
+    %% --- «extend»: nhánh tùy chọn ---
+    UC12 -. "«extend»" .-> UC11
+    UC14 -. "«extend»" .-> UC11
+    UCS5 -. "«extend»" .-> UC02
 
     %% ===================== STYLES =====================
     classDef actor fill:#FFD27F,stroke:#000,stroke-width:3px,font-weight:bold,color:#000
@@ -109,8 +150,12 @@ flowchart TB
     classDef ucLT fill:#E8F5E9,stroke:#2E7D32,stroke-width:1.5px,color:#000
     classDef ucBS fill:#FFF3E0,stroke:#E65100,stroke-width:1.5px,color:#000
     classDef ucQT fill:#FCE4EC,stroke:#AD1457,stroke-width:1.5px,color:#000
+    classDef ucSYS fill:#FFF8E1,stroke:#B87908,stroke-width:1.5px,color:#000,font-style:italic
+    style LEFT_ACTORS fill:transparent,stroke:transparent
+    style RIGHT_ACTORS fill:transparent,stroke:transparent
     style SYS fill:#F8FAFC,stroke:#1F4E79,stroke-width:3px,color:#1F4E79
     style G_BN fill:#F3F8FE,stroke:#1976D2,stroke-dasharray:5 3
     style G_LT fill:#F1F8F2,stroke:#2E7D32,stroke-dasharray:5 3
     style G_BS fill:#FFF8F0,stroke:#E65100,stroke-dasharray:5 3
     style G_QT fill:#FCF3F6,stroke:#AD1457,stroke-dasharray:5 3
+    style G_SYS fill:#FFFCF0,stroke:#B87908,stroke-dasharray:5 3
