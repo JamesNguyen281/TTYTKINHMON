@@ -162,6 +162,32 @@ Các thành phần trong sơ đồ Hình 2.1:
 
 ![Hình 2.2. Trích phóng to quan hệ «include» / «extend» giữa các use case](images/hinh-2-2.png){width=15cm}
 
+Để làm rõ phạm vi quyền hạn của từng vai trò, các hình 2.3 đến 2.6 trình bày sơ đồ use case riêng cho từng tác nhân — cho phép người đọc nhanh chóng nắm bắt các chức năng mà mỗi vai trò có thể thực hiện trong hệ thống.
+
+**a) Tác nhân Bệnh nhân**
+
+![Hình 2.3. Biểu đồ use case của tác nhân Bệnh nhân](images/hinh-2-3.png){width=15cm}
+
+Bệnh nhân có quyền truy cập bảy use case từ UC-01 đến UC-07 — gồm các nghiệp vụ tự phục vụ trên kênh public và member: đăng ký tài khoản, đăng nhập, đặt lịch khám, xem lịch của tôi, đặt câu hỏi Q&A, xem lịch sử khám và cập nhật hồ sơ cá nhân. Use case *UC-03 Đặt lịch khám* có quan hệ «include» với *Kiểm tra quota khoa và bác sĩ* — đảm bảo luôn còn suất trước khi tạo lịch ở trạng thái Pending. Use case *UC-02 Đăng nhập* có quan hệ «extend» với *Đổi mật khẩu lần đầu* — chỉ thực thi khi cờ `must_change_password = 1`.
+
+**b) Tác nhân Lễ tân**
+
+![Hình 2.4. Biểu đồ use case của tác nhân Lễ tân](images/hinh-2-4.png){width=15cm}
+
+Lễ tân vận hành cổng nội bộ với bảy use case từ UC-10 đến UC-16: xem danh sách lịch hẹn, duyệt và xác nhận lịch, từ chối lịch, check-in bệnh nhân, phân phòng khám + bác sĩ, quản lý quota khám và xem lịch trực bác sĩ. Use case trung tâm *UC-11 Duyệt và xác nhận lịch* có hai quan hệ «include» — gọi tới *Sinh mã booking* (định dạng `KMyymmdd-XXXXXX`) và *Ghi audit log*. Các use case *UC-12 Từ chối lịch* và *UC-14 Phân phòng + BS* có quan hệ «extend» với UC-11 — kích hoạt theo điều kiện cụ thể (bác sĩ bận hoặc lễ tân quyết định phân phòng sau xác nhận).
+
+**c) Tác nhân Bác sĩ**
+
+![Hình 2.5. Biểu đồ use case của tác nhân Bác sĩ](images/hinh-2-5.png){width=15cm}
+
+Bác sĩ có năm use case từ UC-20 đến UC-24: xem bệnh nhân hôm nay, tạo hồ sơ + chẩn đoán, kê đơn thuốc, hoàn tất khám và trả lời câu hỏi Q&A. Use case trung tâm *UC-21 Tạo hồ sơ + chẩn đoán* có quan hệ «include» với hai use case nội bộ — *Cấp số hồ sơ* (sử dụng cơ chế `NextRecordNoAsync` retry 5 lần để chống race condition) và *Ghi audit log*. Các use case *UC-22 Kê đơn thuốc* và *UC-23 Hoàn tất khám* là quan hệ «include» của UC-21 — chỉ thực hiện sau khi đã có hồ sơ khám.
+
+**d) Tác nhân Quản trị viên**
+
+![Hình 2.6. Biểu đồ use case của tác nhân Quản trị viên (kèm quan hệ generalization với Lễ tân và Bác sĩ)](images/hinh-2-6.png){width=15cm}
+
+Quản trị viên có sáu use case từ UC-30 đến UC-35: cấu hình site, quản lý News/Khoa, quản lý Doctor/User, quản lý tài liệu, xem audit log và force change password. Tác nhân Quản trị viên là *super-user* — thông qua quan hệ tổng quát hoá (*generalization*) thể hiện bằng tam giác UML, Quản trị kế thừa toàn bộ quyền của Lễ tân và Bác sĩ, đồng thời có thêm các quyền cấu hình hệ thống. Phần lớn các use case quản trị có «include» với *Ghi audit log* để bảo đảm truy vết toàn bộ thay đổi.
+
 Các chi tiết kịch bản từng use case được mô tả ở các mục 2.3.2 đến 2.3.7.
 
 ### 2.3.2. Use case Đặt lịch khám
@@ -244,7 +270,7 @@ Các chi tiết kịch bản từng use case được mô tả ở các mục 2.
 
 ### 2.4.1. Biểu đồ hoạt động Đăng ký tài khoản
 
-![Hình 2.2. Biểu đồ hoạt động Đăng ký tài khoản](images/hinh-2-2.png){width=16cm}
+![Hình 2.7. Biểu đồ hoạt động Đăng ký tài khoản](images/hinh-2-7.png){width=16cm}
 
 **Mô tả luồng:**
 
@@ -255,7 +281,7 @@ Các chi tiết kịch bản từng use case được mô tả ở các mục 2.
 
 ### 2.4.2. Biểu đồ hoạt động Đăng nhập
 
-![Hình 2.3. Biểu đồ hoạt động Đăng nhập](images/hinh-2-3.png){width=16cm}
+![Hình 2.8. Biểu đồ hoạt động Đăng nhập](images/hinh-2-8.png){width=16cm}
 
 **Mô tả luồng:**
 
@@ -267,7 +293,7 @@ Các chi tiết kịch bản từng use case được mô tả ở các mục 2.
 
 ### 2.4.3. Biểu đồ hoạt động Đặt lịch khám
 
-![Hình 2.4. Biểu đồ hoạt động Đặt lịch khám](images/hinh-2-4.png){width=16cm}
+![Hình 2.9. Biểu đồ hoạt động Đặt lịch khám](images/hinh-2-9.png){width=16cm}
 
 **Mô tả luồng (3 swimlane: Bệnh nhân – Hệ thống – Lễ tân):**
 
@@ -281,7 +307,7 @@ Các chi tiết kịch bản từng use case được mô tả ở các mục 2.
 
 ### 2.4.4. Biểu đồ hoạt động Check-in và Khám bệnh
 
-![Hình 2.5. Biểu đồ hoạt động Check-in và Khám bệnh](images/hinh-2-5.png){width=16cm}
+![Hình 2.10. Biểu đồ hoạt động Check-in và Khám bệnh](images/hinh-2-10.png){width=16cm}
 
 **Mô tả luồng:**
 
@@ -293,7 +319,7 @@ Các chi tiết kịch bản từng use case được mô tả ở các mục 2.
 
 ### 2.4.5. Biểu đồ hoạt động Hỏi đáp với bác sĩ
 
-![Hình 2.6. Biểu đồ hoạt động Hỏi đáp](images/hinh-2-6.png){width=16cm}
+![Hình 2.11. Biểu đồ hoạt động Hỏi đáp](images/hinh-2-11.png){width=16cm}
 
 **Mô tả luồng:**
 
@@ -309,31 +335,31 @@ Biểu đồ hoạt động (Activity Diagram) trong mục 2.4 tập trung mô t
 
 ### 2.5.1. Biểu đồ tuần tự Đăng nhập
 
-![Hình 2.7. Biểu đồ tuần tự nghiệp vụ Đăng nhập](images/hinh-2-7.png){width=16cm}
+![Hình 2.12. Biểu đồ tuần tự nghiệp vụ Đăng nhập](images/hinh-2-12.png){width=16cm}
 
 Người dùng nhập tài khoản tại form `/dang-nhap`. `AuthController` kiểm tra anti-CSRF token, sau đó gọi `UserService.ValidateCredentialsAsync()` xác minh mật khẩu bằng PBKDF2-SHA256 với 600.000 vòng lặp. Nếu sai 5 lần liên tiếp, hệ thống khóa tài khoản 15 phút (`locked_until`). Nếu đúng, cookie session HttpOnly + Secure được tạo; nếu cờ `must_change_password = 1` thì chuyển hướng đến trang đổi mật khẩu, ngược lại điều hướng theo vai trò (`/`, `/le-tan`, `/bac-si-portal`, `/AdminCP/Default`).
 
 ### 2.5.2. Biểu đồ tuần tự Đặt lịch khám
 
-![Hình 2.8. Biểu đồ tuần tự nghiệp vụ Đặt lịch khám](images/hinh-2-8.png){width=16cm}
+![Hình 2.13. Biểu đồ tuần tự nghiệp vụ Đặt lịch khám](images/hinh-2-13.png){width=16cm}
 
 `AppointmentController` xử lý form đặt lịch: kiểm tra anti-CSRF, gọi `AppointmentService.CreateAppointmentAsync()`. Service trước hết kiểm tra trùng buổi (cùng tài khoản, cùng ngày, cùng ca), sau đó gọi `QuotaService.CheckQuotaAsync()` đối chiếu hai tầng quota (theo khoa và theo bác sĩ). Khi cả hai kiểm tra đều đạt, lịch được lưu ở trạng thái *Pending* và ghi `audit_system` với mã hành vi `APPOINTMENT_CREATED`. Hệ thống tự gán `DepartmentId = Khoa Khám bệnh`, để trống `ClinicRoomId` chờ lễ tân phân phòng.
 
 ### 2.5.3. Biểu đồ tuần tự Duyệt và xác nhận lịch hẹn
 
-![Hình 2.9. Biểu đồ tuần tự nghiệp vụ Duyệt lịch (UC-11 và UC-14)](images/hinh-2-9.png){width=16cm}
+![Hình 2.14. Biểu đồ tuần tự nghiệp vụ Duyệt lịch (UC-11 và UC-14)](images/hinh-2-14.png){width=16cm}
 
 Lễ tân chọn phòng khám chuyên môn, hệ thống gọi AJAX `/le-tan/available-doctors` để lọc danh sách bác sĩ đang trực phòng đó. `DoctorScheduleService.GetAvailableDoctorsAsync()` áp dụng cơ chế *fallback* — nếu không có bác sĩ trực phòng đã chọn, hệ thống chuyển sang lấy toàn bộ bác sĩ thuộc khoa và hiển thị banner cảnh báo. Sau khi lễ tân xác nhận, `AppointmentService.ConfirmAppointmentAsync()` áp dụng máy trạng thái whitelist (Pending → Confirmed), sinh mã booking dạng `KMyymmdd-XXXXXX` và cập nhật quota.
 
 ### 2.5.4. Biểu đồ tuần tự Chẩn đoán và kê đơn thuốc
 
-![Hình 2.10. Biểu đồ tuần tự nghiệp vụ Chẩn đoán + kê đơn (UC-21)](images/hinh-2-10.png){width=16cm}
+![Hình 2.15. Biểu đồ tuần tự nghiệp vụ Chẩn đoán + kê đơn (UC-21)](images/hinh-2-15.png){width=16cm}
 
 `DoctorPortalController` áp dụng *cross-doctor guard* — bác sĩ A không thể chẩn đoán bệnh nhân của bác sĩ B. Sau khi qua kiểm tra phân quyền, `MedicalRecordService.NextRecordNoAsync()` cấp số hồ sơ tự động với cơ chế retry tối đa 5 lần khi xảy ra `DbUpdateException` do race condition. Đây là một trong những điểm nhạy cảm nhất của hệ thống vì nhiều bác sĩ có thể tạo hồ sơ đồng thời. Cuối cùng, trạng thái lịch chuyển CheckedIn → Done và ghi audit log.
 
 ### 2.5.5. Biểu đồ tuần tự Hỏi đáp Q&A
 
-![Hình 2.11. Biểu đồ tuần tự nghiệp vụ Hỏi đáp Q&A (UC-05 và UC-24)](images/hinh-2-11.png){width=16cm}
+![Hình 2.16. Biểu đồ tuần tự nghiệp vụ Hỏi đáp Q&A (UC-05 và UC-24)](images/hinh-2-16.png){width=16cm}
 
 Nghiệp vụ Q&A có ba tác nhân tham gia: bệnh nhân đặt câu hỏi, quản trị viên duyệt nội dung (chống spam), bác sĩ trả lời. Câu hỏi đi qua ba trạng thái: *Pending* (mới gửi) → *Visible* (đã duyệt) → có `answer` (đã trả lời). Mỗi bước duyệt/từ chối/trả lời đều ghi audit log để truy vết. Cách bố trí này bảo đảm chất lượng nội dung trước khi công khai, phù hợp với yêu cầu của lĩnh vực y tế.
 
@@ -434,7 +460,7 @@ Ngoài năm bảng nêu trên, hệ thống còn **20 bảng phụ trợ** khác
 
 ## 2.7. Sơ đồ quan hệ thực thể (ERD)
 
-![Hình 2.12. Sơ đồ quan hệ thực thể (ERD) của hệ thống TTYT phường Kinh Môn](images/hinh-2-12.png){width=16cm}
+![Hình 2.17. Sơ đồ quan hệ thực thể (ERD) của hệ thống TTYT phường Kinh Môn](images/hinh-2-17.png){width=16cm}
 
 *(xem ảnh đính kèm — file `docs/diagrams/erd_full.png`)*
 

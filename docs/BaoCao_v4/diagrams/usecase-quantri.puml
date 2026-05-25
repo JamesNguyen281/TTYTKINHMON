@@ -1,0 +1,52 @@
+@startuml usecase-quantri
+left to right direction
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 13
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+skinparam linetype ortho
+skinparam usecase {
+    BackgroundColor #FCE4EC
+    BorderColor #AD1457
+    ArrowColor #AD1457
+    FontColor #000000
+}
+skinparam actor {
+    BackgroundColor #FFD27F
+    BorderColor #000000
+    FontStyle bold
+}
+
+actor "Lễ tân" as LT
+actor "Bác sĩ" as BS
+actor "Quản trị" as QT
+
+' Generalization: Admin kế thừa Lễ tân + Bác sĩ
+LT <|-- QT
+BS <|-- QT
+
+rectangle "Hệ thống Website TTYT Kinh Môn" {
+    usecase "UC-30 Cấu hình site" as UC30
+    usecase "UC-31 Quản lý News/Khoa" as UC31
+    usecase "UC-32 Quản lý Doctor/User" as UC32
+    usecase "UC-33 Quản lý tài liệu" as UC33
+    usecase "UC-34 Xem audit log" as UC34
+    usecase "UC-35 Force change password" as UC35
+
+    usecase "Ghi audit log" as UCI_AUDIT #FFF8E1
+}
+
+QT -- UC30
+QT -- UC31
+QT -- UC32
+QT -- UC33
+QT -- UC34
+QT -- UC35
+
+UC30 ..> UCI_AUDIT : <<include>>
+UC31 ..> UCI_AUDIT : <<include>>
+UC32 ..> UCI_AUDIT : <<include>>
+UC35 ..> UCI_AUDIT : <<include>>
+
+@enduml

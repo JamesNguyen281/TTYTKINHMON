@@ -1,0 +1,51 @@
+@startuml usecase-letan
+left to right direction
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 13
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+skinparam linetype ortho
+skinparam usecase {
+    BackgroundColor #E8F5E9
+    BorderColor #2E7D32
+    ArrowColor #2E7D32
+    FontColor #000000
+}
+skinparam actor {
+    BackgroundColor #FFD27F
+    BorderColor #000000
+    FontStyle bold
+}
+
+actor "Lễ tân" as LT
+
+rectangle "Hệ thống Website TTYT Kinh Môn" {
+    usecase "UC-10 Xem danh sách lịch hẹn" as UC10
+    usecase "UC-11 Duyệt và xác nhận lịch" as UC11
+    usecase "UC-12 Từ chối lịch" as UC12
+    usecase "UC-13 Check-in bệnh nhân" as UC13
+    usecase "UC-14 Phân phòng khám + BS" as UC14
+    usecase "UC-15 Quản lý quota khám" as UC15
+    usecase "UC-16 Xem lịch trực BS" as UC16
+
+    usecase "Sinh mã booking\nKMyymmdd-XXXXXX" as UCI_CODE #FFF8E1
+    usecase "Ghi audit log" as UCI_AUDIT #FFF8E1
+}
+
+LT -- UC10
+LT -- UC11
+LT -- UC12
+LT -- UC13
+LT -- UC14
+LT -- UC15
+LT -- UC16
+
+UC11 ..> UCI_CODE  : <<include>>
+UC11 ..> UCI_AUDIT : <<include>>
+UC12 ..> UCI_AUDIT : <<include>>
+UC13 ..> UCI_AUDIT : <<include>>
+UC12 ..> UC11 : <<extend>>
+UC14 ..> UC11 : <<extend>>
+
+@enduml

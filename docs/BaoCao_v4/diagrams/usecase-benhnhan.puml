@@ -1,0 +1,48 @@
+@startuml usecase-benhnhan
+' Use case riêng cho actor Bệnh nhân
+left to right direction
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 13
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+skinparam linetype ortho
+skinparam usecase {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    ArrowColor #1976D2
+    FontColor #000000
+}
+skinparam actor {
+    BackgroundColor #FFD27F
+    BorderColor #000000
+    FontStyle bold
+}
+
+actor "Bệnh nhân" as BN
+
+rectangle "Hệ thống Website TTYT Kinh Môn" {
+    usecase "UC-01 Đăng ký tài khoản" as UC01
+    usecase "UC-02 Đăng nhập" as UC02
+    usecase "UC-03 Đặt lịch khám" as UC03
+    usecase "UC-04 Xem lịch của tôi" as UC04
+    usecase "UC-05 Đặt câu hỏi Q&A" as UC05
+    usecase "UC-06 Xem lịch sử khám" as UC06
+    usecase "UC-07 Cập nhật hồ sơ" as UC07
+
+    usecase "Kiểm tra quota\nkhoa + BS" as UCI_QUOTA #FFF8E1
+    usecase "Đổi mật khẩu\nlần đầu" as UCE_PWDFIRST #FFF8E1
+}
+
+BN -- UC01
+BN -- UC02
+BN -- UC03
+BN -- UC04
+BN -- UC05
+BN -- UC06
+BN -- UC07
+
+UC03 ..> UCI_QUOTA : <<include>>
+UCE_PWDFIRST ..> UC02 : <<extend>>
+
+@enduml
