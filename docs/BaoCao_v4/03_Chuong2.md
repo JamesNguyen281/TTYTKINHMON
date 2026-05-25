@@ -303,11 +303,45 @@ Các chi tiết kịch bản từng use case được mô tả ở các mục 2.
 - Bác sĩ chuyên khoa thấy câu hỏi, viết trả lời;
 - Sau khi có trả lời, hệ thống email thông báo cho người hỏi (nếu có email).
 
-## 2.5. Đặc tả cơ sở dữ liệu
+## 2.5. Biểu đồ tuần tự
+
+Biểu đồ hoạt động (Activity Diagram) trong mục 2.4 tập trung mô tả *trình tự bước hoạt động* trong một nghiệp vụ — trả lời câu hỏi "việc gì làm trước, việc gì làm sau". Biểu đồ tuần tự (Sequence Diagram) bổ sung góc nhìn còn lại — *tương tác giữa các đối tượng* trong hệ thống — trả lời câu hỏi "đối tượng nào gọi đối tượng nào, thông điệp gì được trao đổi". Mục này trình bày năm biểu đồ tuần tự đại diện cho năm nghiệp vụ chính, thể hiện luồng dữ liệu giữa Controller (tầng trình bày), Service (tầng nghiệp vụ) và cơ sở dữ liệu.
+
+### 2.5.1. Biểu đồ tuần tự Đăng nhập
+
+![Hình 2.7. Biểu đồ tuần tự nghiệp vụ Đăng nhập](images/hinh-2-7.png){width=16cm}
+
+Người dùng nhập tài khoản tại form `/dang-nhap`. `AuthController` kiểm tra anti-CSRF token, sau đó gọi `UserService.ValidateCredentialsAsync()` xác minh mật khẩu bằng PBKDF2-SHA256 với 600.000 vòng lặp. Nếu sai 5 lần liên tiếp, hệ thống khóa tài khoản 15 phút (`locked_until`). Nếu đúng, cookie session HttpOnly + Secure được tạo; nếu cờ `must_change_password = 1` thì chuyển hướng đến trang đổi mật khẩu, ngược lại điều hướng theo vai trò (`/`, `/le-tan`, `/bac-si-portal`, `/AdminCP/Default`).
+
+### 2.5.2. Biểu đồ tuần tự Đặt lịch khám
+
+![Hình 2.8. Biểu đồ tuần tự nghiệp vụ Đặt lịch khám](images/hinh-2-8.png){width=16cm}
+
+`AppointmentController` xử lý form đặt lịch: kiểm tra anti-CSRF, gọi `AppointmentService.CreateAppointmentAsync()`. Service trước hết kiểm tra trùng buổi (cùng tài khoản, cùng ngày, cùng ca), sau đó gọi `QuotaService.CheckQuotaAsync()` đối chiếu hai tầng quota (theo khoa và theo bác sĩ). Khi cả hai kiểm tra đều đạt, lịch được lưu ở trạng thái *Pending* và ghi `audit_system` với mã hành vi `APPOINTMENT_CREATED`. Hệ thống tự gán `DepartmentId = Khoa Khám bệnh`, để trống `ClinicRoomId` chờ lễ tân phân phòng.
+
+### 2.5.3. Biểu đồ tuần tự Duyệt và xác nhận lịch hẹn
+
+![Hình 2.9. Biểu đồ tuần tự nghiệp vụ Duyệt lịch (UC-11 và UC-14)](images/hinh-2-9.png){width=16cm}
+
+Lễ tân chọn phòng khám chuyên môn, hệ thống gọi AJAX `/le-tan/available-doctors` để lọc danh sách bác sĩ đang trực phòng đó. `DoctorScheduleService.GetAvailableDoctorsAsync()` áp dụng cơ chế *fallback* — nếu không có bác sĩ trực phòng đã chọn, hệ thống chuyển sang lấy toàn bộ bác sĩ thuộc khoa và hiển thị banner cảnh báo. Sau khi lễ tân xác nhận, `AppointmentService.ConfirmAppointmentAsync()` áp dụng máy trạng thái whitelist (Pending → Confirmed), sinh mã booking dạng `KMyymmdd-XXXXXX` và cập nhật quota.
+
+### 2.5.4. Biểu đồ tuần tự Chẩn đoán và kê đơn thuốc
+
+![Hình 2.10. Biểu đồ tuần tự nghiệp vụ Chẩn đoán + kê đơn (UC-21)](images/hinh-2-10.png){width=16cm}
+
+`DoctorPortalController` áp dụng *cross-doctor guard* — bác sĩ A không thể chẩn đoán bệnh nhân của bác sĩ B. Sau khi qua kiểm tra phân quyền, `MedicalRecordService.NextRecordNoAsync()` cấp số hồ sơ tự động với cơ chế retry tối đa 5 lần khi xảy ra `DbUpdateException` do race condition. Đây là một trong những điểm nhạy cảm nhất của hệ thống vì nhiều bác sĩ có thể tạo hồ sơ đồng thời. Cuối cùng, trạng thái lịch chuyển CheckedIn → Done và ghi audit log.
+
+### 2.5.5. Biểu đồ tuần tự Hỏi đáp Q&A
+
+![Hình 2.11. Biểu đồ tuần tự nghiệp vụ Hỏi đáp Q&A (UC-05 và UC-24)](images/hinh-2-11.png){width=16cm}
+
+Nghiệp vụ Q&A có ba tác nhân tham gia: bệnh nhân đặt câu hỏi, quản trị viên duyệt nội dung (chống spam), bác sĩ trả lời. Câu hỏi đi qua ba trạng thái: *Pending* (mới gửi) → *Visible* (đã duyệt) → có `answer` (đã trả lời). Mỗi bước duyệt/từ chối/trả lời đều ghi audit log để truy vết. Cách bố trí này bảo đảm chất lượng nội dung trước khi công khai, phù hợp với yêu cầu của lĩnh vực y tế.
+
+## 2.6. Đặc tả cơ sở dữ liệu
 
 Hệ thống sử dụng SQL Server, schema `ttytlp` được sinh tự động từ Entity Framework Core 8 với mô hình code-first. Toàn bộ cơ sở dữ liệu gồm **25 bảng** chia thành 6 nhóm chức năng. Bảng 2.9 mô tả cấu trúc các bảng quan trọng nhất.
 
-### 2.5.1. Bảng `customer` — Hồ sơ bệnh nhân
+### 2.6.1. Bảng `customer` — Hồ sơ bệnh nhân
 
 **Bảng 2.9. Cấu trúc bảng `customer`**
 
@@ -326,7 +360,7 @@ Hệ thống sử dụng SQL Server, schema `ttytlp` được sinh tự động 
 | 11 | LockedUntil | DATETIME2 | Thời điểm hết khóa nếu bị lockout |
 | 12 | CreatedAt | DATETIME2 | Thời điểm tạo |
 
-### 2.5.2. Bảng `appointment` — Lịch hẹn khám
+### 2.6.2. Bảng `appointment` — Lịch hẹn khám
 
 **Bảng 2.10. Cấu trúc bảng `appointment`**
 
@@ -349,7 +383,7 @@ Hệ thống sử dụng SQL Server, schema `ttytlp` được sinh tự động 
 | 15 | ConfirmedAt | DATETIME2 | Thời điểm xác nhận |
 | 16 | DoneAt | DATETIME2 | Thời điểm khám xong |
 
-### 2.5.3. Bảng `medical_record` — Hồ sơ khám
+### 2.6.3. Bảng `medical_record` — Hồ sơ khám
 
 **Bảng 2.11. Cấu trúc bảng `medical_record`**
 
@@ -366,7 +400,7 @@ Hệ thống sử dụng SQL Server, schema `ttytlp` được sinh tự động 
 | 9 | Note | NVARCHAR(500) | Ghi chú thêm |
 | 10 | CreatedAt | DATETIME2 | Thời điểm tạo hồ sơ |
 
-### 2.5.4. Bảng `doctor_schedule` — Lịch trực bác sĩ
+### 2.6.4. Bảng `doctor_schedule` — Lịch trực bác sĩ
 
 **Bảng 2.12. Cấu trúc bảng `doctor_schedule`**
 
@@ -381,7 +415,7 @@ Hệ thống sử dụng SQL Server, schema `ttytlp` được sinh tự động 
 | 7 | ValidTo | DATE | Ngày kết thúc hiệu lực |
 | 8 | IsActive | BIT | 0 = không hoạt động, 1 = hoạt động |
 
-### 2.5.5. Bảng `audit_system` — Nhật ký kiểm toán
+### 2.6.5. Bảng `audit_system` — Nhật ký kiểm toán
 
 **Bảng 2.13. Cấu trúc bảng `audit_system`**
 
@@ -398,9 +432,9 @@ Hệ thống sử dụng SQL Server, schema `ttytlp` được sinh tự động 
 
 Ngoài năm bảng nêu trên, hệ thống còn **20 bảng phụ trợ** khác phục vụ các nghiệp vụ: `site` (cấu hình cơ sở), `system_user` + `system_user_group` (quản lý nhân viên + phân quyền), `doctor`, `department`, `clinic_room` (phòng khám trong Khoa Khám bệnh), `schedule_change_request` (yêu cầu đổi lịch trực của bác sĩ), `service`, `news`, `qna_topic` + `qna_post`, `prescription_drug`, `bank_holiday`, `ip_blacklist`, `customer_address`, `notification`, `attachment`, `setting`, `migration_history`. Chi tiết đầy đủ được mô tả trong sơ đồ ERD ở mục 2.5.
 
-## 2.6. Sơ đồ quan hệ thực thể (ERD)
+## 2.7. Sơ đồ quan hệ thực thể (ERD)
 
-![Hình 2.7. Sơ đồ quan hệ thực thể (ERD) của hệ thống TTYT phường Kinh Môn](images/hinh-2-7.png){width=16cm}
+![Hình 2.12. Sơ đồ quan hệ thực thể (ERD) của hệ thống TTYT phường Kinh Môn](images/hinh-2-12.png){width=16cm}
 
 *(xem ảnh đính kèm — file `docs/diagrams/erd_full.png`)*
 

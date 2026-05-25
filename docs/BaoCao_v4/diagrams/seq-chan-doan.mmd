@@ -1,0 +1,50 @@
+---
+config:
+    theme: default
+    themeVariables:
+        fontSize: 14px
+---
+sequenceDiagram
+    autonumber
+    actor BS as Bác sĩ
+    participant B as Trình duyệt
+    participant C as DoctorPortalController
+    participant MS as MedicalRecordService
+    participant AS as AppointmentService
+    participant DB as SQL Server
+
+    BS->>B: Vào /bac-si-portal/benh-nhan-hom-nay
+    B->>C: GET danh sách BN hôm nay
+    C->>DB: SELECT appointment WHERE doctor=? AND date=today AND status IN (Confirmed, CheckedIn)
+    DB-->>C: List bệnh nhân
+    C-->>B: Render bảng BN hôm nay
+    BS->>B: Click "Khám" trên 1 BN
+    B->>C: GET /bac-si-portal/chan-doan/{apptId}
+    C->>C: Cross-doctor guard — kiểm tra BS đang đăng nhập có quyền với appointment này
+    alt Không phải BS được phân
+        C-->>B: HTTP 403 Forbidden
+    else Đúng BS
+        C->>DB: SELECT appointment + customer
+        DB-->>C: Detail
+        C-->>B: Form chẩn đoán (triệu chứng, chẩn đoán, đơn thuốc)
+        BS->>B: Nhập + submit
+        B->>C: POST /bac-si-portal/chan-doan
+        C->>C: Validate CSRF + length cap (note ≤ 500, drug ≤ 100, dose ≤ 200)
+        C->>MS: CreateRecordAsync(apptId, symptoms, diagnosis, drugs)
+        MS->>MS: NextRecordNoAsync — retry 5 lần khi DbUpdateException (race-safe)
+        loop Retry tối đa 5 lần
+            MS->>DB: SELECT MAX(record_no) + 1
+            DB-->>MS: next_no
+            MS->>DB: INSERT medical_record (record_no=next_no)
+            alt DbUpdateException (unique violation)
+                Note over MS,DB: Race condition — chờ + retry
+            else Success
+                DB-->>MS: record_id
+            end
+        end
+        MS->>AS: TransitionAsync(apptId, CheckedIn→Done)
+        AS->>DB: UPDATE appointment SET status=Done
+        AS->>DB: INSERT audit_system (action=RECORD_CREATED)
+        MS-->>C: record_id
+        C-->>B: Redirect /bac-si-portal/benh-nhan-hom-nay (thông báo thành công)
+    end

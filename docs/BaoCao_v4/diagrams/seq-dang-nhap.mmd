@@ -1,0 +1,47 @@
+---
+config:
+    theme: default
+    themeVariables:
+        fontSize: 14px
+---
+sequenceDiagram
+    autonumber
+    actor U as Người dùng
+    participant B as Trình duyệt
+    participant C as AuthController
+    participant S as UserService
+    participant DB as SQL Server
+
+    U->>B: Truy cập /dang-nhap
+    B->>C: GET /dang-nhap
+    C-->>B: Render form (anti-CSRF token)
+    U->>B: Nhập username + password
+    B->>C: POST /dang-nhap (token + form)
+    C->>C: Validate CSRF token
+    alt CSRF không hợp lệ
+        C-->>B: HTTP 400 Bad Request
+    else CSRF hợp lệ
+        C->>S: ValidateCredentialsAsync(user, pass)
+        S->>DB: SELECT user WHERE username=?
+        DB-->>S: User record (password_hash, salt, failed_count)
+        S->>S: Verify PBKDF2-SHA256 600.000 vòng
+        alt Mật khẩu sai
+            S->>DB: UPDATE failed_count + 1
+            DB-->>S: OK
+            alt failed_count ≥ 5
+                S->>DB: UPDATE locked_until = now + 15 phút
+            end
+            S-->>C: AuthResult.Failure
+            C-->>B: Hiển thị "Sai tài khoản/mật khẩu"
+        else Mật khẩu đúng
+            S->>DB: UPDATE failed_count = 0, last_login = now
+            DB-->>S: OK
+            S-->>C: AuthResult.Success(user, role)
+            C->>C: Tạo session cookie (HttpOnly, Secure)
+            alt must_change_password = 1
+                C-->>B: Redirect /doi-mat-khau
+            else
+                C-->>B: Redirect / hoặc /AdminCP/Default theo role
+            end
+        end
+    end

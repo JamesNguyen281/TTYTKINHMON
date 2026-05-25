@@ -1,0 +1,62 @@
+---
+config:
+    theme: default
+    themeVariables:
+        fontSize: 14px
+---
+sequenceDiagram
+    autonumber
+    actor BN as Bệnh nhân
+    actor QT as Quản trị
+    actor BS as Bác sĩ
+    participant B as Trình duyệt
+    participant C as QnaController
+    participant S as QnaService
+    participant DB as SQL Server
+
+    BN->>B: Vào /hoi-dap → Đặt câu hỏi mới
+    B->>C: GET /hoi-dap/dat-cau-hoi
+    alt Chưa đăng nhập
+        C-->>B: Redirect /dang-nhap
+    else Đã đăng nhập
+        C-->>B: Render form (tiêu đề, nội dung, chuyên khoa)
+        BN->>B: Nhập + submit
+        B->>C: POST /hoi-dap/dat-cau-hoi
+        C->>C: Validate CSRF + length cap (body ≤ 500)
+        C->>S: SubmitQuestionAsync(userId, title, body, deptId)
+        S->>DB: INSERT qa_question (status=Pending, created_at)
+        DB-->>S: question_id
+        S-->>C: question_id
+        C-->>B: Hiển thị "Đã gửi, chờ duyệt"
+    end
+    Note over QT,DB: --- Quản trị duyệt câu hỏi ---
+    QT->>B: Vào /AdminCP/Qna
+    B->>C: GET danh sách câu hỏi pending
+    C->>DB: SELECT qa_question WHERE status=Pending
+    DB-->>C: List
+    C-->>B: Render bảng duyệt
+    QT->>B: Approve/Reject 1 câu hỏi
+    B->>C: POST /AdminCP/Qna/Approve hoặc Reject
+    alt Approve
+        C->>S: ApproveQuestionAsync(questionId)
+        S->>DB: UPDATE status=Visible
+        S->>DB: INSERT audit_system (action=QNA_APPROVED)
+    else Reject
+        C->>S: RejectQuestionAsync(questionId, reason)
+        S->>DB: UPDATE status=Rejected, soft_delete=1
+        S->>DB: INSERT audit_system (action=QNA_REJECTED)
+    end
+    Note over BS,DB: --- Bác sĩ trả lời ---
+    BS->>B: Vào /bac-si-portal/qna
+    B->>C: GET câu hỏi thuộc chuyên khoa của BS, status=Visible
+    C->>DB: SELECT qa_question WHERE specialty=? AND status=Visible
+    DB-->>C: List
+    C-->>B: Render bảng câu hỏi
+    BS->>B: Nhập câu trả lời + submit
+    B->>C: POST /bac-si-portal/qna/answer
+    C->>S: AnswerQuestionAsync(questionId, answerBody)
+    S->>DB: UPDATE qa_question SET answer=?, answered_at=now
+    S->>DB: INSERT audit_system (action=QNA_ANSWERED)
+    S-->>C: OK
+    C-->>B: Hiển thị "Đã trả lời"
+    Note over BN: Câu hỏi + trả lời hiển thị công khai trên /hoi-dap

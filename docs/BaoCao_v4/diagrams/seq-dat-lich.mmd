@@ -1,0 +1,49 @@
+---
+config:
+    theme: default
+    themeVariables:
+        fontSize: 14px
+---
+sequenceDiagram
+    autonumber
+    actor BN as Bệnh nhân
+    participant B as Trình duyệt
+    participant C as AppointmentController
+    participant S as AppointmentService
+    participant Q as QuotaService
+    participant DB as SQL Server
+
+    BN->>B: Vào /dat-lich-kham
+    B->>C: GET /dat-lich-kham
+    C->>DB: SELECT phòng khám Khoa Khám bệnh
+    DB-->>C: List clinic_room
+    C-->>B: Render form (chọn ngày, ca, triệu chứng)
+    BN->>B: Điền form + submit
+    B->>C: POST /dat-lich-kham
+    C->>C: Validate CSRF + dữ liệu vào
+    alt Dữ liệu không hợp lệ
+        C-->>B: Hiển thị lỗi validation
+    else Dữ liệu hợp lệ
+        C->>S: CreateAppointmentAsync(symptoms, date, session)
+        S->>S: Kiểm tra trùng buổi (cùng tài khoản + ngày + ca)
+        alt Đã có lịch buổi này
+            S-->>C: Exception "Trùng buổi"
+            C-->>B: Hiển thị link "Lịch của tôi"
+        else Chưa trùng
+            S->>Q: CheckQuotaAsync(deptId, date, session)
+            Q->>DB: SELECT quota_dept + quota_doctor
+            DB-->>Q: Quota records
+            alt Hết suất
+                Q-->>S: QuotaExceeded
+                S-->>C: Exception "Hết suất khám"
+                C-->>B: Hiển thị thông báo + gợi ý ngày khác
+            else Còn suất
+                Q-->>S: OK
+                S->>DB: INSERT appointment (status=Pending, dept=Khoa Khám)
+                DB-->>S: appointment_id
+                S->>DB: INSERT audit_system (action=APPOINTMENT_CREATED)
+                S-->>C: appointment_id + temp_code
+                C-->>B: Redirect /xac-nhan-dat-lich (hiển thị mã tạm)
+            end
+        end
+    end

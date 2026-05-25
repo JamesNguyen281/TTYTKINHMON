@@ -1,0 +1,51 @@
+---
+config:
+    theme: default
+    themeVariables:
+        fontSize: 14px
+---
+sequenceDiagram
+    autonumber
+    actor LT as Lễ tân
+    participant B as Trình duyệt
+    participant C as LeTanController
+    participant AS as AppointmentService
+    participant DS as DoctorScheduleService
+    participant DB as SQL Server
+
+    LT->>B: Vào /le-tan/lich-hen
+    B->>C: GET /le-tan/lich-hen
+    C->>DB: SELECT appointment WHERE status=Pending
+    DB-->>C: List lịch chờ duyệt
+    C-->>B: Render danh sách
+    LT->>B: Click chi tiết 1 lịch
+    B->>C: GET /le-tan/detail/{id}
+    C->>DB: SELECT appointment + customer
+    DB-->>C: Appointment detail
+    C-->>B: Render form (chọn phòng khám + BS)
+    LT->>B: Chọn phòng khám chuyên môn
+    B->>C: AJAX /available-doctors?roomId=X
+    C->>DS: GetAvailableDoctors(roomId, date, session)
+    DS->>DB: SELECT doctor_schedule WHERE room=? AND date=?
+    DB-->>DS: List BS đang trực
+    alt Không có BS nào trực phòng X
+        DS-->>C: Empty list
+        C->>DS: GetAvailableDoctors(deptId, date, session) - fallback
+        DS->>DB: SELECT all BS thuộc khoa
+        DB-->>DS: List BS toàn khoa
+        DS-->>C: List BS (fallback)
+        C-->>B: Hiển thị banner vàng "phòng chưa có BS" + list toàn khoa
+    else Có BS trực
+        DS-->>C: List BS chuyên phòng
+        C-->>B: Hiển thị banner xanh "đang lọc theo phòng" + list BS phòng
+    end
+    LT->>B: Chọn BS + nhấn Xác nhận
+    B->>C: POST /le-tan/duyet
+    C->>AS: ConfirmAppointmentAsync(apptId, roomId, doctorId, staffNote)
+    AS->>AS: Kiểm tra state machine Pending→Confirmed
+    AS->>AS: Generate booking_code KMyymmddS|C-XXXXXX
+    AS->>DB: UPDATE appointment SET status=Confirmed, booking_code, room, doctor
+    AS->>DB: UPDATE quota +1 cho khoa và BS
+    AS->>DB: INSERT audit_system (action=APPOINTMENT_CONFIRMED)
+    AS-->>C: booking_code
+    C-->>B: Hiển thị mã booking thành công
