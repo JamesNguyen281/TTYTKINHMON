@@ -20,7 +20,7 @@ Sau bốn tháng thực hiện đồ án tốt nghiệp dưới sự hướng d�
 
 **b. Về kiểm thử tự động bằng Playwright:**
 
-- Xây dựng bộ test **End-to-End với 269 kịch bản kiểm thử** Playwright + TypeScript (256 pass, 13 skip có lý do, 0 fail) — bao phủ đầy đủ ba loại kiểm thử theo định hướng đề cương: **UI Testing, Functional Testing và Regression Testing** trên toàn bộ nghiệp vụ public, portal và member, ở 4 viewport (desktop 1366 / 1920, mobile iPhone X / iPhone SE);
+- Xây dựng bộ test **End-to-End với 279 kịch bản kiểm thử** Playwright + TypeScript (264 pass, 15 skip có lý do, 0 fail) — bao phủ đầy đủ ba loại kiểm thử theo định hướng đề cương: **UI Testing, Functional Testing và Regression Testing** trên toàn bộ nghiệp vụ public, portal và member, ở 4 viewport (desktop 1366 / 1920, mobile iPhone X / iPhone SE);
 
 - Bổ sung 8 request smoke test bằng **Postman** cho các HTTP endpoint trọng yếu (đăng nhập, đặt lịch, duyệt lịch, IDOR guard) và 12 kịch bản kiểm thử thủ công cho các luồng end-to-end + deploy public;
 

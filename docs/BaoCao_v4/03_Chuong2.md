@@ -170,7 +170,7 @@ Các chi tiết kịch bản từng use case được mô tả ở các mục 2.
 
 | **Trường** | **Nội dung** |
 |:--|:--|
-| **Mã use case** | UC-01 |
+| **Mã use case** | UC-03 |
 | **Tên use case** | Đặt lịch khám |
 | **Tác nhân** | Bệnh nhân (Member hoặc Khách vãng lai) |
 | **Mô tả** | Cho phép bệnh nhân đặt lịch khám tại Khoa Khám bệnh — đầu mối tiếp nhận bệnh nhân ngoại trú. Bệnh nhân không chọn khoa/phòng/bác sĩ; lễ tân tiếp nhận triệu chứng và phân vào một trong tám phòng khám chuyên môn (Nội, Ngoại, Tiểu đường, Sản, Truyền nhiễm, Nhi, Đông y, Răng Hàm Mặt) |
@@ -185,7 +185,7 @@ Các chi tiết kịch bản từng use case được mô tả ở các mục 2.
 
 | **Trường** | **Nội dung** |
 |:--|:--|
-| **Mã use case** | UC-02 |
+| **Mã use case** | UC-11 |
 | **Tên use case** | Duyệt và xác nhận lịch hẹn |
 | **Tác nhân** | Lễ tân (Reception) |
 | **Điều kiện trước** | Đã đăng nhập, có lịch ở trạng thái *Pending* |
@@ -199,7 +199,7 @@ Các chi tiết kịch bản từng use case được mô tả ở các mục 2.
 
 | **Trường** | **Nội dung** |
 |:--|:--|
-| **Mã use case** | UC-03 |
+| **Mã use case** | UC-13 |
 | **Tác nhân** | Lễ tân |
 | **Mô tả** | Đánh dấu bệnh nhân đã đến tại cơ sở, đẩy lịch sang trạng thái sẵn sàng khám |
 | **Luồng chính** | 1. Lễ tân nhập SĐT bệnh nhân hoặc quét mã booking<br>2. Hệ thống hiển thị lịch hẹn của ngày<br>3. Lễ tân nhấn *"Check-in"*<br>4. Hệ thống chuyển trạng thái Confirmed → CheckedIn<br>5. Bác sĩ thấy bệnh nhân trong danh sách *"Bệnh nhân hôm nay"* |
@@ -211,7 +211,7 @@ Các chi tiết kịch bản từng use case được mô tả ở các mục 2.
 
 | **Trường** | **Nội dung** |
 |:--|:--|
-| **Mã use case** | UC-04 |
+| **Mã use case** | UC-21 |
 | **Tác nhân** | Bác sĩ (Doctor) |
 | **Điều kiện trước** | Có bệnh nhân ở trạng thái CheckedIn được phân công cho bác sĩ |
 | **Luồng chính** | 1. Bác sĩ vào *"Cổng Bác sĩ → Bệnh nhân hôm nay"*<br>2. Chọn bệnh nhân, nhấn *"Khám"*<br>3. Hệ thống kiểm tra cross-doctor guard (BS A không được khám bệnh nhân của BS B)<br>4. Bác sĩ nhập triệu chứng, chẩn đoán, đơn thuốc<br>5. Hệ thống kiểm soát độ dài: ghi chú ≤ 500 ký tự, tên thuốc ≤ 100, liều dùng ≤ 200<br>6. Hệ thống sinh số hồ sơ tự động (`NextRecordNoAsync` retry 5 lần khi đụng race)<br>7. Lưu hồ sơ, chuyển trạng thái lịch hẹn sang *Done*<br>8. Ghi audit log với userId của bác sĩ |
@@ -223,8 +223,8 @@ Các chi tiết kịch bản từng use case được mô tả ở các mục 2.
 
 | **Trường** | **Nội dung** |
 |:--|:--|
-| **Mã use case** | UC-05 |
-| **Tác nhân** | Bệnh nhân (đặt câu hỏi), Bác sĩ (trả lời), Quản trị viên (kiểm duyệt) |
+| **Mã use case** | UC-05 / UC-24 |
+| **Tác nhân** | Bệnh nhân (đặt câu hỏi — UC-05), Bác sĩ (trả lời — UC-24), Quản trị viên (kiểm duyệt) |
 | **Luồng chính** | 1. Bệnh nhân chọn *"Hỏi đáp → Đặt câu hỏi mới"*<br>2. Nhập tiêu đề, nội dung; chọn chuyên khoa hoặc bác sĩ cụ thể<br>3. Hệ thống lưu câu hỏi ở trạng thái *Pending* (chờ duyệt)<br>4. Quản trị viên duyệt câu hỏi, chuyển sang *Visible*<br>5. Bác sĩ xem các câu hỏi thuộc chuyên khoa của mình, nhập trả lời<br>6. Hệ thống hiển thị Q&A công khai trên trang *Hỏi đáp* |
 | **Luồng phụ** | – Quản trị từ chối câu hỏi (vi phạm nội quy): xóa mềm, ghi audit |
 | **Điều kiện sau** | Câu hỏi được hiển thị công khai và có câu trả lời |
@@ -235,7 +235,7 @@ Các chi tiết kịch bản từng use case được mô tả ở các mục 2.
 
 | **Trường** | **Nội dung** |
 |:--|:--|
-| **Mã use case** | UC-06 |
+| **Mã use case** | UC-32 |
 | **Tác nhân** | Quản trị viên |
 | **Luồng chính** | 1. Admin vào *"AdminCP → Quản lý tài khoản"*<br>2. Hệ thống liệt kê tài khoản theo nhóm quyền<br>3. Admin có thể: tạo mới, gán nhóm quyền, khóa/mở khóa, reset mật khẩu<br>4. Mọi thao tác đều ghi audit log với mã hành vi tương ứng |
 | **Điều kiện sau** | Tài khoản được cập nhật, người dùng có thể đăng nhập lại với quyền mới |

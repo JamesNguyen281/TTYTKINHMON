@@ -12,7 +12,7 @@ Bám sát nội dung đề cương đã được phê duyệt, công tác kiểm
 
 Ngoài ba loại trên, đồ án duy trì thêm một bộ smoke test ngắn bằng Postman cho tầng HTTP (đã trình bày ở mục 1.4.6) và một số kịch bản thủ công nhằm đánh giá trải nghiệm thực tế khi triển khai public. Tổng hợp kết quả được trình bày ở mục 4.3.
 
-> **Tài liệu đính kèm:** chi tiết toàn bộ 289 ca kiểm thử (269 Playwright + 8 Postman + 12 Manual) được tổng hợp trong file `TestCases_TTYTKM.xlsx` đính kèm cùng đồ án — quản lý theo chuẩn ISTQB với các trường: ID, Loại, Mô tả, Tiền điều kiện, Các bước thực hiện, Kết quả mong đợi, Kết quả thực tế, Trạng thái, Mức độ ưu tiên.
+> **Tài liệu đính kèm:** chi tiết toàn bộ 299 ca kiểm thử (279 Playwright + 8 Postman + 12 Manual) được tổng hợp trong file `TestCases_TTYTKM.xlsx` đính kèm cùng đồ án — quản lý theo chuẩn ISTQB với các trường: ID, Loại, Mô tả, Tiền điều kiện, Các bước thực hiện, Kết quả mong đợi, Kết quả thực tế, Trạng thái, Mức độ ưu tiên.
 
 ## 4.1. Kiểm thử bằng Playwright
 
@@ -232,16 +232,16 @@ Hệ thống được triển khai public qua Cloudflare Tunnel với tên miề
 | **STT** | **Loại kiểm thử** | **Phạm vi** | **Tổng số TC** | **Pass** | **Fail** | **Skip** | **Tỷ lệ Pass** |
 |:--:|:--|:--|:--:|:--:|:--:|:--:|:--:|
 | 1 | E2E Playwright — UI Testing | 9 trang public + 10 trang portal + 3 trang member trên 4 viewport | 78 | 78 | 0 | 0 | 100% |
-| 2 | E2E Playwright — Functional Testing | Đặt lịch, duyệt lịch, check-in, chẩn đoán, Q&A, audit | 100 | 90 | 0 | 10 | 100% |
+| 2 | E2E Playwright — Functional Testing | Đặt lịch, duyệt lịch, check-in, chẩn đoán, Q&A, audit, lịch trực + phân phòng | 110 | 98 | 0 | 12 | 100% |
 | 3 | E2E Playwright — Regression Testing | Re-run toàn bộ sau mỗi commit | 42 | 39 | 0 | 3 | 100% |
 | 4 | Mobile Audit (iPhone X + iPhone SE) | Overflow, tap target, font size | 49 | 49 | 0 | 0 | 100% |
 | 5 | Postman Collection | 8 endpoint smoke test | 8 | 8 | 0 | 0 | 100% |
 | 6 | Manual | Luồng end-to-end + deploy public | 12 | 6 | 0 | 6 | 100% |
-| **Tổng** | | | **289** | **270** | **0** | **19** *(skip có lý do)* | **100%** |
+| **Tổng** | | | **299** | **278** | **0** | **21** *(skip có lý do)* | **100%** |
 
-> Trong tổng số 289 test case, **269 test case** được thực thi tự động bằng Playwright Test Runner (UI + Functional + Regression + Mobile Audit), còn lại 8 test Postman thủ công và 12 test manual. Toàn bộ test pass, 19 trường hợp skip có lý do (cần fixture nâng cao như PDF export, gửi email SMTP thật).
+> Trong tổng số 299 test case, **279 test case** được thực thi tự động bằng Playwright Test Runner (UI + Functional + Regression + Mobile Audit), còn lại 8 test Postman thủ công và 12 test manual. Toàn bộ test pass, 21 trường hợp skip có lý do (cần fixture nâng cao như PDF export, gửi email SMTP thật, lịch tháng kế tiếp chưa auto-gen).
 
-![Hình 4.2. Báo cáo HTML Playwright Test Runner — toàn bộ 256 test pass, 13 skip, 0 fail](images/hinh-4-3.png){width=16cm}
+![Hình 4.2. Báo cáo HTML Playwright Test Runner — toàn bộ 264 test pass, 15 skip, 0 fail](images/hinh-4-3.png){width=16cm}
 
 ### 4.3.1. So sánh thời gian thực thi
 
