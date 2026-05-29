@@ -1,0 +1,57 @@
+@startuml usecase-zoom
+' =========================================================================
+' Hình 2.2 — Trích phóng to quan hệ «include» và «extend»
+' giữa các use case của hệ thống Website TTYT Kinh Môn
+' =========================================================================
+left to right direction
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 13
+skinparam packageStyle rectangle
+skinparam linetype ortho
+
+skinparam usecase {
+    BackgroundColor #D6E9FF
+    BorderColor     #1F4E79
+    ArrowColor      #1F4E79
+    FontColor       #000000
+}
+
+rectangle "Hệ thống — quan hệ «include» / «extend»" {
+
+    ' === Chùm include xoay quanh Duyệt lịch ===
+    usecase "Duyệt và\nxác nhận lịch"   as UC11
+    usecase "Sinh mã booking\n(KMyymmdd-XXXXXX)" as UCI_CODE #FFF8E1
+    usecase "Ghi audit log"                   as UCI_AUDIT #FFF8E1
+    usecase "Từ chối lịch"              as UC12
+    usecase "Phân phòng + BS"           as UC14
+
+    UC11 ..> UCI_CODE  : <<include>>
+    UC11 ..> UCI_AUDIT : <<include>>
+    UC12 ..> UC11      : <<extend>>
+    UC14 ..> UC11      : <<extend>>
+
+    ' === Chùm xoay quanh Đặt lịch ===
+    usecase "Đặt lịch khám"             as UC03
+    usecase "Kiểm tra quota\nkhoa + BS"       as UCI_QUOTA #FFF8E1
+
+    UC03 ..> UCI_QUOTA : <<include>>
+
+    ' === Chùm xoay quanh Chẩn đoán ===
+    usecase "Tạo hồ sơ\n+ chẩn đoán"    as UC21
+    usecase "Kê đơn thuốc"              as UC22
+    usecase "Hoàn tất khám"             as UC23
+    usecase "Cấp số hồ sơ\n(NextRecordNo)"    as UCI_RECNO #FFF8E1
+
+    UC21 ..> UCI_RECNO : <<include>>
+    UC21 ..> UCI_AUDIT : <<include>>
+    UC22 ..> UC21      : <<include>>
+    UC23 ..> UC21      : <<include>>
+
+    ' === Đăng nhập + Đổi mật khẩu lần đầu ===
+    usecase "Đăng nhập"                 as UC02
+    usecase "Đổi mật khẩu lần đầu"            as UCE_PWDFIRST #FFF8E1
+
+    UCE_PWDFIRST ..> UC02 : <<extend>>
+}
+@enduml

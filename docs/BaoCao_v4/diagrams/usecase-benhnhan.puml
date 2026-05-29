@@ -22,13 +22,13 @@ skinparam actor {
 actor "Bệnh nhân" as BN
 
 rectangle "Hệ thống Website TTYT Kinh Môn" {
-    usecase "UC-01 Đăng ký tài khoản" as UC01
-    usecase "UC-02 Đăng nhập" as UC02
-    usecase "UC-03 Đặt lịch khám" as UC03
-    usecase "UC-04 Xem lịch của tôi" as UC04
-    usecase "UC-05 Đặt câu hỏi Q&A" as UC05
-    usecase "UC-06 Xem lịch sử khám" as UC06
-    usecase "UC-07 Cập nhật hồ sơ" as UC07
+    usecase "Đăng ký tài khoản" as UC01
+    usecase "Đăng nhập" as UC02
+    usecase "Đặt lịch khám" as UC03
+    usecase "Xem lịch của tôi" as UC04
+    usecase "Đặt câu hỏi Q&A" as UC05
+    usecase "Xem lịch sử khám" as UC06
+    usecase "Cập nhật hồ sơ" as UC07
 
     usecase "Kiểm tra quota\nkhoa + BS" as UCI_QUOTA #FFF8E1
     usecase "Đổi mật khẩu\nlần đầu" as UCE_PWDFIRST #FFF8E1

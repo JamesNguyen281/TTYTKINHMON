@@ -1,0 +1,111 @@
+---
+config:
+    layout: elk
+    elk:
+        nodePlacementStrategy: BRANDES_KOEPF
+    theme: default
+    themeVariables:
+        fontSize: 12px
+    flowchart:
+        nodeSpacing: 8
+        rankSpacing: 30
+        curve: linear
+        padding: 5
+        useMaxWidth: false
+---
+%% Sơ đồ phân rã chức năng — Website TTYT Kinh Môn
+%% Sơ đồ chia hệ thống thành 5 nhóm chức năng theo vai trò người dùng:
+%% M1 Public Site, M2 Bệnh nhân, M3 Lễ tân, M4 Bác sĩ, M5 Quản trị
+flowchart TB
+    ROOT(["<b>Website TTYT Kinh Môn</b>"]):::root
+
+    ROOT --> M1[Public Site]:::m1
+    ROOT --> M2[Bệnh nhân]:::m2
+    ROOT --> M3[Lễ tân]:::m3
+    ROOT --> M4[Bác sĩ]:::m4
+    ROOT --> M5[Quản trị]:::m5
+
+    subgraph G1[ ]
+        direction TB
+        F11[Trang chủ]:::f1
+        F12[Tin tức / Bài viết]:::f1
+        F13[Chuyên khoa]:::f1
+        F14[Phòng khám công khai]:::f1
+        F15[Lịch trực BS công khai]:::f1
+        F16[Q&A công khai]:::f1
+        F17[Đăng ký]:::f1
+        F18[Đăng nhập]:::f1
+        F19[FAQ + Giới thiệu]:::f1
+    end
+    M1 --> G1
+
+    subgraph G2[ ]
+        direction TB
+        F21[Đặt lịch khám]:::f2
+        F22[Lịch của tôi]:::f2
+        F23[Hồ sơ cá nhân]:::f2
+        F24[Lịch sử khám]:::f2
+        F25[Câu hỏi của tôi]:::f2
+        F26[Đổi mật khẩu]:::f2
+    end
+    M2 --> G2
+
+    subgraph G3[ ]
+        direction TB
+        F31[DS lịch hẹn]:::f3
+        F32[Duyệt + xác nhận]:::f3
+        F33[Từ chối lịch]:::f3
+        F34[Check-in BN]:::f3
+        F35[Phân phòng khám]:::f3
+        F36[Phân bác sĩ]:::f3
+        F37[Quản lý quota]:::f3
+        F38[Lịch trực BS]:::f3
+        F39[Tra cứu theo SĐT]:::f3
+    end
+    M3 --> G3
+
+    subgraph G4[ ]
+        direction TB
+        F41[BN hôm nay]:::f4
+        F42[Lịch trực của tôi]:::f4
+        F43[Tạo hồ sơ + chẩn đoán]:::f4
+        F44[Kê đơn thuốc]:::f4
+        F45[Hoàn tất khám]:::f4
+        F46[Hẹn khám lại]:::f4
+        F47[Trả lời Q&A]:::f4
+        F48[Yêu cầu đổi lịch trực]:::f4
+    end
+    M4 --> G4
+
+    subgraph G5[ ]
+        direction TB
+        F51[Dashboard]:::f5
+        F52[Cấu hình site]:::f5
+        F53[Quản lý News + Khoa]:::f5
+        F54[Quản lý Doctor + User]:::f5
+        F55[Quản lý phòng khám]:::f5
+        F56[Quản lý lịch trực BS]:::f5
+        F57[Duyệt yêu cầu đổi lịch]:::f5
+        F58[Quản lý tài liệu]:::f5
+        F59[Audit log + export CSV]:::f5
+        F5A[Reset mật khẩu]:::f5
+    end
+    M5 --> G5
+
+    classDef root fill:#1F4E79,stroke:#0D2E4D,stroke-width:3px,color:#fff,font-weight:bold
+    classDef m1 fill:#1976D2,stroke:#0D47A1,stroke-width:2px,color:#fff,font-weight:bold
+    classDef m2 fill:#7B1FA2,stroke:#4A148C,stroke-width:2px,color:#fff,font-weight:bold
+    classDef m3 fill:#2E7D32,stroke:#1B5E20,stroke-width:2px,color:#fff,font-weight:bold
+    classDef m4 fill:#E65100,stroke:#BF360C,stroke-width:2px,color:#fff,font-weight:bold
+    classDef m5 fill:#AD1457,stroke:#880E4F,stroke-width:2px,color:#fff,font-weight:bold
+    classDef f1 fill:#E3F2FD,stroke:#1976D2,stroke-width:1.5px,color:#000
+    classDef f2 fill:#F3E5F5,stroke:#7B1FA2,stroke-width:1.5px,color:#000
+    classDef f3 fill:#E8F5E9,stroke:#2E7D32,stroke-width:1.5px,color:#000
+    classDef f4 fill:#FFF3E0,stroke:#E65100,stroke-width:1.5px,color:#000
+    classDef f5 fill:#FCE4EC,stroke:#AD1457,stroke-width:1.5px,color:#000
+
+    style G1 fill:#ffffff00,stroke:#ffffff00
+    style G2 fill:#ffffff00,stroke:#ffffff00
+    style G3 fill:#ffffff00,stroke:#ffffff00
+    style G4 fill:#ffffff00,stroke:#ffffff00
+    style G5 fill:#ffffff00,stroke:#ffffff00

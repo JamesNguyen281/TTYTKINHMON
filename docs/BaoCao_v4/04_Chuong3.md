@@ -1,28 +1,60 @@
-# CHƯƠNG 3. CÀI ĐẶT WEBSITE Y TẾ TTYT PHƯỜNG KINH MÔN
+# CHƯƠNG 3. CÀI ĐẶT WEBSITE
 
-Trên cơ sở phần phân tích thiết kế đã trình bày ở Chương 2, đồ án tiến hành cài đặt website trên nền tảng ASP.NET Core 8 kết hợp Razor MVC, Entity Framework Core 8 và SQL Server. Toàn bộ giao diện được phát triển theo chuẩn responsive web design, được kiểm thử song song trên cấu hình desktop (1366 × 768) và hai mẫu điện thoại phổ biến iPhone X (375 × 812) và iPhone SE (320 × 568). Chương này mô tả bảy nhóm trang chính của hệ thống.
+## 3.1. Kiến trúc hệ thống
 
-## 3.1. Trang chủ (Public)
+Hệ thống được tổ chức theo mô hình ba tầng gồm Web, Business và Data. Solution `WebsiteCore` chia thành ba project tương ứng cùng một project test.
 
-### 3.1.1. Bố cục
+```
+SourceCodeTTYTKM/
+├── WebsiteCore/
+│   ├── src/
+│   │   ├── WebsiteCore.Data/          Entities + DbContext (EF Core)
+│   │   ├── WebsiteCore.Business/      Services + ViewModels
+│   │   └── WebsiteCore.Web/           MVC + Razor + AdminCP area
+│   └── tests/
+│       └── WebsiteCore.Tests/         xUnit
+├── tests/playwright/                  E2E Playwright + TypeScript
+├── docs/                              Tài liệu báo cáo và sơ đồ
+└── full_test.sh                       Bash functional smoke test
+```
 
-Trang chủ được thiết kế theo bố cục chuẩn của các website y tế công lập tại Việt Nam: Header (logo + menu) → Hero banner → Khu vực giới thiệu nhanh → Danh sách dịch vụ → Tin tức mới nhất → Footer (thông tin liên hệ).
+Tầng Data gồm 23 entity ánh xạ tới 23 bảng trong cơ sở dữ liệu `ttytlp`, kèm lớp `WebsiteCoreDbContext`. Một số entity chính: `Site`, `SystemUser`, `Doctor`, `Department`, `ClinicRoom`, `Appointment`, `MedicalRecord`, `QaQuestion`, `QaAnswer`, `AuditSystem`. Ràng buộc khoá ngoại và chỉ mục được khai báo qua Fluent API trong `OnModelCreating`.
 
-### 3.1.2. Giao diện thực tế
+Tầng Business gồm các service nghiệp vụ và lớp ViewModel. Các service chính: `AppointmentService` (máy trạng thái lịch hẹn), `MedicalRecordService` (cấp số hồ sơ chống race), `UserService` (đăng ký, đăng nhập, hash mật khẩu), `QnaService` (hỏi đáp), `AuditService` (ghi log thay đổi trạng thái). Mỗi service được đăng ký dependency injection trong `Program.cs` và nhận `DbContext` qua constructor.
+
+Tầng Web theo mô hình MVC, chia thành ba khu vực: controller công khai (Home, Appointment, Qna, Auth), portal cho Lễ tân và Bác sĩ (`/le-tan`, `/bac-si-portal`), và area AdminCP. Các controller kế thừa `BaseController` để gắn `ViewBag.Site`, `ViewBag.CurrentUser`, `ViewBag.Locate`. Action trong AdminCP được bảo vệ bởi filter `StaffAuthorize` để kiểm tra session và phân quyền theo nhóm.
+
+Bảng 3.1. Một số bộ Controller, Service và Entity chính
+
+| Vai trò | Controller | Service | Entity tham gia |
+|:--|:--|:--|:--|
+| Public | `HomeController`, `AppointmentController` | `AppointmentService`, `NewsService` | `News`, `Doctor`, `Department`, `Appointment` |
+| Member | `MemberController`, `AuthController` | `UserService`, `AppointmentService` | `SystemUser`, `Appointment`, `MedicalRecord` |
+| Lễ tân | `LeTanController` | `AppointmentService`, `AuditService` | `Appointment`, `ClinicRoom`, `AuditSystem` |
+| Bác sĩ | `DoctorPortalController` | `MedicalRecordService`, `QnaService` | `MedicalRecord`, `QaQuestion`, `Appointment` |
+| AdminCP | `DepartmentsController`, `DoctorsController`, `UsersController`, `SitesController`, `DoctorSchedulesController`, `MedicalRecordsController` | `AuditService`, `ScheduleService` | Toàn bộ 23 entity |
+
+## 3.2. Triển khai việc xây dựng
+
+Phần backend dùng Visual Studio 2022 để soạn mã C#, gỡ lỗi qua IIS Express, chạy Unit Test bằng Test Explorer và quản lý migration EF Core qua Package Manager Console. Phần Playwright TypeScript và các tệp Markdown dùng Visual Studio Code.
+
+Mã nguồn lưu trên GitHub tại `JamesNguyen281/SourceCodeTTYTKM`, nhánh chính `main` chứa mã ổn định, nhánh tính năng được tạo khi cần thử nghiệm thay đổi lớn. Cơ sở dữ liệu quản lý bằng EF Core 8.0.10 theo code-first; mỗi lần đổi entity sinh migration bằng `dotnet ef migrations add <Tên>` rồi áp dụng bằng `dotnet ef database update`. Razor runtime compilation được bật và Central Package Management khai báo trong `Directory.Packages.props` để đồng bộ phiên bản NuGet.
+
+## 3.3. Trang chủ
+
+Trang chủ là điểm vào chính của website. Bố cục gồm header (logo + menu sáu mục + nút *Đặt lịch khám*), hero banner, bốn ô dịch vụ (Khám tổng quát, Sản – Nhi, Tiêm chủng, Cấp cứu), danh sách tám bác sĩ tiêu biểu, sáu tin tức mới nhất và footer với địa chỉ, hotline, email và bản đồ Google Maps. Trên mobile, menu thu gọn thành nút hamburger và các ô dịch vụ xếp dọc.
 
 ![Hình 3.1. Giao diện Trang chủ trên desktop 1366 × 768](images/hinh-3-2.png){width=16cm}
 
 ![Hình 3.2. Giao diện Trang chủ trên iPhone X 375 × 812](images/hinh-3-3.png){width=9cm}
 
-### 3.1.3. Đặc tả chức năng
+Bảng 3.2. Đặc tả chức năng Trang chủ
 
-**Bảng 3.1. Đặc tả chức năng Trang chủ**
-
-| **STT** | **Thành phần** | **Mô tả** |
+| STT | Thành phần | Mô tả |
 |:--:|:--|:--|
-| 1 | Header logo | Hiển thị logo + tên *"Trung tâm Y tế phường Kinh Môn"*, click trở về trang chủ |
+| 1 | Header logo | Hiển thị logo + tên *Trung tâm Y tế phường Kinh Môn*, click trở về trang chủ |
 | 2 | Menu chính | 6 mục: Trang chủ, Bác sĩ, Chuyên khoa, Tin tức, Hỏi đáp, Liên hệ |
-| 3 | Nút *"Đặt lịch khám"* | Nổi bật ở header, dẫn tới `/dat-lich-kham` |
+| 3 | Nút *Đặt lịch khám* | Nổi bật ở header, dẫn tới `/dat-lich-kham` |
 | 4 | Nút Đăng nhập / Đăng ký | Hiển thị bên phải header khi chưa đăng nhập |
 | 5 | Hero banner | Ảnh kích thước lớn của Trung tâm, kèm slogan |
 | 6 | Khu vực giới thiệu | 4 ô icon: Khám tổng quát, Sản – Nhi, Tiêm chủng, Cấp cứu |
@@ -31,23 +63,19 @@ Trang chủ được thiết kế theo bố cục chuẩn của các website y t
 | 9 | Bộ đếm khách trực tuyến | Hiển thị số phiên đang hoạt động trong 15 phút gần nhất |
 | 10 | Footer | Địa chỉ 294 Trần Hưng Đạo, hotline 0220.3.822.205, email, bản đồ Google Maps |
 
-## 3.2. Trang Đặt lịch khám
+## 3.4. Đặt lịch khám
 
-### 3.2.1. Bố cục
+Quy trình ngoại trú của Trung tâm tiếp nhận mọi bệnh nhân tại Khoa Khám bệnh, sau đó lễ tân phân vào một trong tám phòng khám chuyên môn (Nội, Ngoại, Tiểu đường, Sản, Truyền nhiễm, Nhi, Đông y, Răng Hàm Mặt). Form đặt lịch online bám theo quy trình này, chỉ yêu cầu họ tên, số điện thoại, ngày khám (trong vòng 14 ngày), ca khám và mô tả triệu chứng. Hệ thống tự gán `DepartmentId` về Khoa Khám bệnh, để trống `ClinicRoomId` để lễ tân phân sau.
 
-Theo quy trình ngoại trú chuẩn của Trung tâm Y tế phường, mọi bệnh nhân đặt lịch đều được tiếp nhận tại **Khoa Khám bệnh** — đầu mối sàng lọc đa khoa. Sau khi tiếp nhận triệu chứng tại quầy lễ tân, bệnh nhân sẽ được phân vào một trong tám phòng khám chuyên môn (Nội — Ngoại — Tiểu đường — Sản — Truyền nhiễm — Nhi — Đông y — Răng Hàm Mặt). Do đó form đặt lịch online được tinh giản, **bệnh nhân không chọn khoa, phòng hay bác sĩ cụ thể** — chỉ điền thông tin liên hệ, ngày khám, ca khám (sáng/chiều) và mô tả triệu chứng.
-
-### 3.2.2. Giao diện thực tế
+Form được bảo vệ bằng anti-forgery token tự sinh bởi `@Html.AntiForgeryToken()`. Nếu bệnh nhân đã có lịch cùng ngày cùng ca, hệ thống chặn và dẫn tới trang *Lịch của tôi*. Mã booking tạm lưu trong Session với khoá `LastAnonBookingId` cho phép khách vãng lai tra cứu lại trong cùng phiên trình duyệt mà không cần đăng nhập.
 
 ![Hình 3.3. Giao diện Đặt lịch khám trên desktop](images/hinh-3-5.png){width=16cm}
 
 ![Hình 3.4. Giao diện Đặt lịch khám trên iPhone SE 320 × 568](images/hinh-3-6.png){width=9cm}
 
-### 3.2.3. Đặc tả chức năng
+Bảng 3.3. Đặc tả chức năng Đặt lịch khám
 
-**Bảng 3.2. Đặc tả chức năng Đặt lịch khám**
-
-| **STT** | **Thành phần** | **Mô tả** |
+| STT | Thành phần | Mô tả |
 |:--:|:--|:--|
 | 1 | Banner Khoa Khám bệnh | Khối thông tin giải thích quy trình: BN đến Khoa Khám bệnh trước, lễ tân phân phòng chuyên môn sau khi tiếp nhận triệu chứng |
 | 2 | Form thông tin liên hệ | Họ tên, SĐT (8–20 chữ số), email (không bắt buộc) |
@@ -55,27 +83,23 @@ Theo quy trình ngoại trú chuẩn của Trung tâm Y tế phường, mọi b�
 | 4 | Dropdown chọn ca | Sáng (07:00 – 11:00) / Chiều (13:00 – 17:00) |
 | 5 | Textarea triệu chứng | Mô tả triệu chứng để lễ tân phân đúng phòng (ví dụ: "Đau bụng 2 ngày, sốt nhẹ" → phòng khám Ngoại) |
 | 6 | Token CSRF ẩn | Tự sinh bởi `@Html.AntiForgeryToken()` ở Razor |
-| 7 | Nút *"Xác nhận đặt lịch"* | POST tới `/dat-lich-kham`, redirect tới trang xác nhận |
-| 8 | Trang xác nhận | Hiển thị thông tin lịch + ghi chú *"Vui lòng đến trước 15 phút"* |
+| 7 | Nút *Xác nhận đặt lịch* | POST tới `/dat-lich-kham`, redirect tới trang xác nhận |
+| 8 | Trang xác nhận | Hiển thị thông tin lịch + ghi chú *Vui lòng đến trước 15 phút* |
 | 9 | Mã đặt tạm | UUID rút gọn, lưu trong Session với key `LastAnonBookingId` (chống IDOR) |
 | 10 | Cảnh báo trùng buổi | Nếu BN đã có lịch cùng ngày + ca, hệ thống chặn và hiển thị link tới *Lịch của tôi* |
 | 11 | Auto-gán Khoa Khám bệnh | Service tự đặt `DepartmentId = Department alias='khoa-kham-benh'`; `ClinicRoomId = NULL` (lễ tân phân sau) |
 
-## 3.3. Trang Đăng ký và Đăng nhập
+## 3.5. Đăng ký và Đăng nhập
 
-### 3.3.1. Giao diện Đăng ký
+Hai trang Đăng ký và Đăng nhập phục vụ vai trò Bệnh nhân. Trang Đăng ký yêu cầu họ tên, số điện thoại (regex `^(0|\+84)[0-9]{9}$`, unique trong site), email tùy chọn và mật khẩu tối thiểu 8 ký tự có cả chữ và số. Mật khẩu được mã hoá bằng PBKDF2 SHA-256 với salt riêng cho từng tài khoản. Tài khoản bị khoá tạm 15 phút sau năm lần đăng nhập sai liên tiếp.
 
 ![Hình 3.5. Giao diện trang Đăng ký](images/hinh-3-7.png){width=16cm}
 
-### 3.3.2. Giao diện Đăng nhập
-
 ![Hình 3.6. Giao diện trang Đăng nhập](images/hinh-3-8.png){width=16cm}
 
-### 3.3.3. Đặc tả chức năng
+Bảng 3.4. Đặc tả chức năng Đăng ký / Đăng nhập
 
-**Bảng 3.3. Đặc tả chức năng Đăng ký / Đăng nhập**
-
-| **STT** | **Thành phần** | **Mô tả** |
+| STT | Thành phần | Mô tả |
 |:--:|:--|:--|
 | 1 | Trường họ tên | NVARCHAR(150), bắt buộc, ≥ 2 ký tự |
 | 2 | Trường SĐT | Bắt buộc, regex `^(0|\+84)[0-9]{9}$`, unique trong site |
@@ -88,17 +112,15 @@ Theo quy trình ngoại trú chuẩn của Trung tâm Y tế phường, mọi b�
 | 9 | Link Đăng ký | Dẫn tới `/dang-ky` nếu chưa có tài khoản |
 | 10 | Captcha (tùy chọn) | Hiển thị sau 3 lần đăng nhập sai để chống brute force |
 
-## 3.4. Trang Lịch của tôi (Member)
+## 3.6. Lịch của tôi
 
-### 3.4.1. Giao diện
+Trang *Lịch của tôi* hiển thị toàn bộ lịch hẹn của bệnh nhân theo năm tab trạng thái: Tất cả, Chờ duyệt, Đã xác nhận, Đã khám và Đã hủy. Mỗi lịch hiển thị dưới dạng card gồm mã booking, ngày khám, ca, bác sĩ, chuyên khoa và trạng thái. Nút *Hủy lịch* chỉ xuất hiện khi trạng thái Pending hoặc Confirmed và ngày khám chưa qua; nút *Xem hồ sơ khám* chỉ xuất hiện khi trạng thái Done. Danh sách phân trang 10 lịch mỗi trang, mặc định lọc 30 ngày gần nhất.
 
 ![Hình 3.7. Giao diện trang Lịch của tôi](images/hinh-3-9.png){width=16cm}
 
-### 3.4.2. Đặc tả chức năng
+Bảng 3.5. Đặc tả chức năng Lịch của tôi
 
-**Bảng 3.4. Đặc tả chức năng Lịch của tôi**
-
-| **STT** | **Thành phần** | **Mô tả** |
+| STT | Thành phần | Mô tả |
 |:--:|:--|:--|
 | 1 | Tab trạng thái | 5 tab: Tất cả / Chờ duyệt / Đã xác nhận / Đã khám / Đã hủy |
 | 2 | Card lịch hẹn | Mã booking + ngày + ca + bác sĩ + chuyên khoa + trạng thái |
@@ -107,29 +129,17 @@ Theo quy trình ngoại trú chuẩn của Trung tâm Y tế phường, mọi b�
 | 5 | Phân trang | Mỗi trang 10 lịch, sắp xếp mới nhất trước |
 | 6 | Bộ lọc theo ngày | Date picker, mặc định 30 ngày gần nhất |
 
-## 3.5. Cổng Lễ tân
+## 3.7. Cổng Lễ tân
 
-### 3.5.1. Trang chủ Cổng Lễ tân
+Cổng Lễ tân tại `/le-tan` phục vụ nhân viên tiếp nhận bệnh nhân tại quầy. Trang chủ cổng có bốn ô số liệu trong ngày: lịch chờ duyệt, lịch đã xác nhận, bệnh nhân đã check-in, bệnh nhân đã khám xong. Trang *Lịch hẹn — Chờ duyệt* hiển thị bảng sáu cột (Mã, Bệnh nhân, SĐT, Bác sĩ, Ngày khám, Trạng thái) với hai nút thao tác chính: *Xác nhận* sinh mã booking dạng `KMyymmddS001` và ghi audit; *Từ chối* yêu cầu lý do tối thiểu 5 ký tự. Cổng cung cấp thêm hai chức năng tra cứu nhanh là tìm theo số điện thoại và tra cứu lịch theo ngày.
 
-![Hình 3.8. Giao diện Trang chủ Cổng Lễ tân](images/hinh-3-11.png){width=16cm}
-
-### 3.5.2. Trang Lịch hẹn (Chờ duyệt)
+![Hình 3.8. Giao diện trang chủ Cổng Lễ tân](images/hinh-3-11.png){width=16cm}
 
 ![Hình 3.9. Giao diện Lịch hẹn — Chờ duyệt](images/hinh-3-12.png){width=16cm}
 
-### 3.5.3. Trang Tìm theo SĐT
+Bảng 3.6. Đặc tả chức năng Cổng Lễ tân
 
-![Hình 3.10. Giao diện Tìm lịch theo số điện thoại](images/hinh-3-13.png){width=16cm}
-
-### 3.5.4. Trang Lịch theo ngày
-
-![Hình 3.11. Giao diện Tra cứu lịch theo ngày](images/hinh-3-14.png){width=16cm}
-
-### 3.5.5. Đặc tả chức năng
-
-**Bảng 3.5. Đặc tả chức năng Cổng Lễ tân**
-
-| **STT** | **Thành phần** | **Mô tả** |
+| STT | Thành phần | Mô tả |
 |:--:|:--|:--|
 | 1 | Banner thông báo | Hiển thị số lịch chờ duyệt mới (realtime) |
 | 2 | Bảng lịch hẹn | 6 cột: Mã / Bệnh nhân / SĐT / Bác sĩ / Ngày khám / Trạng thái |
@@ -139,30 +149,17 @@ Theo quy trình ngoại trú chuẩn của Trung tâm Y tế phường, mọi b�
 | 6 | Tra cứu theo ngày | Date picker, giới hạn ± 30 ngày, hiển thị toàn bộ lịch trong ngày |
 | 7 | Check-in | Quét mã booking hoặc nhập tay, chuyển trạng thái → CheckedIn |
 
-## 3.6. Cổng Bác sĩ
+## 3.8. Cổng Bác sĩ
 
-### 3.6.1. Trang chủ Cổng Bác sĩ
+Cổng Bác sĩ tại `/bac-si-portal` phục vụ luồng khám bệnh sau khi lễ tân check-in. Trang chủ cổng hiển thị bốn ô tổng quan (chờ, đang khám, đã khám, chuyển tuyến) và danh sách bệnh nhân sắp xếp theo thời gian check-in tăng dần. Bác sĩ chọn bệnh nhân để mở form chẩn đoán bốn trường: Triệu chứng, Chẩn đoán, Đơn thuốc, Ghi chú. Form auto-save vào `localStorage` mỗi 30 giây. Khi nhấn *Lưu hồ sơ*, hệ thống sinh `record_no` qua `MedicalRecordService.NextRecordNoAsync()` với cơ chế retry 5 lần khi gặp `DbUpdateException`, ghi audit và chuyển lịch hẹn sang trạng thái Done.
 
-![Hình 3.12. Giao diện trang chủ Cổng Bác sĩ](images/hinh-3-15.png){width=16cm}
+Cổng bác sĩ áp dụng kiểm soát chéo bác sĩ thông qua bộ lọc cố định `DoctorId == CurrentUser.DoctorId` trong `MedicalRecordService.GetByDoctorAsync()`, kèm join `Appointment.SiteId == CurrentSiteId` để chặn bác sĩ A xem hồ sơ do bác sĩ B lập. Giao diện cổng bác sĩ tách hoàn toàn khỏi AdminCP, bác sĩ không truy cập được khu vực quản trị.
 
-### 3.6.2. Trang Bệnh nhân hôm nay
+![Hình 3.10. Giao diện trang chủ Cổng Bác sĩ](images/hinh-3-15.png){width=16cm}
 
-![Hình 3.13. Giao diện Danh sách bệnh nhân hôm nay](images/hinh-3-16.png){width=16cm}
+Bảng 3.7. Đặc tả chức năng Cổng Bác sĩ
 
-### 3.6.3. Trang Hồ sơ đã chẩn đoán
-
-Trang `/bac-si-portal/ho-so-da-kham` hiển thị danh sách hồ sơ khám bệnh do chính bác sĩ đăng nhập đã ký, sắp xếp giảm dần theo thời gian khám. Trang này được tách hoàn toàn khỏi cổng quản trị (`/AdminCP/MedicalRecords`) để đảm bảo nguyên tắc *least privilege*: bác sĩ chỉ thao tác trong giao diện cổng bác sĩ, không truy cập được layout AdminCP.
-
-Cơ chế bảo mật được triển khai theo mô hình *defense-in-depth* gồm hai lớp:
-
-- **Lớp định tuyến:** controller `MedicalRecordsController` thuộc khu vực AdminCP được giới hạn chỉ cho nhóm `ADMIN`. Nếu tài khoản bác sĩ cố truy cập trực tiếp URL admin, bộ lọc `StaffAuthorize` sẽ tự động chuyển hướng về cổng bác sĩ;
-- **Lớp truy vấn:** phương thức `MedicalRecordService.GetByDoctorAsync(doctorId, siteId)` mã hóa cứng bộ lọc `DoctorId == CurrentUser.DoctorId` kết hợp join `Appointment.SiteId == CurrentSiteId`, đảm bảo bác sĩ chỉ nhìn thấy hồ sơ chính mình ký trong site của họ. Trang chi tiết bổ sung kiểm tra lần thứ ba ở action `HoSoChiTiet`, từ chối truy cập nếu `record.DoctorId` lệch.
-
-### 3.6.4. Đặc tả chức năng
-
-**Bảng 3.6. Đặc tả chức năng Cổng Bác sĩ**
-
-| **STT** | **Thành phần** | **Mô tả** |
+| STT | Thành phần | Mô tả |
 |:--:|:--|:--|
 | 1 | Tổng quan trong ngày | 4 ô: Số bệnh nhân chờ / đang khám / đã khám / chuyển tuyến |
 | 2 | Danh sách bệnh nhân | Sắp xếp theo thời gian check-in tăng dần, đánh dấu khẩn |
@@ -174,25 +171,17 @@ Cơ chế bảo mật được triển khai theo mô hình *defense-in-depth* g�
 | 8 | Cross-doctor guard | BS A không được mở chẩn đoán bệnh nhân của BS B (chặn từ controller) |
 | 9 | Quyền xóa | Bác sĩ không có quyền xoá hồ sơ; quyền xoá thuộc về Quản trị viên |
 
-## 3.7. Cổng Quản trị (AdminCP)
+## 3.9. Cổng Quản trị (AdminCP)
 
-### 3.7.1. Dashboard
+Cổng AdminCP gồm dashboard tổng quan và sidebar tám mục: quản lý tài khoản, danh mục bác sĩ và chuyên khoa, phòng khám, lịch trực bác sĩ, tin tức, hỏi đáp, cấu hình site (tên, logo, địa chỉ, hotline, email) và bảng audit log. Dashboard hiển thị bốn thẻ số liệu: tổng số tài khoản, lịch hẹn trong tháng, hồ sơ đã lập và câu hỏi Q&A chờ duyệt.
 
-![Hình 3.14. Giao diện Dashboard AdminCP](images/hinh-3-18.png){width=16cm}
+Chức năng tự động phân lịch tháng sinh 10 slot mỗi bác sĩ theo lịch Mon – Fri × hai ca (sáng và chiều), bảo đảm idempotent. `BackgroundService` chạy mỗi giờ và kích hoạt vào ngày 28 hằng tháng. Bảng audit hỗ trợ lọc theo action, userId, khoảng thời gian và xuất CSV.
 
-### 3.7.2. Trang Quản lý Lịch trực bác sĩ
+![Hình 3.11. Giao diện Dashboard AdminCP](images/hinh-3-18.png){width=16cm}
 
-![Hình 3.15. Giao diện Quản lý Lịch trực bác sĩ](images/hinh-3-19.png){width=16cm}
+Bảng 3.8. Đặc tả chức năng AdminCP
 
-### 3.7.3. Trang Tự động phân lịch tháng
-
-![Hình 3.16. Giao diện Tự động phân lịch tháng](images/hinh-3-20.png){width=16cm}
-
-### 3.7.4. Đặc tả chức năng
-
-**Bảng 3.7. Đặc tả chức năng AdminCP**
-
-| **STT** | **Thành phần** | **Mô tả** |
+| STT | Thành phần | Mô tả |
 |:--:|:--|:--|
 | 1 | Sidebar quản trị | 8 mục: Dashboard, Tài khoản, Bác sĩ, Khoa, Lịch trực, Tin tức, Hỏi đáp, Audit |
 | 2 | Dashboard cards | Tổng số tài khoản / lịch trong tháng / hồ sơ đã lập / câu hỏi chờ duyệt |
@@ -200,6 +189,6 @@ Cơ chế bảo mật được triển khai theo mô hình *defense-in-depth* g�
 | 4 | Tự động phân lịch | Sinh 10 slot/bác sĩ/tháng (Mon-Fri × 2 ca), idempotent |
 | 5 | Cron auto-gen | BackgroundService chạy mỗi giờ, kích hoạt vào ngày 28 hằng tháng |
 | 6 | Bảng audit log | Filter theo action / userId / khoảng thời gian, export CSV |
-| 7 | Cấu hình site | Đổi tên cơ sở, logo, địa chỉ, hotline, email — file logo upload trực tiếp |
+| 7 | Cấu hình site | Đổi tên cơ sở, logo, địa chỉ, hotline, email, file logo upload trực tiếp |
 
 \newpage

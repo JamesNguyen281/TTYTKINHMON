@@ -1,0 +1,153 @@
+@startuml erd
+' =========================================================================
+' Hình 2.17 — Sơ đồ quan hệ thực thể (ERD)
+' Website TTYT phường Kinh Môn
+' =========================================================================
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam linetype ortho
+skinparam classBackgroundColor #FCE4EC
+skinparam classBorderColor #AD1457
+skinparam classFontColor #000000
+
+title Sơ đồ quan hệ thực thể (ERD) — TTYT phường Kinh Môn
+
+' ----- Entities -----
+entity "User" as User {
+  * id : Guid <<PK>>
+  --
+  user_name : string <<UK>>
+  full_name : string
+  phone : string
+  email : string
+  password_hash : string
+  group_id : Guid <<FK>>
+  must_change_password : bool
+}
+
+entity "UserGroup" as UserGroup {
+  * id : Guid <<PK>>
+  --
+  code : string
+  name_l : string
+}
+
+entity "Doctor" as Doctor {
+  * id : Guid <<PK>>
+  --
+  name_l : string
+  specially_l : string
+  department_id : Guid <<FK>>
+  image_path : string
+}
+
+entity "Department" as Department {
+  * id : Guid <<PK>>
+  --
+  name_l : string
+  alias : string <<UK>>
+  ord : int
+  active_flag : bool
+}
+
+entity "DoctorSchedule" as DoctorSchedule {
+  * id : Guid <<PK>>
+  --
+  doctor_id : Guid <<FK>>
+  work_date : DateTime
+  session : string
+  room : string
+}
+
+entity "Appointment" as Appointment {
+  * id : Guid <<PK>>
+  --
+  patient_name : string
+  patient_phone : string
+  patient_email : string
+  department_id : Guid <<FK>>
+  appointment_date : DateTime
+  session : string
+  status : string
+  booking_code : string
+  staff_note : string
+  checked_in : bool
+  created_by_user_id : Guid <<FK>>
+}
+
+entity "AppointmentQuota" as AppointmentQuota {
+  * id : Guid <<PK>>
+  --
+  department_id : Guid <<FK>>
+  work_date : DateTime
+  session : string
+  max_count : int
+  booked_count : int
+}
+
+entity "MedicalRecord" as MedicalRecord {
+  * id : Guid <<PK>>
+  --
+  record_no : string <<UK>>
+  patient_user_id : Guid <<FK>>
+  doctor_id : Guid <<FK>>
+  visit_date : DateTime
+  diagnosis : string
+  symptoms : string
+  treatment : string
+}
+
+entity "Prescription" as Prescription {
+  * id : Guid <<PK>>
+  --
+  medical_record_id : Guid <<FK>>
+  drug_name : string
+  dosage : string
+  usage_note : string
+}
+
+entity "Question" as Question {
+  * id : Guid <<PK>>
+  --
+  patient_user_id : Guid <<FK>>
+  title : string
+  body : string
+  topic : string
+  is_public : bool
+  approved : bool
+}
+
+entity "Answer" as Answer {
+  * id : Guid <<PK>>
+  --
+  question_id : Guid <<FK>>
+  doctor_id : Guid <<FK>>
+  body : string
+  answered_date : DateTime
+}
+
+entity "Credential" as Credential {
+  * id : Guid <<PK>>
+  --
+  user_id : Guid <<FK>>
+  role_code : string
+}
+
+' ----- Relationships -----
+User           ||--o{ Appointment      : "đặt lịch"
+User           ||--o{ Question         : "đặt câu hỏi"
+User           ||--o{ MedicalRecord    : "khám bệnh"
+User           }o--|| UserGroup        : "thuộc nhóm"
+User           ||--o{ Credential       : "xác thực"
+Doctor         ||--o{ DoctorSchedule   : "có lịch trực"
+Doctor         ||--o{ MedicalRecord    : "lập hồ sơ"
+Doctor         ||--o{ Answer           : "trả lời"
+Doctor         }o--|| Department       : "thuộc khoa"
+Department     ||--o{ Appointment      : "tiếp nhận"
+Department     ||--o{ AppointmentQuota : "có quota"
+Appointment    ||--o| MedicalRecord    : "phát sinh hồ sơ"
+MedicalRecord  ||--o{ Prescription     : "có đơn thuốc"
+Question       ||--o| Answer           : "được trả lời"
+
+@enduml

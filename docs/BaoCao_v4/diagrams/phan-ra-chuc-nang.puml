@@ -1,0 +1,79 @@
+@startwbs
+' =========================================================================
+' Sơ đồ phân rã chức năng (Functional Decomposition Diagram)
+' Website TTYT phường Kinh Môn — Hình 1.1
+' Note: dùng @startwbs (Work Breakdown Structure) thay @startuml để cây
+'       hiển thị gọn theo phân cấp; plantuml.com hỗ trợ trực tiếp.
+' =========================================================================
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam wbsArrowColor #333333
+
+<style>
+wbsDiagram {
+    LineColor #777777
+    .root      { BackgroundColor #1F4E79 FontColor #FFFFFF FontStyle bold }
+    .m1        { BackgroundColor #1976D2 FontColor #FFFFFF FontStyle bold }
+    .m2        { BackgroundColor #7B1FA2 FontColor #FFFFFF FontStyle bold }
+    .m3        { BackgroundColor #2E7D32 FontColor #FFFFFF FontStyle bold }
+    .m4        { BackgroundColor #E65100 FontColor #FFFFFF FontStyle bold }
+    .m5        { BackgroundColor #AD1457 FontColor #FFFFFF FontStyle bold }
+    .f1        { BackgroundColor #E3F2FD }
+    .f2        { BackgroundColor #F3E5F5 }
+    .f3        { BackgroundColor #E8F5E9 }
+    .f4        { BackgroundColor #FFF3E0 }
+    .f5        { BackgroundColor #FCE4EC }
+}
+</style>
+
++ Website TTYT Kinh Môn <<root>>
+++ Public Site <<m1>>
++++ Trang chủ <<f1>>
++++ Tin tức / Bài viết <<f1>>
++++ Chuyên khoa <<f1>>
++++ Phòng khám công khai <<f1>>
++++ Lịch trực BS công khai <<f1>>
++++ Q&A công khai <<f1>>
++++ Đăng ký <<f1>>
++++ Đăng nhập <<f1>>
++++ FAQ + Giới thiệu <<f1>>
+++ Bệnh nhân <<m2>>
++++ Đặt lịch khám <<f2>>
++++ Lịch của tôi <<f2>>
++++ Hồ sơ cá nhân <<f2>>
++++ Lịch sử khám <<f2>>
++++ Câu hỏi của tôi <<f2>>
++++ Đổi mật khẩu <<f2>>
+++ Lễ tân <<m3>>
++++ DS lịch hẹn <<f3>>
++++ Duyệt + xác nhận <<f3>>
++++ Từ chối lịch <<f3>>
++++ Check-in BN <<f3>>
++++ Phân phòng khám <<f3>>
++++ Phân bác sĩ <<f3>>
++++ Quản lý quota <<f3>>
++++ Lịch trực BS <<f3>>
++++ Tra cứu theo SĐT <<f3>>
+++ Bác sĩ <<m4>>
++++ BN hôm nay <<f4>>
++++ Lịch trực của tôi <<f4>>
++++ Tạo hồ sơ + chẩn đoán <<f4>>
++++ Kê đơn thuốc <<f4>>
++++ Hoàn tất khám <<f4>>
++++ Hẹn khám lại <<f4>>
++++ Trả lời Q&A <<f4>>
++++ Yêu cầu đổi lịch trực <<f4>>
+++ Quản trị <<m5>>
++++ Dashboard <<f5>>
++++ Cấu hình site <<f5>>
++++ Quản lý News + Khoa <<f5>>
++++ Quản lý Doctor + User <<f5>>
++++ Quản lý phòng khám <<f5>>
++++ Quản lý lịch trực BS <<f5>>
++++ Duyệt yêu cầu đổi lịch <<f5>>
++++ Quản lý tài liệu <<f5>>
++++ Audit log + export CSV <<f5>>
++++ Reset mật khẩu <<f5>>
+
+@endwbs

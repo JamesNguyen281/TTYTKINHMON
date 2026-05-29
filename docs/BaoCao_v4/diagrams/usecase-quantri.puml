@@ -27,12 +27,12 @@ LT <|-- QT
 BS <|-- QT
 
 rectangle "Hệ thống Website TTYT Kinh Môn" {
-    usecase "UC-30 Cấu hình site" as UC30
-    usecase "UC-31 Quản lý News/Khoa" as UC31
-    usecase "UC-32 Quản lý Doctor/User" as UC32
-    usecase "UC-33 Quản lý tài liệu" as UC33
-    usecase "UC-34 Xem audit log" as UC34
-    usecase "UC-35 Force change password" as UC35
+    usecase "Cấu hình site" as UC30
+    usecase "Quản lý News/Khoa" as UC31
+    usecase "Quản lý Doctor/User" as UC32
+    usecase "Quản lý tài liệu" as UC33
+    usecase "Xem audit log" as UC34
+    usecase "Force change password" as UC35
 
     usecase "Ghi audit log" as UCI_AUDIT #FFF8E1
 }

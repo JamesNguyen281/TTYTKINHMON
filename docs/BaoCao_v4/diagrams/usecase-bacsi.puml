@@ -21,11 +21,11 @@ skinparam actor {
 actor "Bác sĩ" as BS
 
 rectangle "Hệ thống Website TTYT Kinh Môn" {
-    usecase "UC-20 Xem BN hôm nay" as UC20
-    usecase "UC-21 Tạo hồ sơ + chẩn đoán" as UC21
-    usecase "UC-22 Kê đơn thuốc" as UC22
-    usecase "UC-23 Hoàn tất khám" as UC23
-    usecase "UC-24 Trả lời câu hỏi BN" as UC24
+    usecase "Xem BN hôm nay" as UC20
+    usecase "Tạo hồ sơ + chẩn đoán" as UC21
+    usecase "Kê đơn thuốc" as UC22
+    usecase "Hoàn tất khám" as UC23
+    usecase "Trả lời câu hỏi BN" as UC24
 
     usecase "Cấp số hồ sơ\n(NextRecordNo)" as UCI_RECNO #FFF8E1
     usecase "Ghi audit log" as UCI_AUDIT #FFF8E1

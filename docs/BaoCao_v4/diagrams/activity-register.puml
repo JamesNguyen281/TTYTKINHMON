@@ -1,0 +1,63 @@
+@startuml activity-register
+' =========================================================================
+' Hình 2.7 — Biểu đồ hoạt động Đăng ký tài khoản
+' =========================================================================
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ActivityBackgroundColor #E3F2FD
+skinparam ActivityBorderColor #1976D2
+skinparam ActivityDiamondBackgroundColor #FFF3E0
+skinparam ActivityDiamondBorderColor #E65100
+skinparam ArrowColor #1976D2
+skinparam SwimlaneBorderColor #424242
+skinparam SwimlaneTitleFontStyle bold
+
+title Sơ đồ hoạt động: Đăng ký tài khoản
+
+|Người dùng|
+start
+:Truy cập /dang-ky;
+:Nhập họ tên, SĐT, email, mật khẩu;
+:Nhập lại mật khẩu xác nhận;
+:Submit form;
+
+|Hệ thống|
+:Nhận yêu cầu đăng ký;
+
+if (Anti-forgery token hợp lệ?) then (Không)
+  :Trả về HTTP 400;
+  |Người dùng|
+  :Xem thông báo lỗi;
+  stop
+else (Có)
+endif
+
+|Hệ thống|
+if (Dữ liệu hợp lệ?\n(SĐT, email, mật khẩu mạnh)) then (Không)
+  :Trả về thông báo lỗi validate;
+  |Người dùng|
+  :Xem thông báo lỗi;
+  stop
+else (Có)
+endif
+
+|Hệ thống|
+if (SĐT đã tồn tại?) then (Có)
+  :Trả lỗi: SĐT đã được đăng ký;
+  |Người dùng|
+  :Xem thông báo lỗi;
+  stop
+else (Không)
+endif
+
+|Hệ thống|
+:Hash mật khẩu PBKDF2-SHA256\n(600.000 vòng);
+:Lưu tài khoản (group_code = MEMBER);
+:Ghi audit log USER_REGISTERED;
+:Tạo session đăng nhập;
+
+|Người dùng|
+:Vào trang /ho-so;
+stop
+@enduml

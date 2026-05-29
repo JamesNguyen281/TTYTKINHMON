@@ -1,113 +1,100 @@
 @startuml usecase
-' ========================================================================
-' Biểu đồ Use Case tổng quát - Website TTYT Kinh Môn
-' Chuẩn UML 2.x: Actor + System + Quan hệ (assoc/include/extend/general.)
-' Layout: BS/LT/QT bên trái  |  System ở giữa  |  Bệnh nhân bên phải
-' ========================================================================
+' =========================================================================
+' Hình 2.1 — Biểu đồ Use Case TỔNG QUÁT
+' Website TTYT phường Kinh Môn — hiển thị toàn bộ use case nghiệp vụ
+' Chia 4 vùng theo vai trò (package) để tránh đường nối chồng chéo.
+' Use case nội bộ (Sinh mã booking / Ghi audit / Cấp số hồ sơ ...)
+' và quan hệ «include» / «extend» được tách sang Hình 2.2 (zoom).
+' =========================================================================
 left to right direction
-
 skinparam shadowing false
 skinparam defaultFontName Arial
-skinparam defaultFontSize 13
+skinparam defaultFontSize 12
 skinparam packageStyle rectangle
 skinparam actorStyle awesome
-skinparam linetype ortho
+skinparam linetype polyline
+skinparam nodesep 12
+skinparam ranksep 25
 
 skinparam usecase {
     BackgroundColor #D6E9FF
-    BorderColor #1F4E79
-    ArrowColor #1F4E79
-    FontColor #000000
+    BorderColor     #1F4E79
+    ArrowColor      #1F4E79
+    FontColor       #000000
 }
 skinparam actor {
     BackgroundColor #FFD27F
-    BorderColor #000000
-    FontStyle bold
+    BorderColor     #000000
+    FontStyle       bold
 }
 skinparam rectangle {
     BackgroundColor #F8FAFC
-    BorderColor #1F4E79
-    FontColor #1F4E79
-    FontStyle bold
+    BorderColor     #1F4E79
+    FontColor       #1F4E79
+    FontStyle       bold
 }
 
-' =========================================================================
-' Khai báo actors NỘI BỘ (TRÁI) — dùng together để buộc cạnh nhau
-' =========================================================================
-together {
-    actor "Bác sĩ"   as BS
-    actor "Lễ tân"   as LT
-    actor "Quản trị" as QT
-}
+' ====== Actors NỘI BỘ (TRÁI) ======
+actor "Bác sĩ"   as BS
+actor "Lễ tân"   as LT
+actor "Quản trị" as QT
 
-' Generalization: Quản trị là super-user
+' Quản trị kế thừa quyền của Lễ tân + Bác sĩ
 LT <|-- QT
 BS <|-- QT
 
-' =========================================================================
-' System boundary (GIỮA) — chia 5 cụm bằng together
-' =========================================================================
+' ====== System boundary ======
 rectangle "Hệ thống Website TTYT Kinh Môn" {
 
-    together {
-        usecase "UC-20 Xem BN hôm nay"        as UC20
-        usecase "UC-21 Tạo hồ sơ + chẩn đoán" as UC21
-        usecase "UC-22 Kê đơn thuốc"          as UC22
-        usecase "UC-23 Hoàn tất khám"         as UC23
-        usecase "UC-24 Trả lời câu hỏi BN"    as UC24
+    package "Bệnh nhân (Member)" #F3E5F5 {
+        usecase "Đăng ký tài khoản" as UC01
+        usecase "Đăng nhập"         as UC02
+        usecase "Đặt lịch khám"     as UC03
+        usecase "Xem lịch của tôi"  as UC04
+        usecase "Đặt câu hỏi Q&A"   as UC05
+        usecase "Xem lịch sử khám"  as UC06
+        usecase "Cập nhật hồ sơ"    as UC07
     }
 
-    together {
-        usecase "UC-10 Xem danh sách lịch hẹn" as UC10
-        usecase "UC-11 Duyệt và xác nhận lịch" as UC11
-        usecase "UC-12 Từ chối lịch"           as UC12
-        usecase "UC-13 Check-in bệnh nhân"     as UC13
-        usecase "UC-14 Phân phòng khám + BS"   as UC14
-        usecase "UC-15 Quản lý quota khám"     as UC15
-        usecase "UC-16 Xem lịch trực BS"       as UC16
+    package "Lễ tân (Reception)" #E8F5E9 {
+        usecase "Xem DS lịch hẹn"      as UC10
+        usecase "Duyệt và xác nhận"    as UC11
+        usecase "Từ chối lịch"         as UC12
+        usecase "Check-in bệnh nhân"   as UC13
+        usecase "Phân phòng khám + BS" as UC14
+        usecase "Quản lý quota"        as UC15
+        usecase "Xem lịch trực BS"     as UC16
     }
 
-    together {
-        usecase "UC-30 Cấu hình site"          as UC30
-        usecase "UC-31 Quản lý News/Khoa"      as UC31
-        usecase "UC-32 Quản lý Doctor/User"    as UC32
-        usecase "UC-33 Quản lý tài liệu"       as UC33
-        usecase "UC-34 Xem audit log"          as UC34
-        usecase "UC-35 Force change password"  as UC35
+    package "Bác sĩ (Doctor)" #FFF3E0 {
+        usecase "Xem BN hôm nay"        as UC20
+        usecase "Tạo hồ sơ + chẩn đoán" as UC21
+        usecase "Kê đơn thuốc"          as UC22
+        usecase "Hoàn tất khám"         as UC23
+        usecase "Trả lời Q&A"           as UC24
     }
 
-    ' --- Use cases nội bộ (target của include/extend) ---
-    together {
-        usecase "Sinh mã booking\n(KMyymmdd-XXXXXX)" as UCI_CODE #FFF8E1
-        usecase "Kiểm tra quota\nkhoa + BS"          as UCI_QUOTA #FFF8E1
-        usecase "Cấp số hồ sơ\n(NextRecordNo)"       as UCI_RECNO #FFF8E1
-        usecase "Ghi audit log"                      as UCI_AUDIT #FFF8E1
-        usecase "Đổi mật khẩu lần đầu"               as UCE_PWDFIRST #FFF8E1
-    }
-
-    together {
-        usecase "UC-01 Đăng ký tài khoản" as UC01
-        usecase "UC-02 Đăng nhập"         as UC02
-        usecase "UC-03 Đặt lịch khám"     as UC03
-        usecase "UC-04 Xem lịch của tôi"  as UC04
-        usecase "UC-05 Đặt câu hỏi"       as UC05
-        usecase "UC-06 Xem lịch sử khám"  as UC06
-        usecase "UC-07 Cập nhật hồ sơ"    as UC07
+    package "Quản trị viên (Admin)" #FCE4EC {
+        usecase "Cấu hình site"         as UC30
+        usecase "Quản lý News/Khoa"     as UC31
+        usecase "Quản lý Doctor/User"   as UC32
+        usecase "Quản lý tài liệu"      as UC33
+        usecase "Xem audit log"         as UC34
+        usecase "Reset mật khẩu"        as UC35
     }
 }
 
-' =========================================================================
-' Actor NGOÀI (PHẢI)
-' =========================================================================
+' ====== Actor BÊN PHẢI ======
 actor "Bệnh nhân" as BN
 
-' ============== ASSOCIATIONS ==============
-' BS / LT / QT bên trái (actor --> use case)
-BS -- UC20
-BS -- UC21
-BS -- UC22
-BS -- UC23
-BS -- UC24
+' ====== Associations ======
+BN -- UC01
+BN -- UC02
+BN -- UC03
+BN -- UC04
+BN -- UC05
+BN -- UC06
+BN -- UC07
 
 LT -- UC10
 LT -- UC11
@@ -117,36 +104,17 @@ LT -- UC14
 LT -- UC15
 LT -- UC16
 
+BS -- UC20
+BS -- UC21
+BS -- UC22
+BS -- UC23
+BS -- UC24
+
 QT -- UC30
 QT -- UC31
 QT -- UC32
 QT -- UC33
 QT -- UC34
 QT -- UC35
-
-' BN bên phải (use case --> actor để buộc về phía phải)
-UC01 -- BN
-UC02 -- BN
-UC03 -- BN
-UC04 -- BN
-UC05 -- BN
-UC06 -- BN
-UC07 -- BN
-
-' ============== <<include>> ==============
-UC03 ..> UCI_QUOTA : <<include>>
-UC11 ..> UCI_CODE  : <<include>>
-UC11 ..> UCI_AUDIT : <<include>>
-UC12 ..> UCI_AUDIT : <<include>>
-UC13 ..> UCI_AUDIT : <<include>>
-UC21 ..> UCI_RECNO : <<include>>
-UC21 ..> UCI_AUDIT : <<include>>
-UC22 ..> UC21      : <<include>>
-UC23 ..> UC21      : <<include>>
-
-' ============== <<extend>> ==============
-UC12         ..> UC11 : <<extend>>
-UC14         ..> UC11 : <<extend>>
-UCE_PWDFIRST ..> UC02 : <<extend>>
 
 @enduml

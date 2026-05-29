@@ -1,0 +1,70 @@
+@startuml activity-checkin
+' =========================================================================
+' Hình 2.10 — Biểu đồ hoạt động Check-in và Khám bệnh
+' =========================================================================
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ActivityBackgroundColor #E3F2FD
+skinparam ActivityBorderColor #1976D2
+skinparam ActivityDiamondBackgroundColor #FFF3E0
+skinparam ActivityDiamondBorderColor #E65100
+skinparam ArrowColor #1976D2
+skinparam SwimlaneBorderColor #424242
+skinparam SwimlaneTitleFontStyle bold
+
+title Sơ đồ hoạt động: Check-in bệnh nhân
+
+|Bệnh nhân|
+start
+:Tới quầy lễ tân;
+:Xuất trình mã booking (KMyymmddS001);
+
+|Lễ tân|
+:Nhập mã vào /le-tan/check-in;
+:Gửi yêu cầu check-in;
+
+|Hệ thống|
+:Tra cứu lịch theo booking_code;
+
+if (Tìm thấy lịch?) then (Không)
+  :Trả lỗi: mã không tồn tại;
+  |Lễ tân|
+  :Xem thông báo lỗi;
+  stop
+else (Có)
+endif
+
+|Hệ thống|
+if (Status = Confirmed?) then (Không)
+  :Trả lỗi: lịch chưa được duyệt;
+  |Lễ tân|
+  :Xem thông báo lỗi;
+  stop
+else (Có)
+endif
+
+|Hệ thống|
+if (Ngày khám = hôm nay?) then (Không)
+  :Trả lỗi: không đúng ngày khám;
+  |Lễ tân|
+  :Xem thông báo lỗi;
+  stop
+else (Có)
+endif
+
+|Hệ thống|
+if (Đã check-in trước đó?) then (Có)
+  :Idempotent — trả OK;
+else (Không)
+  :Cập nhật CheckedIn = true,\nLastUpdated, LastUserId;
+  :Ghi audit log CHECK_IN;
+endif
+
+|Lễ tân|
+:Hướng dẫn bệnh nhân tới phòng khám;
+
+|Bệnh nhân|
+:Chờ gọi tên vào phòng khám;
+stop
+@enduml

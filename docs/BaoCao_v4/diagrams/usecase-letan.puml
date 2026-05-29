@@ -21,13 +21,13 @@ skinparam actor {
 actor "Lễ tân" as LT
 
 rectangle "Hệ thống Website TTYT Kinh Môn" {
-    usecase "UC-10 Xem danh sách lịch hẹn" as UC10
-    usecase "UC-11 Duyệt và xác nhận lịch" as UC11
-    usecase "UC-12 Từ chối lịch" as UC12
-    usecase "UC-13 Check-in bệnh nhân" as UC13
-    usecase "UC-14 Phân phòng khám + BS" as UC14
-    usecase "UC-15 Quản lý quota khám" as UC15
-    usecase "UC-16 Xem lịch trực BS" as UC16
+    usecase "Xem danh sách lịch hẹn" as UC10
+    usecase "Duyệt và xác nhận lịch" as UC11
+    usecase "Từ chối lịch" as UC12
+    usecase "Check-in bệnh nhân" as UC13
+    usecase "Phân phòng khám + BS" as UC14
+    usecase "Quản lý quota khám" as UC15
+    usecase "Xem lịch trực BS" as UC16
 
     usecase "Sinh mã booking\nKMyymmdd-XXXXXX" as UCI_CODE #FFF8E1
     usecase "Ghi audit log" as UCI_AUDIT #FFF8E1

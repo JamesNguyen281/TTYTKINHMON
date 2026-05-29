@@ -1,0 +1,92 @@
+@startuml activity-login
+' =========================================================================
+' Hình 2.8 — Biểu đồ hoạt động Đăng nhập
+' =========================================================================
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ActivityBackgroundColor #E3F2FD
+skinparam ActivityBorderColor #1976D2
+skinparam ActivityDiamondBackgroundColor #FFF3E0
+skinparam ActivityDiamondBorderColor #E65100
+skinparam ArrowColor #1976D2
+skinparam SwimlaneBorderColor #424242
+skinparam SwimlaneTitleFontStyle bold
+
+title Sơ đồ hoạt động: Đăng nhập hệ thống
+
+|Người dùng|
+start
+:Truy cập /dang-nhap;
+:Nhập tên đăng nhập và mật khẩu;
+:Gửi yêu cầu đăng nhập;
+
+|Hệ thống|
+:Nhận thông tin đăng nhập;
+
+if (Anti-forgery token hợp lệ?) then (Không)
+  :Trả về HTTP 400;
+  |Người dùng|
+  :Xem thông báo lỗi;
+  stop
+else (Có)
+endif
+
+|Hệ thống|
+if (Tài khoản tồn tại?) then (Không)
+  :Trả lỗi: thông tin sai;
+  |Người dùng|
+  :Xem thông báo lỗi;
+  stop
+else (Có)
+endif
+
+|Hệ thống|
+if (Tài khoản bị khóa?) then (Có)
+  :Trả lỗi: tài khoản bị khóa\n(sai 5 lần liên tiếp);
+  |Người dùng|
+  :Xem thông báo lỗi;
+  stop
+else (Không)
+endif
+
+|Hệ thống|
+:Xác minh mật khẩu (PBKDF2-SHA256);
+
+if (Mật khẩu đúng?) then (Không)
+  :Tăng login_failed_count;
+  if (login_failed_count ≥ 5?) then (Có)
+    :Khóa tài khoản 15 phút;
+  else (Không)
+  endif
+  :Trả lỗi đăng nhập;
+  |Người dùng|
+  :Xem thông báo lỗi;
+  stop
+else (Có)
+endif
+
+|Hệ thống|
+:Reset login_failed_count = 0;
+
+if (must_change_password?) then (Có)
+  :Yêu cầu đổi mật khẩu;
+  |Người dùng|
+  :Vào /doi-mat-khau;
+  stop
+else (Không)
+endif
+
+|Hệ thống|
+:Tạo session\n+ thiết lập cookie;
+
+if (Vai trò Admin?) then (Có)
+  :Điều hướng tới /AdminCP;
+else (Không)
+  :Điều hướng tới trang chủ/portal\ntheo vai trò;
+endif
+
+|Người dùng|
+:Truy cập giao diện theo vai trò;
+stop
+@enduml

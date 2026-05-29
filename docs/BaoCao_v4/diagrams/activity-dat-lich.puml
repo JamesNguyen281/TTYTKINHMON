@@ -1,0 +1,81 @@
+@startuml activity-dat-lich
+' =========================================================================
+' Hình 2.9 — Biểu đồ hoạt động Đặt lịch khám
+' =========================================================================
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ActivityBackgroundColor #E3F2FD
+skinparam ActivityBorderColor #1976D2
+skinparam ActivityDiamondBackgroundColor #FFF3E0
+skinparam ActivityDiamondBorderColor #E65100
+skinparam ArrowColor #1976D2
+skinparam SwimlaneBorderColor #424242
+skinparam SwimlaneTitleFontStyle bold
+
+title Sơ đồ hoạt động: Đặt lịch khám
+
+|Bệnh nhân|
+start
+:Truy cập /dat-lich-kham;
+
+|Hệ thống|
+if (Đã đăng nhập?) then (Có)
+  :Tự điền họ tên, SĐT, email\ntừ hồ sơ;
+else (Không)
+  :Hiển thị form trống\n+ gợi ý đăng nhập;
+endif
+
+|Bệnh nhân|
+:Chọn ngày khám, ca khám;
+:Nhập triệu chứng;
+:Gửi yêu cầu đặt lịch;
+
+|Hệ thống|
+:Nhận yêu cầu đặt lịch;
+
+if (Anti-forgery token hợp lệ?) then (Không)
+  :Trả về HTTP 400;
+  |Bệnh nhân|
+  :Xem thông báo lỗi;
+  stop
+else (Có)
+endif
+
+|Hệ thống|
+if (Đủ họ tên + SĐT?) then (Không)
+  :Trả lỗi: thiếu thông tin bắt buộc;
+  |Bệnh nhân|
+  :Xem thông báo lỗi;
+  stop
+else (Có)
+endif
+
+|Hệ thống|
+if (Ngày khám trong\n[hôm nay, hôm nay + 14]?) then (Không)
+  :Trả lỗi: ngày không hợp lệ;
+  |Bệnh nhân|
+  :Xem thông báo lỗi;
+  stop
+else (Có)
+endif
+
+|Hệ thống|
+if (Đã có lịch cùng ngày + ca?) then (Có)
+  :Trả lỗi: trùng buổi;
+  |Bệnh nhân|
+  :Xem thông báo + link Lịch của tôi;
+  stop
+else (Không)
+endif
+
+|Hệ thống|
+:Auto-gán DepartmentId\n= Khoa Khám bệnh;
+:Tạo Appointment\n(status = Pending);
+:Lưu DB;
+:Ghi audit log APPOINTMENT_CREATED;
+
+|Bệnh nhân|
+:Vào trang xác nhận\nxem mã đặt lịch tạm;
+stop
+@enduml

@@ -1,0 +1,57 @@
+@startuml activity-qna
+' =========================================================================
+' Hình 2.11 — Biểu đồ hoạt động Hỏi đáp Q&A
+' =========================================================================
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ActivityBackgroundColor #E3F2FD
+skinparam ActivityBorderColor #1976D2
+skinparam ActivityDiamondBackgroundColor #FFF3E0
+skinparam ActivityDiamondBorderColor #E65100
+skinparam ArrowColor #1976D2
+skinparam SwimlaneBorderColor #424242
+skinparam SwimlaneTitleFontStyle bold
+
+title Sơ đồ hoạt động: Hỏi đáp Q&A
+
+|Bệnh nhân|
+start
+:Đăng nhập + vào /dat-cau-hoi;
+:Nhập tiêu đề, nội dung, chuyên khoa;
+:Gửi câu hỏi;
+
+|Hệ thống|
+:Lưu câu hỏi (status = Pending);
+:Hiển thị flash "Đã gửi, chờ duyệt";
+
+|Quản trị viên|
+:Vào /AdminCP/Qna;
+:Mở danh sách câu hỏi chờ duyệt;
+
+if (Duyệt câu hỏi?) then (Approve)
+  |Hệ thống|
+  :Cập nhật status = Visible;
+  :Ghi audit log QNA_APPROVED;
+else (Reject)
+  |Hệ thống|
+  :Cập nhật status = Rejected\nsoft_delete = 1;
+  :Ghi audit log QNA_REJECTED;
+  stop
+endif
+
+|Bác sĩ|
+:Vào /bac-si-portal/qna;
+:Xem câu hỏi thuộc chuyên khoa\n(status = Visible);
+:Nhập nội dung trả lời;
+:Gửi trả lời;
+
+|Hệ thống|
+:Lưu Answer;
+:Cập nhật Question.approved = true;
+:Ghi audit log QUESTION_ANSWERED;
+
+|Bệnh nhân|
+:Vào /cau-hoi-cua-toi xem trả lời;
+stop
+@enduml
