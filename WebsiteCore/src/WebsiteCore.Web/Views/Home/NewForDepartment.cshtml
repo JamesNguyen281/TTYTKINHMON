@@ -3,57 +3,160 @@
 @{
     ViewData["Title"] = Model.NameL;
     var newsList = ViewBag.NewsList as List<News> ?? new();
-    var doctors = ViewBag.Doctors as List<Doctor> ?? new();
+    var doctors  = ViewBag.Doctors  as List<Doctor> ?? new();
+    var detail   = Model.DetailL;
+    var summary  = Model.DescriptionL;
 }
 
-<div class="container" style="padding-top:24px;">
-    <h1 style="color:#0a3d62;">@Model.NameL</h1>
+<div class="container km-dept" style="padding:24px 15px 50px;">
+    <nav class="km-bc">
+        <a href="/">Trang chủ</a> ›
+        <a href="/chuyen-khoa">Chuyên khoa</a> ›
+        <span>@Model.NameL</span>
+    </nav>
 
-    <div class="row">
-        <div class="col-md-8">
-            <div class="panel panel-default">
-                <div class="panel-heading"><strong>Giới thiệu</strong></div>
-                <div class="panel-body">
-                    @Html.Raw(Model.DetailL ?? Model.DescriptionL)
+    <header class="km-dept-header">
+        <h1>@Model.NameL</h1>
+        @if (!string.IsNullOrWhiteSpace(summary))
+        {
+            <p class="km-dept-sub">@summary</p>
+        }
+    </header>
+
+    <div class="row km-dept-main">
+        <article class="col-md-8 km-dept-article">
+            @if (!string.IsNullOrWhiteSpace(detail))
+            {
+                @* Nội dung biên tập bởi admin qua /AdminCP/Departments — render HTML/text trực tiếp *@
+                <div class="km-dept-content">@Html.Raw(detail)</div>
+            }
+            else if (!string.IsNullOrWhiteSpace(summary))
+            {
+                <div class="km-dept-content">@Html.Raw(summary.Replace("\n", "<br />"))</div>
+            }
+            else
+            {
+                <div class="km-dept-content">
+                    <p><em>Nội dung giới thiệu chi tiết về <strong>@Model.NameL</strong> đang được biên soạn. Vui lòng liên hệ Lễ tân hoặc Hotline để biết thông tin chi tiết.</em></p>
                 </div>
-            </div>
+            }
 
             @if (newsList.Any())
             {
-                <h3>Tin tức của khoa</h3>
-                <ul class="list-group">
-                    @foreach (var n in newsList)
-                    {
-                        <li class="list-group-item">
-                            <a href="/tin-tuc/@n.AliasL"><strong>@n.TitleL</strong></a>
-                            <p class="text-muted">@n.DescriptionL</p>
-                            <small>@n.CreatedDate?.ToString("dd/MM/yyyy")</small>
-                        </li>
-                    }
-                </ul>
+                <section class="km-dept-news">
+                    <h2 class="km-dept-h2">Tin tức liên quan</h2>
+                    <ul>
+                        @foreach (var n in newsList)
+                        {
+                            <li>
+                                <a href="/tin-tuc/@n.AliasL">@n.TitleL</a>
+                                <small>@n.CreatedDate?.ToString("dd/MM/yyyy")</small>
+                                @if (!string.IsNullOrEmpty(n.DescriptionL)) { <p>@n.DescriptionL</p> }
+                            </li>
+                        }
+                    </ul>
+                </section>
             }
-        </div>
-        <div class="col-md-4">
-            <div class="panel panel-primary">
-                <div class="panel-heading"><strong>Bác sĩ trong khoa</strong></div>
-                <div class="panel-body">
-                    @foreach (var d in doctors)
+        </article>
+
+        <aside class="col-md-4 km-dept-aside">
+            <div class="km-aside-block">
+                <h3>Bác sĩ trong khoa <span>(@doctors.Count)</span></h3>
+                @if (doctors.Any())
+                {
+                    foreach (var d in doctors)
                     {
-                        <div style="margin-bottom:10px; padding:8px; border-bottom:1px solid #eee;">
-                            @if (!string.IsNullOrEmpty(d.ImagePath))
-                            {
-                                <img src="/@d.ImagePath.TrimStart('/')" alt="@d.NameL"
-                                     style="height:48px; width:48px; object-fit:cover; border-radius:50%; float:left; margin-right:10px;"
-                                     onerror="this.onerror=null;this.src='/assets/client/images/doctor-default.svg';" />
-                            }
-                            <strong>@d.NameL</strong>
-                            <br /><small class="text-muted">@d.SpeciallyL</small>
-                            <div style="clear:both;"></div>
+                        <div class="km-doc-row">
+                            <img src="@(string.IsNullOrEmpty(d.ImagePath) ? "/assets/admin/images/user_none.jpg" : "/" + d.ImagePath.TrimStart('/'))"
+                                 alt="@d.NameL"
+                                 onerror="this.onerror=null;this.src='/assets/admin/images/user_none.jpg';" />
+                            <div>
+                                <strong>@d.NameL</strong>
+                                @if (!string.IsNullOrEmpty(d.Position)) { <span class="km-pos">@d.Position</span> }
+                                @if (!string.IsNullOrEmpty(d.SpeciallyL)) { <em>@d.SpeciallyL</em> }
+                            </div>
                         </div>
                     }
-                    @if (!doctors.Any()) { <p class="text-muted">Chưa có thông tin bác sĩ.</p> }
-                </div>
+                }
+                else
+                {
+                    <p class="km-empty">Liên hệ Lễ tân để biết thông tin bác sĩ trực hiện tại.</p>
+                }
             </div>
-        </div>
+
+            <div class="km-aside-block km-contact-block">
+                <h3>Thông tin liên hệ</h3>
+                <p><strong>Hotline đặt khám</strong><br /><a href="tel:0964801616" class="km-phone">0964.801.616</a></p>
+                <p><strong>Cấp cứu 24/7</strong><br /><a href="tel:02203822205" class="km-phone km-phone-em">02203.822.205</a></p>
+                <p><strong>Giờ làm việc</strong><br />Thứ Hai – Thứ Sáu: 07:00 – 17:00<br />Thứ Bảy: 07:00 – 11:30 (theo lịch trực)</p>
+                <p style="margin-bottom:0;"><strong>Địa chỉ</strong><br />294 Trần Hưng Đạo, Phường Kinh Môn, TP Hải Phòng</p>
+            </div>
+
+            <a href="/dat-lich-kham" class="km-cta-book"><i class="fa fa-calendar-plus-o"></i> Đặt lịch khám</a>
+        </aside>
     </div>
 </div>
+
+<style>
+    .km-dept { color: #2c3e50; font-size: 15px; }
+    .km-bc { font-size: 13px; color: #6c757d; margin-bottom: 14px; }
+    .km-bc a { color: #0a3d62; text-decoration: none; }
+    .km-bc a:hover { text-decoration: underline; }
+    .km-bc span { color: #5e7790; }
+
+    .km-dept-header { border-bottom: 2px solid #0a3d62; padding-bottom: 14px; margin-bottom: 24px; }
+    .km-dept-header h1 { color: #0a3d62; font-size: 30px; font-weight: 700; margin: 0; }
+    .km-dept-sub { color: #5e7790; font-size: 15px; margin: 8px 0 0; font-style: italic; }
+
+    .km-dept-article { color: #2c3e50; }
+    .km-dept-content { font-size: 15px; line-height: 1.8; }
+    .km-dept-content p { margin: 0 0 12px; }
+    .km-dept-content ul, .km-dept-content ol { padding-left: 22px; margin: 0 0 14px; }
+    .km-dept-content ul li, .km-dept-content ol li { margin-bottom: 6px; }
+    .km-dept-content h2, .km-dept-content h3, .km-dept-content h4 { color: #0a3d62; margin-top: 22px; margin-bottom: 10px; }
+    .km-dept-content strong { color: #0a3d62; }
+    .km-dept-content img { max-width: 100%; height: auto; border-radius: 6px; margin: 10px 0; }
+
+    .km-dept-h2 { color: #0a3d62; font-size: 20px; font-weight: 700; margin: 30px 0 14px; padding-bottom: 8px; border-bottom: 1px solid #d8e6f3; }
+
+    .km-dept-news ul { list-style: none; padding: 0; margin: 0; }
+    .km-dept-news li { padding: 12px 0; border-bottom: 1px dashed #d8e6f3; }
+    .km-dept-news li:last-child { border-bottom: 0; }
+    .km-dept-news a { color: #0a3d62; font-weight: 600; text-decoration: none; font-size: 15px; }
+    .km-dept-news a:hover { color: #1d5688; text-decoration: underline; }
+    .km-dept-news small { color: #8898a8; margin-left: 8px; font-size: 12.5px; }
+    .km-dept-news p { color: #5e7790; font-size: 13.5px; margin: 4px 0 0; }
+
+    .km-dept-aside { padding-left: 24px; }
+    .km-aside-block { background: #f7fbff; border: 1px solid #d8e6f3; border-radius: 8px; padding: 16px 18px; margin-bottom: 14px; }
+    .km-aside-block h3 { color: #0a3d62; font-size: 15px; font-weight: 700; margin: 0 0 12px; padding-bottom: 8px; border-bottom: 1px solid #d8e6f3; }
+    .km-aside-block h3 span { color: #5e7790; font-weight: 500; font-size: 13px; }
+
+    .km-doc-row { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid #e6eef7; align-items: center; }
+    .km-doc-row:last-child { border-bottom: 0; padding-bottom: 0; }
+    .km-doc-row img { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 1px solid #d8e6f3; flex: 0 0 44px; }
+    .km-doc-row strong { display: block; color: #0a3d62; font-size: 14px; }
+    .km-doc-row .km-pos { display: block; color: #43aa8b; font-size: 12px; font-weight: 600; margin-top: 1px; }
+    .km-doc-row em { display: block; color: #5e7790; font-size: 12.5px; font-style: normal; }
+    .km-empty { color: #8898a8; font-size: 13.5px; font-style: italic; margin: 0; }
+
+    .km-contact-block p { margin: 0 0 12px; font-size: 13.5px; color: #2c3e50; line-height: 1.55; }
+    .km-contact-block strong { display: block; color: #0a3d62; font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 2px; }
+    .km-phone { display: inline-block; color: #0a3d62; font-size: 17px; font-weight: 700; text-decoration: none; }
+    .km-phone:hover { color: #1d5688; text-decoration: underline; }
+    .km-phone-em { color: #e84545; }
+    .km-phone-em:hover { color: #c0392b; }
+
+    .km-cta-book {
+        display: block; text-align: center; background: #0a3d62; color: #ffffff;
+        padding: 13px 18px; border-radius: 8px; font-weight: 600; text-decoration: none;
+        box-shadow: 0 4px 12px rgba(10,61,98,0.2); transition: all 0.2s;
+    }
+    .km-cta-book:hover { background: #1d5688; color: #ffffff; transform: translateY(-1px); box-shadow: 0 6px 16px rgba(10,61,98,0.3); }
+    .km-cta-book .fa { margin-right: 6px; }
+
+    @@media (max-width: 768px) {
+        .km-dept-aside { padding-left: 15px; margin-top: 18px; }
+        .km-dept-header h1 { font-size: 24px; }
+    }
+</style>

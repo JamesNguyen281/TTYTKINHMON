@@ -86,19 +86,28 @@ $(document).ready(function () {
             modal.find('.department').text(d.department_name || d.specially || '');
 
             // Build lưới lịch trực 7 cột × 2 hàng (T2-CN × Sáng/Chiều)
-            function buildScheduleGrid(schedules, cycleLabel) {
+            function buildScheduleGrid(schedules, cycleLabel, weekDates) {
                 if (!schedules || schedules.length === 0) {
-                    return '<p style="color:#6c757d; font-style:italic;"><i class="fa fa-info-circle"></i> Chưa có lịch trực cho tháng ' + (cycleLabel || '') + '.</p>';
+                    return '<p style="color:#6c757d; font-style:italic;"><i class="fa fa-info-circle"></i> Chưa có lịch trực cho tuần ' + (cycleLabel || '') + '.</p>';
                 }
                 // weekday: 1=CN, 2=T2..7=T7 → reorder T2-CN
                 var orderedWd = [2, 3, 4, 5, 6, 7, 1];
                 var wdShort = { 1: 'CN', 2: 'T2', 3: 'T3', 4: 'T4', 5: 'T5', 6: 'T6', 7: 'T7' };
+                // Map weekday → dd/MM của tuần đại diện (lấy từ server)
+                var dateByWd = {};
+                if (weekDates && weekDates.length) {
+                    weekDates.forEach(function (w) { dateByWd[w.weekday] = w.date; });
+                }
                 var byKey = {};
                 schedules.forEach(function (s) { byKey[s.weekday + '|' + s.session] = s; });
                 var html = '<div class="km-sched-grid">';
                 html += '<div class="km-sched-cell km-sched-h-buoi">Buổi</div>';
                 orderedWd.forEach(function (wd) {
-                    html += '<div class="km-sched-cell km-sched-h-day">' + wdShort[wd] + '</div>';
+                    var d = dateByWd[wd];
+                    html += '<div class="km-sched-cell km-sched-h-day">'
+                          + '<div class="wd-name">' + wdShort[wd] + '</div>'
+                          + (d ? '<div class="wd-date">' + d + '</div>' : '')
+                          + '</div>';
                 });
                 ['morning', 'afternoon'].forEach(function (sess) {
                     var sessLbl = sess === 'morning' ? '☀ Sáng' : '🌙 Chiều';
@@ -128,8 +137,20 @@ $(document).ready(function () {
                     (d.quantification ? '<p><strong>Bằng cấp:</strong> ' + d.quantification + '</p>' : '') +
                     (d.experiences   ? '<p><strong>Kinh nghiệm:</strong> ' + d.experiences + '</p>' : '') +
                     (d.timetable     ? '<p><strong>Lịch khám (ghi chú):</strong> ' + d.timetable + '</p>' : '');
-                var schedHtml = '<div class="km-sched-section"><h4><i class="fa fa-calendar-check-o"></i> Lịch trực tháng ' + (d.cycle_label || '') + '</h4>'
-                              + buildScheduleGrid(d.schedules, d.cycle_label) + '</div>';
+                var schedHtml;
+                if (d.is_management) {
+                    schedHtml = '<div class="km-sched-section km-sched-mgmt">'
+                              + '<h4><i class="fa fa-briefcase"></i> Lịch làm việc</h4>'
+                              + '<p class="km-mgmt-note"><i class="fa fa-info-circle"></i> '
+                              + (d.management_note || 'Vai trò quản lý — trực hành chính trong giờ làm việc.')
+                              + '</p></div>';
+                } else {
+                    var schedHeading = d.week_label
+                        ? 'Lịch trực ' + d.week_label.toLowerCase()
+                        : 'Lịch trực ' + (d.cycle_label || '');
+                    schedHtml = '<div class="km-sched-section"><h4><i class="fa fa-calendar-check-o"></i> ' + schedHeading + '</h4>'
+                              + buildScheduleGrid(d.schedules, d.cycle_label, d.week_dates) + '</div>';
+                }
                 line.html(infoHtml + schedHtml);
             }
             // Reset scroll về đầu cho cả hai cột — tránh hiện tượng modal mở ra đã ở vị trí cuối

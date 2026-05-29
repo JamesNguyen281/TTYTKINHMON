@@ -175,9 +175,12 @@
     @* Empty fallback content if nothing of the above rendered *@
     @if ((Model == null || !Model.Any()) && !subCats.Any() && !relatedDepts.Any() && (category == null || string.IsNullOrEmpty(category.DescriptionL)))
     {
-        <div class="row" style="margin-top:24px;">
+        var catAlias = (category?.AliasL ?? "").ToLowerInvariant();
+        bool isFacility = catAlias.Contains("co-so") || catAlias.Contains("vat-chat") || catAlias.Contains("trang-thiet-bi");
+
+        <div class="row km-cat-empty" style="margin-top:24px;">
             <div class="col-md-8">
-                <div class="panel panel-info">
+                <div class="panel panel-info km-empty-panel">
                     <div class="panel-heading"><strong><i class="fa fa-info-circle"></i> Thông tin chung</strong></div>
                     <div class="panel-body">
                         <p>
@@ -197,7 +200,53 @@
                         </p>
                     </div>
                 </div>
+
+                @if (isFacility)
+                {
+                    <div class="panel panel-default km-empty-panel">
+                        <div class="panel-heading"><strong><i class="fa fa-building"></i> Hạ tầng – cơ sở vật chất</strong></div>
+                        <div class="panel-body">
+                            <p>Trung tâm Y tế phường Kinh Môn được đầu tư đồng bộ theo tiêu chuẩn ngành y tế tuyến cơ sở, bố trí khu khám – khu hành chính – khu cấp cứu tách biệt, bảo đảm luồng di chuyển một chiều và phòng chống nhiễm khuẩn.</p>
+                            <div class="row km-fac-grid">
+                                <div class="col-md-6"><div class="km-fac-item"><i class="fa fa-hospital-o"></i><div><strong>Khu khám đa khoa</strong><span>8 phòng khám chuyên môn, cùng phòng tư vấn và lấy mẫu</span></div></div></div>
+                                <div class="col-md-6"><div class="km-fac-item"><i class="fa fa-ambulance"></i><div><strong>Khu cấp cứu 24/7</strong><span>Trang bị monitor, máy thở, xe đẩy cáng và oxy y tế</span></div></div></div>
+                                <div class="col-md-6"><div class="km-fac-item"><i class="fa fa-flask"></i><div><strong>Khoa xét nghiệm</strong><span>Sinh hoá, huyết học, miễn dịch cơ bản – kết quả trong ngày</span></div></div></div>
+                                <div class="col-md-6"><div class="km-fac-item"><i class="fa fa-x-ray"></i><div><strong>Chẩn đoán hình ảnh</strong><span>X-quang kỹ thuật số, siêu âm tổng quát và sản – nhi</span></div></div></div>
+                                <div class="col-md-6"><div class="km-fac-item"><i class="fa fa-syringe"></i><div><strong>Phòng tiêm chủng</strong><span>Tủ bảo quản vắc-xin chuẩn dây lạnh, dụng cụ tiêm an toàn</span></div></div></div>
+                                <div class="col-md-6"><div class="km-fac-item"><i class="fa fa-wifi"></i><div><strong>Hạ tầng CNTT</strong><span>Phần mềm quản lý khám chữa bệnh, đặt lịch trực tuyến</span></div></div></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel panel-default km-empty-panel">
+                        <div class="panel-heading"><strong><i class="fa fa-cogs"></i> Trang thiết bị tiêu biểu</strong></div>
+                        <div class="panel-body">
+                            <ul class="km-equipment">
+                                <li>Máy X-quang kỹ thuật số (DR) hỗ trợ chẩn đoán hô hấp – xương khớp</li>
+                                <li>Máy siêu âm 4D phục vụ khám sản phụ khoa và tổng quát</li>
+                                <li>Máy điện tim 12 đạo trình tích hợp lưu trữ kết quả</li>
+                                <li>Máy xét nghiệm sinh hoá – huyết học tự động</li>
+                                <li>Hệ thống monitor theo dõi bệnh nhân tại khu cấp cứu</li>
+                                <li>Tủ bảo quản vắc-xin chuyên dụng đạt chuẩn WHO – PQS</li>
+                                <li>Xe cứu thương chuyên dụng phục vụ chuyển tuyến và cấp cứu ngoại viện</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="panel panel-default km-empty-panel">
+                        <div class="panel-heading"><strong><i class="fa fa-check-circle"></i> Cam kết chất lượng</strong></div>
+                        <div class="panel-body">
+                            <ul class="km-commit">
+                                <li><strong>An toàn:</strong> tuân thủ quy trình kiểm soát nhiễm khuẩn, kiểm chuẩn thiết bị định kỳ.</li>
+                                <li><strong>Thân thiện:</strong> đội ngũ nhân viên y tế tận tâm, hỗ trợ người cao tuổi và trẻ em.</li>
+                                <li><strong>Minh bạch:</strong> công khai giá dịch vụ, mã booking và quy trình thanh toán.</li>
+                                <li><strong>Liên tục cải tiến:</strong> tiếp thu phản hồi từ bệnh nhân qua kênh Hỏi đáp và đường dây nóng.</li>
+                            </ul>
+                        </div>
+                    </div>
+                }
             </div>
+
             <div class="col-md-4">
                 <div class="panel panel-default">
                     <div class="panel-heading"><strong>Liên kết nhanh</strong></div>
@@ -211,7 +260,53 @@
                         </ul>
                     </div>
                 </div>
+
+                @if (isFacility)
+                {
+                    <div class="panel panel-default">
+                        <div class="panel-heading"><strong><i class="fa fa-clock-o"></i> Giờ làm việc</strong></div>
+                        <div class="panel-body km-hours-side">
+                            <div><strong>T2 – T6</strong><span>07:00 – 11:30 · 13:30 – 17:00</span></div>
+                            <div><strong>Thứ Bảy</strong><span>07:00 – 11:30</span></div>
+                            <div><strong>CN – Lễ</strong><span>Cấp cứu 24/7</span></div>
+                        </div>
+                    </div>
+
+                    <div class="panel panel-default">
+                        <div class="panel-heading"><strong><i class="fa fa-map-marker"></i> Vị trí</strong></div>
+                        <div class="panel-body">
+                            <p style="margin:0; font-size:13.5px; color:#2c3e50;">294 Trần Hưng Đạo, Phường Kinh Môn, TP Hải Phòng — gần UBND phường, có bãi đỗ xe.</p>
+                        </div>
+                    </div>
+                }
             </div>
         </div>
+
+        <style>
+            .km-empty-panel { box-shadow: 0 2px 6px rgba(10,61,98,0.06); border: 1px solid #e1ebf5; }
+            .km-empty-panel .panel-heading { background: linear-gradient(to right,#0a3d62,#1d5688); color: white; }
+            .km-empty-panel .panel-body { color: #2c3e50; font-size: 14.5px; line-height: 1.75; padding: 16px 18px; }
+
+            .km-fac-grid { margin-top: 8px; }
+            .km-fac-item {
+                display: flex; gap: 12px; align-items: flex-start;
+                padding: 12px; margin-bottom: 8px;
+                background: #f7fbff; border-left: 3px solid #43aa8b; border-radius: 4px;
+            }
+            .km-fac-item .fa { color: #0a3d62; font-size: 24px; padding-top: 2px; width: 28px; text-align: center; }
+            .km-fac-item strong { display: block; color: #0a3d62; font-size: 13.5px; margin-bottom: 2px; }
+            .km-fac-item span { display: block; color: #5e7790; font-size: 12.5px; line-height: 1.55; }
+
+            .km-equipment, .km-commit { padding-left: 22px; margin: 0; }
+            .km-equipment li, .km-commit li { margin-bottom: 6px; }
+            .km-equipment li::marker { color: #f6b73c; }
+            .km-commit li::marker { color: #43aa8b; }
+            .km-commit strong { color: #0a3d62; }
+
+            .km-hours-side > div { padding: 8px 0; border-bottom: 1px dashed #e1ebf5; }
+            .km-hours-side > div:last-child { border-bottom: 0; }
+            .km-hours-side strong { display: block; color: #0a3d62; font-size: 13px; }
+            .km-hours-side span { display: block; color: #5e7790; font-size: 12.5px; margin-top: 2px; }
+        </style>
     }
 </div>

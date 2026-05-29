@@ -1,0 +1,186 @@
+@using WebsiteCore.Data.Entities
+@{
+    ViewData["Title"] = "Mô hình tổ chức — Trung tâm Y tế phường Kinh Môn";
+    var news = ViewBag.News as News;
+    var isAdmin = (ViewBag.CurrentUser as WebsiteCore.Business.ViewModels.LoggedInUser)?.GroupId == "ADMIN";
+}
+
+@* Nếu admin tạo bài News alias='co-cau-to-chuc' → ưu tiên render HTML do admin biên soạn *@
+@if (news != null && !string.IsNullOrWhiteSpace(news.DetailL))
+{
+    <div class="container" style="padding:24px 15px 60px;">
+        <nav aria-label="breadcrumb" style="margin-bottom:12px; font-size:13px; color:#6c757d;">
+            <a href="/" style="color:#0a3d62;">Trang chủ</a> /
+            <a href="/gioi-thieu-trung-tam" style="color:#0a3d62;">Giới thiệu</a> /
+            <span style="color:#5e7790;">Mô hình tổ chức</span>
+        </nav>
+        <h1 style="color:#0a3d62; margin-bottom:20px;"><i class="fa fa-sitemap"></i> @news.TitleL</h1>
+        @if (isAdmin)
+        {
+            <a href="/AdminCP/News/Edit/@news.Id" class="btn btn-warning btn-sm" style="float:right; margin-top:-50px;"><i class="fa fa-edit"></i> Sửa nội dung</a>
+        }
+        @Html.Raw(news.DetailL)
+    </div>
+    return;
+}
+
+@if (isAdmin)
+{
+    <div class="container" style="padding-top:14px;">
+        <div class="alert alert-warning">
+            <i class="fa fa-info-circle"></i>
+            Nội dung mặc định. Để admin sửa qua UI, tạo bài News với <strong>Alias = <code>co-cau-to-chuc</code></strong>.
+            <a href="/AdminCP/News/Create" class="btn btn-xs btn-primary">+ Tạo bài News</a>
+        </div>
+    </div>
+}
+
+<div class="container km-org-page" style="padding:24px 15px 60px;">
+    <nav aria-label="breadcrumb" style="margin-bottom:12px; font-size:13px; color:#6c757d;">
+        <a href="/" style="color:#0a3d62;">Trang chủ</a> /
+        <a href="/gioi-thieu-trung-tam" style="color:#0a3d62;">Giới thiệu</a> /
+        <span style="color:#5e7790;">Mô hình tổ chức</span>
+    </nav>
+
+    <h1 style="color:#0a3d62; margin-bottom:6px;"><i class="fa fa-sitemap"></i> Mô hình tổ chức</h1>
+    <p class="text-muted" style="font-size:14px; margin-bottom:24px;">
+        Cơ cấu tổ chức Trung tâm Y tế phường Kinh Môn — bệnh viện hạng II theo chuẩn Bộ Y tế, gồm 4 khối: Ban Giám đốc, Lâm sàng, Cận lâm sàng, Hành chính – Dự phòng.
+    </p>
+
+    @* === Ban Giám đốc === *@
+    <div class="km-org-block">
+        <h3><i class="fa fa-id-badge"></i> Ban Giám đốc</h3>
+        <p>Ban Giám đốc gồm <strong>Giám đốc Trung tâm</strong> và <strong>các Phó Giám đốc</strong>, chịu trách nhiệm điều hành toàn diện hoạt động chuyên môn, hành chính, tài chính và đầu tư của đơn vị theo quy định của Sở Y tế thành phố Hải Phòng.</p>
+        <div class="km-org-roles">
+            <div class="role-card role-director">
+                <div class="role-title">Giám đốc Trung tâm</div>
+                <ul>
+                    <li>Phụ trách điều hành chung & đại diện pháp lý đơn vị</li>
+                    <li>Quyết định chiến lược phát triển, kế hoạch tài chính – nhân lực</li>
+                    <li>Phê duyệt quy chế chuyên môn, dịch vụ kỹ thuật mới</li>
+                </ul>
+            </div>
+            <div class="role-card role-deputy">
+                <div class="role-title">Phó Giám đốc phụ trách chuyên môn</div>
+                <ul>
+                    <li>Chỉ đạo hoạt động khám chữa bệnh, hội chẩn ca khó</li>
+                    <li>Giám sát chất lượng chuyên môn các khoa lâm sàng</li>
+                    <li>Đầu mối phối hợp tuyến trên – tuyến dưới</li>
+                </ul>
+            </div>
+            <div class="role-card role-deputy">
+                <div class="role-title">Phó Giám đốc phụ trách dự phòng</div>
+                <ul>
+                    <li>Quản lý các hoạt động y tế dự phòng, tiêm chủng, kiểm soát dịch</li>
+                    <li>Triển khai chương trình mục tiêu y tế quốc gia</li>
+                    <li>Quản lý mạng lưới trạm y tế trên địa bàn</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    @* === Khối Lâm sàng === *@
+    <div class="km-org-block">
+        <h3><i class="fa fa-stethoscope"></i> Khối Lâm sàng</h3>
+        <p>Trực tiếp khám và điều trị bệnh nhân nội trú – ngoại trú, cấp cứu và phục hồi chức năng.</p>
+        <div class="km-org-grid">
+            <div class="org-item">Khoa Khám bệnh <span>(Đầu mối ngoại trú)</span></div>
+            <div class="org-item">Khoa Nội</div>
+            <div class="org-item">Khoa Ngoại – Phẫu thuật – Gây mê hồi sức</div>
+            <div class="org-item">Khoa Sản – Chăm sóc sức khỏe sinh sản</div>
+            <div class="org-item">Khoa Nhi</div>
+            <div class="org-item">Khoa Truyền nhiễm</div>
+            <div class="org-item">Khoa Răng – Hàm – Mặt</div>
+            <div class="org-item">Khoa Mắt – Tai Mũi Họng</div>
+            <div class="org-item">Khoa Cấp cứu – Hồi sức tích cực – Chống độc</div>
+            <div class="org-item">Khoa Y học cổ truyền – Phục hồi chức năng</div>
+            <div class="org-item">Bộ phận Thận nhân tạo</div>
+        </div>
+    </div>
+
+    @* === Khối Cận lâm sàng === *@
+    <div class="km-org-block">
+        <h3><i class="fa fa-flask"></i> Khối Cận lâm sàng</h3>
+        <p>Hỗ trợ chẩn đoán, theo dõi diễn biến bệnh và cung ứng thuốc cho toàn bộ Trung tâm.</p>
+        <div class="km-org-grid">
+            <div class="org-item">Khoa Xét nghiệm</div>
+            <div class="org-item">Khoa Chẩn đoán hình ảnh <span>(X-quang, siêu âm)</span></div>
+            <div class="org-item">Khoa Dược</div>
+            <div class="org-item">Khoa Kiểm soát nhiễm khuẩn</div>
+            <div class="org-item">Khoa Dinh dưỡng</div>
+        </div>
+    </div>
+
+    @* === Khối Dự phòng – Hành chính === *@
+    <div class="km-org-block">
+        <h3><i class="fa fa-shield"></i> Khối Dự phòng – Hành chính</h3>
+        <p>Triển khai y tế cộng đồng, quản lý nhân sự, tài chính và mạng lưới trạm y tế trên địa bàn phường.</p>
+        <div class="km-org-grid">
+            <div class="org-item">Khoa Kiểm soát bệnh tật & HIV/AIDS</div>
+            <div class="org-item">Khoa Y tế công cộng & Dinh dưỡng</div>
+            <div class="org-item">Khoa An toàn thực phẩm</div>
+            <div class="org-item">Khoa Chăm sóc sức khỏe sinh sản – Cộng đồng</div>
+            <div class="org-item">Phòng Tổ chức – Hành chính</div>
+            <div class="org-item">Phòng Kế hoạch – Tài chính</div>
+            <div class="org-item">Phòng Điều dưỡng</div>
+            <div class="org-item">Mạng lưới Trạm Y tế cơ sở</div>
+        </div>
+    </div>
+
+    @* === Sơ đồ phân cấp đơn giản === *@
+    <div class="km-org-block">
+        <h3><i class="fa fa-diagram-project"></i> Sơ đồ phân cấp</h3>
+        <div class="km-tree">
+            <div class="tree-l1">Ban Giám đốc</div>
+            <div class="tree-l2-wrap">
+                <div class="tree-l2 tree-clinic">Khối Lâm sàng<br /><small>11 khoa</small></div>
+                <div class="tree-l2 tree-paraclinic">Khối Cận lâm sàng<br /><small>5 khoa</small></div>
+                <div class="tree-l2 tree-prevention">Khối Dự phòng – Hành chính<br /><small>8 phòng/khoa + mạng lưới TYT</small></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="km-org-cta">
+        <a href="/gioi-thieu-trung-tam"><i class="fa fa-arrow-left"></i> Quay lại Giới thiệu</a>
+        <a href="/bac-si" class="alt"><i class="fa fa-user-md"></i> Xem đội ngũ bác sĩ</a>
+        <a href="/chuyen-khoa" class="alt"><i class="fa fa-stethoscope"></i> Xem chuyên khoa</a>
+    </div>
+</div>
+
+<style>
+    .km-org-page h1 { font-size: 28px; font-weight: 700; }
+    .km-org-block { background: white; border: 1px solid #e1ebf5; border-radius: 10px; padding: 20px 22px; margin-bottom: 18px; box-shadow: 0 2px 6px rgba(10,61,98,0.06); }
+    .km-org-block h3 { color: #0a3d62; font-size: 19px; font-weight: 700; margin: 0 0 10px; padding-bottom: 8px; border-bottom: 2px solid #0a3d62; }
+    .km-org-block h3 .fa { margin-right: 8px; color: #1d5688; }
+    .km-org-block p { color: #2c3e50; font-size: 14.5px; line-height: 1.7; margin: 0 0 14px; text-align: justify; }
+
+    .km-org-roles { display: grid; grid-template-columns: repeat(auto-fit,minmax(280px,1fr)); gap: 14px; }
+    .role-card { padding: 16px 18px; border-radius: 8px; background: #f7fbff; border-left: 4px solid #0a3d62; }
+    .role-card.role-director { background: linear-gradient(135deg,#fff8e1,#fff3cc); border-left-color: #c98b00; }
+    .role-card.role-deputy { border-left-color: #43aa8b; background: #f0faf6; }
+    .role-title { color: #0a3d62; font-size: 14.5px; font-weight: 700; margin-bottom: 8px; }
+    .role-card ul { margin: 0; padding-left: 18px; color: #2c3e50; font-size: 13.5px; line-height: 1.7; }
+    .role-card ul li { margin-bottom: 4px; }
+
+    .km-org-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap: 10px; }
+    .org-item { background: #f7fbff; border-left: 3px solid #1d5688; padding: 10px 14px; font-size: 13.5px; color: #2c3e50; border-radius: 4px; }
+    .org-item span { display: block; color: #5e7790; font-size: 12px; margin-top: 2px; font-style: italic; }
+
+    .km-tree { text-align: center; padding: 16px 0; }
+    .tree-l1 { display: inline-block; background: linear-gradient(135deg,#0a3d62,#1d5688); color: white; padding: 12px 28px; border-radius: 25px; font-weight: 700; font-size: 16px; box-shadow: 0 4px 12px rgba(10,61,98,0.25); position: relative; margin-bottom: 30px; }
+    .tree-l1::after { content: ''; position: absolute; bottom: -22px; left: 50%; transform: translateX(-50%); width: 2px; height: 22px; background: #0a3d62; }
+    .tree-l2-wrap { display: grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap: 16px; position: relative; }
+    .tree-l2-wrap::before { content: ''; position: absolute; top: -10px; left: 12%; right: 12%; height: 2px; background: #0a3d62; }
+    .tree-l2 { padding: 14px 16px; border-radius: 8px; color: white; font-weight: 600; font-size: 14px; position: relative; }
+    .tree-l2::before { content: ''; position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 2px; height: 10px; background: #0a3d62; }
+    .tree-l2 small { display: block; opacity: 0.9; font-weight: 400; font-size: 11.5px; margin-top: 4px; }
+    .tree-clinic { background: linear-gradient(135deg,#0a3d62,#1d5688); }
+    .tree-paraclinic { background: linear-gradient(135deg,#43aa8b,#2f7a5e); }
+    .tree-prevention { background: linear-gradient(135deg,#f39c12,#c87f0e); }
+
+    .km-org-cta { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 18px; }
+    .km-org-cta a { padding: 10px 22px; border-radius: 25px; font-weight: 600; font-size: 14px; text-decoration: none; background: linear-gradient(135deg,#0a3d62,#1d5688); color: white; box-shadow: 0 4px 12px rgba(10,61,98,0.20); transition: all 0.25s; }
+    .km-org-cta a:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(10,61,98,0.30); color: white; }
+    .km-org-cta a.alt { background: white; color: #0a3d62; border: 2px solid #0a3d62; box-shadow: none; }
+    .km-org-cta a.alt:hover { background: #0a3d62; color: white; }
+</style>

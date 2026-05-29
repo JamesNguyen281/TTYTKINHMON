@@ -238,32 +238,73 @@ public class HomeController : BaseController
     {
         var d = await _doctorService.GetByIdAsync(id);
         if (d == null) return NotFound();
-        var dept = d.DepartmentId.HasValue
-            ? (await _deptService.GetActiveBySiteAsync(CurrentSiteId)).FirstOrDefault(x => x.Id == d.DepartmentId)
-            : null;
+        // Site guard: chỉ trả info BS thuộc site đang xem (chống URL tamper sang BS site khác)
+        // BS có DepartmentId → khoa phải thuộc site hiện tại
+        // BS không gán khoa (vd: Giám đốc) → cho qua (đã hiển thị trên home theo logic GetForHomeAsync)
+        Data.Entities.Department? dept = null;
+        if (d.DepartmentId.HasValue)
+        {
+            dept = (await _deptService.GetActiveBySiteAsync(CurrentSiteId))
+                    .FirstOrDefault(x => x.Id == d.DepartmentId);
+            if (dept == null) return NotFound();
+        }
         bool isEn = Locate_Client == "en";
         string Pick(string? l, string? e) => isEn ? (string.IsNullOrEmpty(e) ? (l ?? "") : e) : (l ?? "");
 
-        // Lịch trực — chỉ ca active đang phủ tháng hiện tại để bệnh nhân biết khi nào bs làm việc
-        var todayD = DateOnly.FromDateTime(DateTime.Today);
-        var firstOfMonth = new DateOnly(todayD.Year, todayD.Month, 1);
-        var lastOfMonth  = firstOfMonth.AddMonths(1).AddDays(-1);
-        var allSchedules = await _scheduleService.GetByDoctorAsync(d.Id);
-        var schedules = allSchedules
-            .Where(s => s.ValidFrom <= lastOfMonth && (s.ValidTo == null || s.ValidTo >= firstOfMonth))
-            .OrderBy(s => s.Weekday).ThenBy(s => s.Session)
-            .Select(s => new {
-                weekday      = (int)s.Weekday,
-                weekday_name = s.Weekday switch {
-                    1 => "Chủ Nhật", 2 => "Thứ Hai", 3 => "Thứ Ba", 4 => "Thứ Tư",
-                    5 => "Thứ Năm", 6 => "Thứ Sáu", 7 => "Thứ Bảy", _ => $"WD{s.Weekday}"
-                },
-                session       = s.Session,
-                session_label = s.Session == "morning" ? "Sáng" : "Chiều",
-                room          = s.Room,
-                max_patients  = s.MaxPatients ?? 0,
-                valid_from    = s.ValidFrom.ToString("yyyy-MM-dd"),
-                valid_to      = s.ValidTo?.ToString("yyyy-MM-dd")
+        // Lịch trực — chỉ ca active trong TUẦN HIỆN TẠI (Thứ Hai → Chủ Nhật)
+        // KHÔNG hiển thị lịch các tuần tương lai để tránh BN đặt nhầm
+        var todayDt = DateTime.Today;
+        int diffToMon = ((int)todayDt.DayOfWeek + 6) % 7;  // Mon=0..Sun=6
+        var monday = todayDt.AddDays(-diffToMon);
+        var sunday = monday.AddDays(6);
+        var weekFrom = DateOnly.FromDateTime(monday);
+        var weekTo   = DateOnly.FromDateTime(sunday);
+
+        // Giám đốc / Phó giám đốc = vai trò QUẢN LÝ, chỉ trực hành chính, KHÔNG có lịch khám
+        // Trưởng khoa / Phó khoa vẫn khám bệnh → không loại trừ ở đây
+        var positionLower = (d.Position ?? "").ToLowerInvariant();
+        bool isManagement =
+            (positionLower.Contains("giám đốc") || positionLower.Contains("giam doc"))
+            && !positionLower.Contains("khoa");
+
+        IReadOnlyList<object> schedules;
+        if (isManagement)
+        {
+            schedules = Array.Empty<object>();
+        }
+        else
+        {
+            var allSchedules = await _scheduleService.GetByDoctorAsync(d.Id);
+            schedules = allSchedules
+                .Where(s => s.ValidFrom <= weekTo && (s.ValidTo == null || s.ValidTo >= weekFrom))
+                .OrderBy(s => s.Weekday).ThenBy(s => s.Session)
+                .Select(s => (object)new {
+                    weekday      = (int)s.Weekday,
+                    weekday_name = s.Weekday switch {
+                        1 => "Chủ Nhật", 2 => "Thứ Hai", 3 => "Thứ Ba", 4 => "Thứ Tư",
+                        5 => "Thứ Năm", 6 => "Thứ Sáu", 7 => "Thứ Bảy", _ => $"WD{s.Weekday}"
+                    },
+                    session       = s.Session,
+                    session_label = s.Session == "morning" ? "Sáng" : "Chiều",
+                    room          = s.Room,
+                    max_patients  = s.MaxPatients ?? 0,
+                    valid_from    = s.ValidFrom.ToString("yyyy-MM-dd"),
+                    valid_to      = s.ValidTo?.ToString("yyyy-MM-dd")
+                })
+                .ToList();
+        }
+
+        // 7 cột thứ với ngày cụ thể của tuần hiện tại (Mon → Sun)
+        // weekday convention: 1=CN, 2=T2..7=T7 (khớp DoctorSchedule.Weekday)
+        var weekDates = Enumerable.Range(0, 7)
+            .Select(i => {
+                var dt = monday.AddDays(i);
+                int wd = dt.DayOfWeek == DayOfWeek.Sunday ? 1 : (int)dt.DayOfWeek + 1;
+                return new {
+                    weekday = wd,
+                    date    = dt.ToString("dd/MM"),
+                    iso     = dt.ToString("yyyy-MM-dd")
+                };
             })
             .ToList();
 
@@ -279,8 +320,14 @@ public class HomeController : BaseController
             position        = d.Position,
             image_path      = d.ImagePath,
             department_name = Pick(dept?.NameL, dept?.NameE),
-            cycle_label     = $"{firstOfMonth:MM/yyyy}",
-            schedules       = schedules
+            cycle_label     = $"{monday:dd/MM} – {sunday:dd/MM/yyyy}",
+            week_label      = $"Tuần {monday:dd/MM} – {sunday:dd/MM/yyyy}",
+            week_dates      = weekDates,
+            schedules       = schedules,
+            is_management   = isManagement,
+            management_note = isManagement
+                ? "Vai trò Ban Giám đốc — phụ trách điều hành & quản lý chuyên môn, KHÔNG nhận khám trực tiếp. Liên hệ qua văn phòng Trung tâm trong giờ hành chính (Thứ Hai → Thứ Sáu, 07:00 – 17:00)."
+                : null
         });
     }
 
@@ -357,6 +404,15 @@ public class HomeController : BaseController
         ViewBag.News = await _newsService.GetByAliasAsync(alias);
         return View(viewName);
     }
+
+    [Route("co-cau-to-chuc")]
+    public Task<IActionResult> CoCauToChuc() => RenderStaticPage("CoCauToChuc", "co-cau-to-chuc", "Mô hình tổ chức — Trung tâm Y tế phường Kinh Môn");
+
+    [Route("co-so-ha-tang")]
+    public Task<IActionResult> CoSoHaTang() => RenderStaticPage("CoSoHaTang", "co-so-ha-tang", "Cơ sở hạ tầng — Trung tâm Y tế phường Kinh Môn");
+
+    [Route("co-so-vat-chat")]
+    public Task<IActionResult> CoSoVatChat() => RenderStaticPage("CoSoHaTang", "co-so-vat-chat", "Cơ sở vật chất — Trung tâm Y tế phường Kinh Môn");
 
     [Route("cau-hoi-thuong-gap")]
     public Task<IActionResult> Faq() => RenderStaticPage("Faq", "cau-hoi-thuong-gap", "Câu hỏi thường gặp");

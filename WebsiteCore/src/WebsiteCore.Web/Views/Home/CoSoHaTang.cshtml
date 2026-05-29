@@ -1,0 +1,166 @@
+@using WebsiteCore.Data.Entities
+@{
+    ViewData["Title"] = ViewBag.Title as string ?? "Cơ sở hạ tầng — Trung tâm Y tế phường Kinh Môn";
+    var news = ViewBag.News as News;
+    var pageAlias = (ViewBag.PageAlias as string) ?? "co-so-ha-tang";
+    var isAdmin = (ViewBag.CurrentUser as WebsiteCore.Business.ViewModels.LoggedInUser)?.GroupId == "ADMIN";
+    var pageLabel = pageAlias == "co-so-vat-chat" ? "Cơ sở vật chất" : "Cơ sở hạ tầng";
+}
+
+@if (news != null && !string.IsNullOrWhiteSpace(news.DetailL))
+{
+    <div class="container" style="padding:24px 15px 60px;">
+        <nav aria-label="breadcrumb" style="margin-bottom:12px; font-size:13px; color:#6c757d;">
+            <a href="/" style="color:#0a3d62;">Trang chủ</a> /
+            <a href="/gioi-thieu-trung-tam" style="color:#0a3d62;">Giới thiệu</a> /
+            <span style="color:#5e7790;">@pageLabel</span>
+        </nav>
+        <h1 style="color:#0a3d62; margin-bottom:20px;"><i class="fa fa-building"></i> @news.TitleL</h1>
+        @if (isAdmin)
+        {
+            <a href="/AdminCP/News/Edit/@news.Id" class="btn btn-warning btn-sm" style="float:right; margin-top:-50px;"><i class="fa fa-edit"></i> Sửa nội dung</a>
+        }
+        @Html.Raw(news.DetailL)
+    </div>
+    return;
+}
+
+@if (isAdmin)
+{
+    <div class="container" style="padding-top:14px;">
+        <div class="alert alert-warning">
+            <i class="fa fa-info-circle"></i>
+            Nội dung mặc định. Để admin sửa qua UI, tạo bài News với <strong>Alias = <code>@pageAlias</code></strong>.
+            <a href="/AdminCP/News/Create" class="btn btn-xs btn-primary">+ Tạo bài News</a>
+        </div>
+    </div>
+}
+
+<div class="container km-fac-page" style="padding:24px 15px 60px;">
+    <nav aria-label="breadcrumb" style="margin-bottom:12px; font-size:13px; color:#6c757d;">
+        <a href="/" style="color:#0a3d62;">Trang chủ</a> /
+        <a href="/gioi-thieu-trung-tam" style="color:#0a3d62;">Giới thiệu</a> /
+        <span style="color:#5e7790;">@pageLabel</span>
+    </nav>
+
+    <h1 style="color:#0a3d62; margin-bottom:6px;"><i class="fa fa-building"></i> @pageLabel</h1>
+    <p class="text-muted" style="font-size:14px; margin-bottom:24px;">
+        Hệ thống cơ sở hạ tầng – trang thiết bị y tế của Trung tâm Y tế phường Kinh Môn được đầu tư đồng bộ theo chuẩn Bộ Y tế.
+    </p>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="km-fac-block">
+                <h3><i class="fa fa-hospital-o"></i> Tổng quan hạ tầng</h3>
+                <p>Trung tâm có khuôn viên rộng tại địa chỉ <strong>294 Trần Hưng Đạo, Phường Kinh Môn, TP Hải Phòng</strong>, gồm khu khám đa khoa, khu cấp cứu 24/7, khu điều trị nội trú và khu hành chính. Hạ tầng đáp ứng <strong>150 giường bệnh</strong>, phục vụ trên <strong>200.000 lượt khám ngoại trú</strong> và hơn <strong>10.000 lượt điều trị nội trú</strong> mỗi năm.</p>
+
+                <div class="km-fac-card-grid">
+                    <div class="fac-card"><i class="fa fa-hospital-o"></i><div><strong>Khu khám đa khoa</strong><span>8 phòng khám chuyên môn, phòng tư vấn và lấy mẫu</span></div></div>
+                    <div class="fac-card"><i class="fa fa-ambulance"></i><div><strong>Khu cấp cứu 24/7</strong><span>Monitor, máy thở, xe đẩy cáng, oxy y tế</span></div></div>
+                    <div class="fac-card"><i class="fa fa-bed"></i><div><strong>Khu điều trị nội trú</strong><span>150 giường, phòng dịch vụ và phòng tiêu chuẩn</span></div></div>
+                    <div class="fac-card"><i class="fa fa-flask"></i><div><strong>Khoa Xét nghiệm</strong><span>Sinh hoá, huyết học, miễn dịch — kết quả trong ngày</span></div></div>
+                    <div class="fac-card"><i class="fa fa-x-ray"></i><div><strong>Chẩn đoán hình ảnh</strong><span>X-quang kỹ thuật số, siêu âm tổng quát và sản – nhi</span></div></div>
+                    <div class="fac-card"><i class="fa fa-syringe"></i><div><strong>Phòng tiêm chủng</strong><span>Tủ bảo quản vắc-xin chuẩn dây lạnh WHO – PQS</span></div></div>
+                    <div class="fac-card"><i class="fa fa-leaf"></i><div><strong>Khoa Đông y</strong><span>Phòng châm cứu, xoa bóp bấm huyệt, phục hồi chức năng</span></div></div>
+                    <div class="fac-card"><i class="fa fa-wifi"></i><div><strong>Hạ tầng CNTT</strong><span>Phần mềm quản lý khám chữa bệnh, đặt lịch trực tuyến</span></div></div>
+                </div>
+            </div>
+
+            <div class="km-fac-block">
+                <h3><i class="fa fa-cogs"></i> Trang thiết bị y tế tiêu biểu</h3>
+                <table class="table km-equip-table">
+                    <thead>
+                        <tr><th>Thiết bị</th><th>Khoa sử dụng</th><th>Mục đích</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Máy X-quang kỹ thuật số (DR)</td><td>Chẩn đoán hình ảnh</td><td>Chẩn đoán hô hấp, xương khớp, chấn thương</td></tr>
+                        <tr><td>Máy siêu âm 4D</td><td>Chẩn đoán hình ảnh / Sản</td><td>Khám sản phụ khoa, ổ bụng, tuyến giáp</td></tr>
+                        <tr><td>Máy điện tim 12 đạo trình</td><td>Khoa Nội / Cấp cứu</td><td>Tầm soát tim mạch, theo dõi loạn nhịp</td></tr>
+                        <tr><td>Máy sinh hoá tự động</td><td>Khoa Xét nghiệm</td><td>Đường huyết, mỡ máu, men gan, chức năng thận</td></tr>
+                        <tr><td>Máy huyết học tự động</td><td>Khoa Xét nghiệm</td><td>Công thức máu, tốc độ máu lắng</td></tr>
+                        <tr><td>Máy thận nhân tạo</td><td>Bộ phận Thận nhân tạo</td><td>Lọc máu định kỳ cho bệnh nhân suy thận</td></tr>
+                        <tr><td>Monitor theo dõi bệnh nhân</td><td>Cấp cứu / Hồi sức</td><td>Theo dõi sinh tồn 24/7</td></tr>
+                        <tr><td>Tủ bảo quản vắc-xin WHO – PQS</td><td>Phòng Tiêm chủng</td><td>Bảo quản vắc-xin theo dây lạnh chuẩn</td></tr>
+                        <tr><td>Xe cứu thương chuyên dụng</td><td>Khoa Cấp cứu</td><td>Chuyển tuyến và cấp cứu ngoại viện</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="km-fac-block">
+                <h3><i class="fa fa-check-circle"></i> Tiêu chuẩn vận hành & cam kết</h3>
+                <ul class="km-commit-list">
+                    <li><strong>An toàn:</strong> tuân thủ quy trình kiểm soát nhiễm khuẩn, kiểm chuẩn thiết bị định kỳ theo Thông tư 33/2016/TT-BYT.</li>
+                    <li><strong>Vệ sinh:</strong> khu cấp cứu và phòng mổ vô khuẩn riêng biệt; hệ thống xử lý rác thải y tế tập trung.</li>
+                    <li><strong>Bảo trì:</strong> hợp đồng bảo trì định kỳ với nhà cung cấp thiết bị y tế chính hãng.</li>
+                    <li><strong>Cập nhật:</strong> đầu tư bổ sung và thay thế thiết bị theo lộ trình nâng cấp hằng năm.</li>
+                    <li><strong>Tiếp cận:</strong> bố trí lối đi cho xe lăn, biển chỉ dẫn rõ ràng, bãi đỗ xe miễn phí.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="km-fac-side">
+                <h4><i class="fa fa-clock-o"></i> Giờ làm việc</h4>
+                <div><strong>T2 – T6</strong><span>07:00 – 11:30 · 13:30 – 17:00</span></div>
+                <div><strong>Thứ Bảy</strong><span>07:00 – 11:30 (theo lịch trực)</span></div>
+                <div><strong>CN – Lễ</strong><span>Cấp cứu 24/7</span></div>
+            </div>
+
+            <div class="km-fac-side">
+                <h4><i class="fa fa-phone"></i> Liên hệ</h4>
+                <p style="margin:0 0 8px;"><strong>Hotline đặt khám:</strong><br /><a href="tel:0964801616" style="font-size:18px; color:#e84545;">0964.801.616</a></p>
+                <p style="margin:0 0 8px;"><strong>Cấp cứu 24/7:</strong><br /><a href="tel:02203822205" style="font-size:16px; color:#e84545;">02203.822.205</a></p>
+                <p style="margin:0;"><strong>Email:</strong> ttytkinhmon@gmail.com</p>
+            </div>
+
+            <div class="km-fac-side">
+                <h4><i class="fa fa-map-marker"></i> Vị trí</h4>
+                <p style="font-size:13.5px;">294 Trần Hưng Đạo, Phường Kinh Môn, TP Hải Phòng — gần UBND phường, có bãi đỗ xe.</p>
+            </div>
+
+            <div class="km-fac-cta">
+                <a href="/dat-lich-kham"><i class="fa fa-calendar-plus-o"></i> Đặt lịch khám</a>
+                <a href="/chuyen-khoa" class="alt"><i class="fa fa-stethoscope"></i> Xem chuyên khoa</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .km-fac-page h1 { font-size: 28px; font-weight: 700; }
+    .km-fac-block { background: white; border: 1px solid #e1ebf5; border-radius: 10px; padding: 20px 22px; margin-bottom: 18px; box-shadow: 0 2px 6px rgba(10,61,98,0.06); }
+    .km-fac-block h3 { color: #0a3d62; font-size: 18px; font-weight: 700; margin: 0 0 10px; padding-bottom: 8px; border-bottom: 2px solid #0a3d62; }
+    .km-fac-block h3 .fa { margin-right: 8px; color: #1d5688; }
+    .km-fac-block p { color: #2c3e50; font-size: 14.5px; line-height: 1.7; margin: 0 0 14px; text-align: justify; }
+
+    .km-fac-card-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(260px,1fr)); gap: 12px; }
+    .fac-card { display: flex; gap: 12px; padding: 12px; background: #f7fbff; border-left: 3px solid #43aa8b; border-radius: 4px; }
+    .fac-card .fa { color: #0a3d62; font-size: 26px; padding-top: 2px; width: 32px; text-align: center; }
+    .fac-card strong { display: block; color: #0a3d62; font-size: 13.5px; margin-bottom: 2px; }
+    .fac-card span { display: block; color: #5e7790; font-size: 12.5px; line-height: 1.55; }
+
+    .km-equip-table { width: 100%; margin: 0; }
+    .km-equip-table thead { background: linear-gradient(to right,#0a3d62,#1d5688); color: white; }
+    .km-equip-table th { padding: 10px 14px; font-size: 13.5px; font-weight: 700; }
+    .km-equip-table td { padding: 10px 14px; font-size: 13.5px; color: #2c3e50; border-top: 1px solid #e1ebf5; vertical-align: middle; }
+    .km-equip-table tbody tr:nth-child(even) { background: #f7fbff; }
+
+    .km-commit-list { padding-left: 22px; margin: 0; }
+    .km-commit-list li { margin-bottom: 8px; color: #2c3e50; }
+    .km-commit-list li::marker { color: #43aa8b; font-size: 18px; }
+    .km-commit-list strong { color: #0a3d62; }
+
+    .km-fac-side { background: white; border: 1px solid #e1ebf5; border-radius: 10px; padding: 16px 18px; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(10,61,98,0.06); }
+    .km-fac-side h4 { color: #0a3d62; font-size: 14.5px; font-weight: 700; margin: 0 0 10px; padding-bottom: 6px; border-bottom: 1px solid #e1ebf5; }
+    .km-fac-side h4 .fa { margin-right: 6px; color: #1d5688; }
+    .km-fac-side > div { padding: 6px 0; border-bottom: 1px dashed #e1ebf5; }
+    .km-fac-side > div:last-of-type { border-bottom: 0; }
+    .km-fac-side strong { color: #0a3d62; font-size: 13px; display: block; }
+    .km-fac-side > div > span { display: block; color: #5e7790; font-size: 12.5px; margin-top: 2px; }
+
+    .km-fac-cta { display: flex; flex-direction: column; gap: 10px; margin-top: 6px; }
+    .km-fac-cta a { padding: 12px 18px; border-radius: 8px; text-align: center; font-weight: 600; text-decoration: none; transition: all 0.25s; background: linear-gradient(135deg,#0a3d62,#1d5688); color: white; box-shadow: 0 4px 12px rgba(10,61,98,0.20); }
+    .km-fac-cta a:hover { transform: translateY(-2px); color: white; }
+    .km-fac-cta a.alt { background: white; color: #0a3d62; border: 2px solid #0a3d62; box-shadow: none; }
+    .km-fac-cta a.alt:hover { background: #0a3d62; color: white; }
+</style>

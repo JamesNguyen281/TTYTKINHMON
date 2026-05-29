@@ -39,6 +39,70 @@
     Trung tâm Y tế phường Kinh Môn, TP Hải Phòng — đặt lịch khám, chuyên khoa, đội ngũ bác sĩ
 </h1>
 
+@* ============= .st0 — Giới thiệu ngắn + Thống kê ============= *@
+@{
+    int totalDepts   = depts.Count;
+    int totalDoctors = (doctorIn?.Count ?? 0) + (doctorForeign?.Count ?? 0);
+    if (totalDoctors == 0) totalDoctors = 30; // fallback nếu chưa có data — Trung tâm có khoảng 30+ BS
+    if (totalDepts == 0)   totalDepts   = 8;  // 8 khoa chuyên môn
+}
+<section class="st0-intro full-section">
+    <div class="container">
+        <div class="st0-grid">
+            <div class="st0-text">
+                <h2>Trung tâm Y tế phường Kinh Môn</h2>
+                <p class="st0-tagline">Tận tâm chăm sóc — Chuyên nghiệp điều trị</p>
+                <p class="st0-desc">
+                    Trung tâm Y tế phường Kinh Môn là cơ sở y tế công lập hạng II trực thuộc Sở Y tế thành phố Hải Phòng,
+                    phục vụ trên <strong>200.000 lượt bệnh nhân ngoại trú</strong> mỗi năm. Với đội ngũ bác sĩ chuyên môn cao
+                    và hệ thống trang thiết bị hiện đại, Trung tâm cung cấp dịch vụ khám chữa bệnh đa khoa toàn diện
+                    cho người dân khu vực phường Kinh Môn và các vùng lân cận.
+                </p>
+                <div class="st0-cta">
+                    <a href="/gioi-thieu-trung-tam" class="btn-st0-more">Tìm hiểu thêm</a>
+                    <a href="/dat-lich-kham" class="btn-st0-book">Đặt lịch khám ngay</a>
+                </div>
+            </div>
+            <div class="st0-stats">
+                <div class="stat-card"><div class="stat-num">25<sup>+</sup></div><div class="stat-lbl">Năm hoạt động</div></div>
+                <div class="stat-card"><div class="stat-num">@totalDoctors<sup>+</sup></div><div class="stat-lbl">Bác sĩ chuyên khoa</div></div>
+                <div class="stat-card"><div class="stat-num">@totalDepts<sup>+</sup></div><div class="stat-lbl">Khoa chuyên môn</div></div>
+                <div class="stat-card"><div class="stat-num">200K<sup>+</sup></div><div class="stat-lbl">Lượt khám/năm</div></div>
+            </div>
+        </div>
+    </div>
+</section>
+<style>
+    .st0-intro { padding: 36px 0 28px; background: linear-gradient(135deg,#f4f9ff 0%,#e8f1fb 100%); border-bottom: 1px solid #d8e6f3; }
+    .st0-grid  { display: grid; grid-template-columns: 1.4fr 1fr; gap: 36px; align-items: center; }
+    .st0-text h2 { color: #0a3d62; font-size: 26px; font-weight: 700; margin: 0 0 6px; }
+    .st0-tagline { color: #1d5688; font-size: 16px; font-weight: 600; margin: 0 0 12px; font-style: italic; }
+    .st0-desc { color: #2c3e50; font-size: 14.5px; line-height: 1.7; margin: 0 0 18px; text-align: justify; }
+    .st0-desc strong { color: #0a3d62; }
+    .st0-cta { display: flex; gap: 12px; flex-wrap: wrap; }
+    .st0-cta a { padding: 10px 22px; border-radius: 25px; font-weight: 600; font-size: 14px; text-decoration: none; transition: all 0.25s; }
+    .btn-st0-more { background: white; color: #0a3d62; border: 2px solid #0a3d62; }
+    .btn-st0-more:hover { background: #0a3d62; color: white; }
+    .btn-st0-book { background: linear-gradient(135deg,#0a3d62,#1d5688); color: white; box-shadow: 0 4px 12px rgba(10,61,98,0.25); }
+    .btn-st0-book:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(10,61,98,0.35); color: white; }
+
+    .st0-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .stat-card { background: white; padding: 22px 14px; border-radius: 12px; text-align: center; box-shadow: 0 4px 14px rgba(10,61,98,0.10); border-top: 4px solid #0a3d62; transition: transform 0.25s; }
+    .stat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(10,61,98,0.15); }
+    .stat-card:nth-child(2) { border-top-color: #43aa8b; }
+    .stat-card:nth-child(3) { border-top-color: #f6b73c; }
+    .stat-card:nth-child(4) { border-top-color: #e84545; }
+    .stat-num { font-size: 32px; font-weight: 800; color: #0a3d62; line-height: 1; margin-bottom: 6px; }
+    .stat-num sup { font-size: 18px; color: #43aa8b; margin-left: 2px; }
+    .stat-lbl { font-size: 12.5px; color: #5e7790; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; }
+
+    @@media (max-width: 768px) {
+        .st0-grid { grid-template-columns: 1fr; gap: 22px; }
+        .st0-text h2 { font-size: 22px; }
+        .stat-num { font-size: 26px; }
+    }
+</style>
+
 @* ============= .st7 — Tin tức nổi bật ============= *@
 <section class="st7 full-section">
     <div class="container">

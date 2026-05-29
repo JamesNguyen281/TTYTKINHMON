@@ -58,7 +58,11 @@
                 else if (alias == "phong-kham-chuyen-mon" || alias == "phong-kham" || alias.Contains("phong-kham"))
                     url = "/phong-kham";
                 else if (alias == "co-cau-to-chuc" || alias == "mo-hinh-to-chuc")
-                    url = "/gioi-thieu-trung-tam#co-cau-to-chuc";
+                    url = "/co-cau-to-chuc";
+                else if (alias == "co-so-vat-chat")
+                    url = "/co-so-vat-chat";
+                else if (alias == "co-so-ha-tang" || alias.Contains("ha-tang"))
+                    url = "/co-so-ha-tang";
                 else
                     url = "/" + (c.Link ?? "");
                 return (label: LocalizeStr(c.NameL, c.NameE), url, alias);
