@@ -1,14 +1,21 @@
 @startuml seq-chan-doan
 ' =========================================================================
-' Hình 2.15 — Biểu đồ tuần tự nghiệp vụ Chẩn đoán + kê đơn 
+' Hình 2.15 — Biểu đồ tuần tự nghiệp vụ Chẩn đoán + kê đơn
 ' =========================================================================
+skinparam dpi 300
 skinparam shadowing false
 skinparam defaultFontName Arial
 skinparam defaultFontSize 12
 skinparam sequenceArrowThickness 1.5
 skinparam roundcorner 5
-skinparam ParticipantBackgroundColor #FFF3E0
-skinparam ParticipantBorderColor #E65100
+skinparam BoundaryBackgroundColor #FFF3E0
+skinparam BoundaryBorderColor #E65100
+skinparam ControlBackgroundColor #FFF3E0
+skinparam ControlBorderColor #E65100
+skinparam EntityBackgroundColor #FFF3E0
+skinparam EntityBorderColor #E65100
+skinparam DatabaseBackgroundColor #FFF3E0
+skinparam DatabaseBorderColor #E65100
 skinparam ActorBackgroundColor #FFD27F
 skinparam ActorBorderColor #000000
 
@@ -16,52 +23,56 @@ title Biểu đồ tuần tự — Chẩn đoán và kê đơn thuốc
 
 autonumber
 
-actor "Bác sĩ" as BS
-participant "Trình duyệt"             as B
-participant "DoctorPortalController"  as C
-participant "MedicalRecordService"    as MS
-participant "AppointmentService"      as AS
-database    "SQL Server"              as DB
+actor    "Bác sĩ"                  as BS
+boundary "Trình duyệt"             as B
+control  "DoctorPortalController"  as C
+entity   "MedicalRecordService"    as MS
+entity   "AppointmentService"      as AS
+database "Bảng [Appointment]"      as TA
+database "Bảng [MedicalRecord]"    as TM
+database "Bảng [Prescription]"     as TP
+database "Bảng [AuditSystem]"      as TAU
 
 BS -> B: Vào /bac-si-portal/benh-nhan-hom-nay
 B -> C: GET danh sách BN hôm nay
-C -> DB: SELECT appointment WHERE doctor=?\nAND date=today AND status IN (Confirmed, CheckedIn)
-DB --> C: List bệnh nhân
+C -> TA: SELECT WHERE DoctorId = ?\nAND Date = today\nAND Status IN (Confirmed, CheckedIn)
+TA --> C: List bệnh nhân
 C --> B: Render bảng BN hôm nay
 
 BS -> B: Click "Khám" trên 1 BN
 B -> C: GET /bac-si-portal/chan-doan/{apptId}
-C -> C: Cross-doctor guard — kiểm tra\nBS đang đăng nhập có quyền với appointment
+C -> C: Cross-doctor guard — kiểm tra\nBS đang đăng nhập có quyền
 
 alt Không phải BS được phân
     C --> B: HTTP 403 Forbidden
 else Đúng BS
-    C -> DB: SELECT appointment + customer
-    DB --> C: Detail
+    C -> TA: SELECT JOIN [Customer]
+    TA --> C: Detail
     C --> B: Form chẩn đoán\n(triệu chứng, chẩn đoán, đơn thuốc)
 
     BS -> B: Nhập + submit
     B -> C: POST /bac-si-portal/chan-doan
     C -> C: Validate CSRF + length cap\n(note ≤ 500, drug ≤ 100, dose ≤ 200)
-    C -> MS: CreateRecordAsync(apptId, symptoms, diagnosis, drugs)
+    C -> MS: CreateRecordAsync(apptId, symptoms,\ndiagnosis, drugs)
     MS -> MS: NextRecordNoAsync\n(retry tối đa 5 lần khi DbUpdateException)
 
     loop Retry tối đa 5 lần
-        MS -> DB: SELECT MAX(record_no) + 1
-        DB --> MS: next_no
-        MS -> DB: INSERT medical_record\n(record_no=next_no)
+        MS -> TM: SELECT MAX(RecordNo) + 1
+        TM --> MS: NextNo
+        MS -> TM: INSERT (RecordNo = NextNo,\nDiagnosis, Symptoms)
         alt DbUpdateException\n(unique violation)
-            note over MS,DB: Race condition — chờ + retry
+            note over MS,TM: Race condition — chờ + retry
         else Success
-            DB --> MS: record_id
+            TM --> MS: RecordId
         end
     end
 
+    MS -> TP: INSERT (RecordId, Drug,\nDose, Duration)
     MS -> AS: TransitionAsync(apptId, CheckedIn → Done)
-    AS -> DB: UPDATE appointment SET status=Done
-    AS -> DB: INSERT audit_system\n(action=RECORD_CREATED)
-    MS --> C: record_id
-    C --> B: Redirect /bac-si-portal/benh-nhan-hom-nay\n(thông báo thành công)
+    AS -> TA: UPDATE Status = Done
+    AS -> TAU: INSERT (Action = RECORD_CREATED)
+    MS --> C: RecordId
+    C --> B: Redirect /benh-nhan-hom-nay\n(thông báo thành công)
 end
 
 @enduml

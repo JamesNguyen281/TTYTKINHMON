@@ -1,6 +1,8 @@
 @startuml activity-register
+skinparam dpi 300
 ' =========================================================================
 ' Hình 2.7 — Biểu đồ hoạt động Đăng ký tài khoản
+' Ghi rõ bảng CSDL bị tác động ở mỗi bước
 ' =========================================================================
 skinparam shadowing false
 skinparam defaultFontName Arial
@@ -12,6 +14,8 @@ skinparam ActivityDiamondBorderColor #E65100
 skinparam ArrowColor #1976D2
 skinparam SwimlaneBorderColor #424242
 skinparam SwimlaneTitleFontStyle bold
+skinparam noteBackgroundColor #FFF9C4
+skinparam noteBorderColor #F57F17
 
 title Sơ đồ hoạt động: Đăng ký tài khoản
 
@@ -23,7 +27,7 @@ start
 :Submit form;
 
 |Hệ thống|
-:Nhận yêu cầu đăng ký;
+:Nhận POST /dang-ky;
 
 if (Anti-forgery token hợp lệ?) then (Không)
   :Trả về HTTP 400;
@@ -43,8 +47,11 @@ else (Có)
 endif
 
 |Hệ thống|
-if (SĐT đã tồn tại?) then (Có)
-  :Trả lỗi: SĐT đã được đăng ký;
+:SELECT từ bảng **[User]**\nWHERE UserName = ?;
+note right: Kiểm tra trùng tài khoản
+
+if (Tài khoản đã tồn tại?) then (Có)
+  :Trả lỗi: tài khoản đã được đăng ký;
   |Người dùng|
   :Xem thông báo lỗi;
   stop
@@ -53,11 +60,10 @@ endif
 
 |Hệ thống|
 :Hash mật khẩu PBKDF2-SHA256\n(600.000 vòng);
-:Lưu tài khoản (group_code = MEMBER);
-:Ghi audit log USER_REGISTERED;
+:INSERT vào bảng **[User]**\n(GroupId = MEMBER,\nActiveFlag = 1);
 :Tạo session đăng nhập;
 
 |Người dùng|
-:Vào trang /ho-so;
+:Vào /ho-so;
 stop
 @enduml

@@ -97,6 +97,8 @@ Bảng 5.6. Tổng hợp kết quả kiểm thử toàn hệ thống
 
 Trong tổng số 299 test case, 279 test thực thi tự động bằng Playwright Test Runner, 8 test Postman và 12 test manual. Toàn bộ test pass, 21 trường hợp skip có lý do hợp lệ như cần fixture nâng cao cho PDF export, gửi email SMTP thật và lịch tháng kế tiếp chưa auto-gen.
 
+Bộ test case đầy đủ 299 ca kiểm thử (mỗi ca có mã, tiêu đề, tiền điều kiện, các bước thực hiện, dữ liệu, kết quả mong đợi, kết quả thực tế, mức nghiêm trọng và mức ưu tiên) được lưu trong file đính kèm `TestCases_TTYTKM.xlsx` cùng thư mục với báo cáo này. Mỗi sheet tương ứng một module: *Public site*, *Member – Đặt lịch*, *Cổng Lễ tân*, *Cổng Bác sĩ*, *Cổng AdminCP*, *Bảo mật OWASP*, *Mobile responsive*, *Postman API*, *Manual E2E* và sheet *Tổng hợp* có cột "File spec / Vị trí" chỉ rõ test case của từng module được hiện thực ở file nào trong mã nguồn (`tests/playwright/specs/*.spec.ts`, `tests/postman/TTYTKM_Postman_Collection.json`).
+
 ![Hình 5.1. Báo cáo HTML Playwright Test Runner — toàn bộ 264 test pass, 15 skip, 0 fail](images/hinh-4-3.png){width=16cm}
 
 Bảng 5.7. So sánh thời gian kiểm thử thủ công và kiểm thử tự động

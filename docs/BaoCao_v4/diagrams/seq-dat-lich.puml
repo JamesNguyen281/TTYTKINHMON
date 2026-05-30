@@ -2,13 +2,20 @@
 ' =========================================================================
 ' Hình 2.13 — Biểu đồ tuần tự nghiệp vụ Đặt lịch khám
 ' =========================================================================
+skinparam dpi 300
 skinparam shadowing false
 skinparam defaultFontName Arial
 skinparam defaultFontSize 12
 skinparam sequenceArrowThickness 1.5
 skinparam roundcorner 5
-skinparam ParticipantBackgroundColor #F3E5F5
-skinparam ParticipantBorderColor #7B1FA2
+skinparam BoundaryBackgroundColor #F3E5F5
+skinparam BoundaryBorderColor #7B1FA2
+skinparam ControlBackgroundColor #F3E5F5
+skinparam ControlBorderColor #7B1FA2
+skinparam EntityBackgroundColor #F3E5F5
+skinparam EntityBorderColor #7B1FA2
+skinparam DatabaseBackgroundColor #F3E5F5
+skinparam DatabaseBorderColor #7B1FA2
 skinparam ActorBackgroundColor #FFD27F
 skinparam ActorBorderColor #000000
 
@@ -16,18 +23,16 @@ title Biểu đồ tuần tự — Đặt lịch khám
 
 autonumber
 
-actor "Bệnh nhân" as BN
-participant "Trình duyệt"          as B
-participant "AppointmentController" as C
-participant "AppointmentService"    as S
-participant "QuotaService"          as Q
-database    "SQL Server"            as DB
+actor    "Bệnh nhân"              as BN
+boundary "Trình duyệt"            as B
+control  "AppointmentController"  as C
+entity   "AppointmentService"     as S
+database "Bảng [Department]"   as TD
+database "Bảng [Appointment]"  as TA
 
 BN -> B: Vào /dat-lich-kham
 B -> C: GET /dat-lich-kham
-C -> DB: SELECT phòng khám\nKhoa Khám bệnh
-DB --> C: List clinic_room
-C --> B: Render form\n(chọn ngày, ca, triệu chứng)
+C --> B: Render form\n(họ tên, SĐT, ngày, ca, triệu chứng)
 
 BN -> B: Điền form + submit
 B -> C: POST /dat-lich-kham
@@ -36,27 +41,26 @@ C -> C: Validate CSRF + dữ liệu vào
 alt Dữ liệu không hợp lệ
     C --> B: Hiển thị lỗi validation
 else Dữ liệu hợp lệ
-    C -> S: CreateAppointmentAsync(symptoms, date, session)
-    S -> S: Kiểm tra trùng buổi\n(cùng tài khoản + ngày + ca)
-    alt Đã có lịch buổi này
-        S --> C: Exception "Trùng buổi"
-        C --> B: Hiển thị link "Lịch của tôi"
-    else Chưa trùng
-        S -> Q: CheckQuotaAsync(deptId, date, session)
-        Q -> DB: SELECT quota_dept + quota_doctor
-        DB --> Q: Quota records
-        alt Hết suất
-            Q --> S: QuotaExceeded
-            S --> C: Exception "Hết suất khám"
-            C --> B: Hiển thị thông báo\n+ gợi ý ngày khác
-        else Còn suất
-            Q --> S: OK
-            S -> DB: INSERT appointment\n(status=Pending, dept=Khoa Khám)
-            DB --> S: appointment_id
-            S -> DB: INSERT audit_system\n(action=APPOINTMENT_CREATED)
-            S --> C: appointment_id + temp_code
-            C --> B: Redirect /xac-nhan-dat-lich\n(hiển thị mã tạm)
+    C -> S: BookAsync(input, patientUserId, siteId)
+    S -> TD: SELECT WHERE Alias = 'khoa-kham-benh'\nAND SiteId = ? AND ActiveFlag = 1
+    TD --> S: Khoa Khám bệnh
+    alt Không có khoa
+        S --> C: ErrorMessage "Hệ thống chưa khởi tạo Khoa Khám bệnh"
+        C --> B: Hiển thị lỗi
+    else Có khoa
+        opt Bệnh nhân đã đăng nhập
+            S -> TA: SELECT WHERE PatientUserId = ?\nAND Date = ? AND Session = ?\nAND Status IN (Pending, Confirmed)
+            TA --> S: Trùng buổi (nếu có)
+            alt Đã có lịch
+                S --> C: ErrorMessage "Đã có lịch ở buổi này"
+                C --> B: Hiển thị + link "Lịch của tôi"
+            end
         end
+        S -> S: Tạo Appointment\n(Status = Pending, ClinicRoomId = null,\nDepartmentId = khoaKham.Id)
+        S -> TA: INSERT (...)
+        TA --> S: AppointmentId
+        S --> C: BookingResult.Success(apptId)
+        C --> B: Redirect /xac-nhan-dat-lich
     end
 end
 

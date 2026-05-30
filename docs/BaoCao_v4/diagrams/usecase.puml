@@ -1,120 +1,105 @@
 @startuml usecase
+skinparam dpi 300
 ' =========================================================================
 ' Hình 2.1 — Biểu đồ Use Case TỔNG QUÁT
-' Website TTYT phường Kinh Môn — hiển thị toàn bộ use case nghiệp vụ
-' Chia 4 vùng theo vai trò (package) để tránh đường nối chồng chéo.
-' Use case nội bộ (Sinh mã booking / Ghi audit / Cấp số hồ sơ ...)
-' và quan hệ «include» / «extend» được tách sang Hình 2.2 (zoom).
+' Bố cục: 3 phân hệ (BS, AD, LT) ở cột giữa-trái với actor bên trái,
+'         BN actor bên phải với phân hệ BN ở giữa-phải.
 ' =========================================================================
 left to right direction
 skinparam shadowing false
 skinparam defaultFontName Arial
-skinparam defaultFontSize 12
+skinparam defaultFontSize 13
 skinparam packageStyle rectangle
 skinparam actorStyle awesome
 skinparam linetype polyline
-skinparam nodesep 12
-skinparam ranksep 25
+skinparam nodesep 25
+skinparam ranksep 40
 
 skinparam usecase {
-    BackgroundColor #D6E9FF
-    BorderColor     #1F4E79
-    ArrowColor      #1F4E79
+    BackgroundColor #FFFFFF
+    BorderColor     #000000
+    ArrowColor      #000000
     FontColor       #000000
 }
 skinparam actor {
-    BackgroundColor #FFD27F
+    BackgroundColor #FFFFFF
     BorderColor     #000000
     FontStyle       bold
 }
 skinparam rectangle {
-    BackgroundColor #F8FAFC
-    BorderColor     #1F4E79
-    FontColor       #1F4E79
-    FontStyle       bold
+    BackgroundColor #FFFFFF
+    BorderColor     #000000
 }
 
-' ====== Actors NỘI BỘ (TRÁI) ======
-actor "Bác sĩ"   as BS
-actor "Lễ tân"   as LT
-actor "Quản trị" as QT
+actor "BÁC SĨ"    as BS
+actor "ADMIN"     as AD
+actor "LỄ TÂN"    as LT
+actor "BỆNH NHÂN" as BN
 
-' Quản trị kế thừa quyền của Lễ tân + Bác sĩ
-LT <|-- QT
-BS <|-- QT
+rectangle "**HỆ THỐNG WEBSITE TTYT PHƯỜNG KINH MÔN**" {
 
-' ====== System boundary ======
-rectangle "Hệ thống Website TTYT Kinh Môn" {
+  rectangle "Phân hệ bác sĩ" as PBS {
+    usecase "Xem bệnh nhân hôm nay"    as UCBS3
+    usecase "Tạo hồ sơ + chẩn đoán"    as UCBS2
+    usecase "Kê đơn thuốc"             as UCBS4
+    usecase "Trả lời Q&A"              as UCBS5
+  }
 
-    package "Bệnh nhân (Member)" #F3E5F5 {
-        usecase "Đăng ký tài khoản" as UC01
-        usecase "Đăng nhập"         as UC02
-        usecase "Đặt lịch khám"     as UC03
-        usecase "Xem lịch của tôi"  as UC04
-        usecase "Đặt câu hỏi Q&A"   as UC05
-        usecase "Xem lịch sử khám"  as UC06
-        usecase "Cập nhật hồ sơ"    as UC07
-    }
+  rectangle "Phân hệ admin" as PAD {
+    usecase "Cấu hình website"   as UCAD1
+    usecase "Quản lý user"       as UCAD2
+    usecase "Quản lý tài liệu"   as UCAD3
+    usecase "Xem audit log"      as UCAD4
+    usecase "Force change pwd"   as UCAD5
+  }
 
-    package "Lễ tân (Reception)" #E8F5E9 {
-        usecase "Xem DS lịch hẹn"      as UC10
-        usecase "Duyệt và xác nhận"    as UC11
-        usecase "Từ chối lịch"         as UC12
-        usecase "Check-in bệnh nhân"   as UC13
-        usecase "Phân phòng khám + BS" as UC14
-        usecase "Quản lý quota"        as UC15
-        usecase "Xem lịch trực BS"     as UC16
-    }
+  rectangle "Phân hệ lễ tân" as PLT {
+    usecase "Check-in bệnh nhân"        as UCLT1
+    usecase "Quản lý quota khám"        as UCLT2
+    usecase "Xem lịch trực bác sĩ"      as UCLT3
+    usecase "Phân phòng khám + bác sĩ"  as UCLT4
+    usecase "Xem danh sách lịch hẹn"    as UCLT5
+    usecase "Quản lý yêu cầu đặt lịch"  as UCLT6
+  }
 
-    package "Bác sĩ (Doctor)" #FFF3E0 {
-        usecase "Xem BN hôm nay"        as UC20
-        usecase "Tạo hồ sơ + chẩn đoán" as UC21
-        usecase "Kê đơn thuốc"          as UC22
-        usecase "Hoàn tất khám"         as UC23
-        usecase "Trả lời Q&A"           as UC24
-    }
-
-    package "Quản trị viên (Admin)" #FCE4EC {
-        usecase "Cấu hình site"         as UC30
-        usecase "Quản lý News/Khoa"     as UC31
-        usecase "Quản lý Doctor/User"   as UC32
-        usecase "Quản lý tài liệu"      as UC33
-        usecase "Xem audit log"         as UC34
-        usecase "Reset mật khẩu"        as UC35
-    }
+  rectangle "Phân hệ bệnh nhân" as PBN {
+    usecase "Đăng nhập / đăng ký tài khoản" as UCBN1
+    usecase "Đặt lịch khám"                  as UCBN2
+    usecase "Đặt câu hỏi Q&A"                as UCBN3
+    usecase "Xem lịch của tôi"               as UCBN4
+    usecase "Xem lịch sử khám"               as UCBN5
+    usecase "Quản lý hồ sơ cá nhân"          as UCBN6
+  }
 }
 
-' ====== Actor BÊN PHẢI ======
-actor "Bệnh nhân" as BN
+' Actor → UC
+BS -- UCBS3
+BS -- UCBS2
+BS -- UCBS4
+BS -- UCBS5
 
-' ====== Associations ======
-BN -- UC01
-BN -- UC02
-BN -- UC03
-BN -- UC04
-BN -- UC05
-BN -- UC06
-BN -- UC07
+AD -- UCAD1
+AD -- UCAD2
+AD -- UCAD3
+AD -- UCAD4
+AD -- UCAD5
 
-LT -- UC10
-LT -- UC11
-LT -- UC12
-LT -- UC13
-LT -- UC14
-LT -- UC15
-LT -- UC16
+LT -- UCLT1
+LT -- UCLT2
+LT -- UCLT3
+LT -- UCLT4
+LT -- UCLT5
+LT -- UCLT6
 
-BS -- UC20
-BS -- UC21
-BS -- UC22
-BS -- UC23
-BS -- UC24
+UCBN1 -- BN
+UCBN2 -- BN
+UCBN3 -- BN
+UCBN4 -- BN
+UCBN5 -- BN
+UCBN6 -- BN
 
-QT -- UC30
-QT -- UC31
-QT -- UC32
-QT -- UC33
-QT -- UC34
-QT -- UC35
+' Hidden: 3 actor stacked vertically on left
+BS -[hidden]down- AD
+AD -[hidden]down- LT
 
 @enduml

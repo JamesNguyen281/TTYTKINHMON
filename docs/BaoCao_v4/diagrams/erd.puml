@@ -1,4 +1,5 @@
 @startuml erd
+skinparam dpi 300
 ' =========================================================================
 ' Hình 2.17 — Sơ đồ quan hệ thực thể (ERD)
 ' Website TTYT phường Kinh Môn

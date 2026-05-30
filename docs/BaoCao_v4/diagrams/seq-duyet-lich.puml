@@ -1,14 +1,21 @@
 @startuml seq-duyet-lich
 ' =========================================================================
-' Hình 2.14 — Biểu đồ tuần tự nghiệp vụ Duyệt lịch 
+' Hình 2.14 — Biểu đồ tuần tự nghiệp vụ Duyệt lịch
 ' =========================================================================
+skinparam dpi 300
 skinparam shadowing false
 skinparam defaultFontName Arial
 skinparam defaultFontSize 12
 skinparam sequenceArrowThickness 1.5
 skinparam roundcorner 5
-skinparam ParticipantBackgroundColor #E8F5E9
-skinparam ParticipantBorderColor #2E7D32
+skinparam BoundaryBackgroundColor #E8F5E9
+skinparam BoundaryBorderColor #2E7D32
+skinparam ControlBackgroundColor #E8F5E9
+skinparam ControlBorderColor #2E7D32
+skinparam EntityBackgroundColor #E8F5E9
+skinparam EntityBorderColor #2E7D32
+skinparam DatabaseBackgroundColor #E8F5E9
+skinparam DatabaseBorderColor #2E7D32
 skinparam ActorBackgroundColor #FFD27F
 skinparam ActorBorderColor #000000
 
@@ -16,52 +23,64 @@ title Biểu đồ tuần tự — Duyệt và xác nhận lịch hẹn
 
 autonumber
 
-actor "Lễ tân" as LT
-participant "Trình duyệt"               as B
-participant "LeTanController"           as C
-participant "AppointmentService"        as AS
-participant "DoctorScheduleService"     as DS
-database    "SQL Server"                as DB
+actor    "Lễ tân"                  as LT
+boundary "Trình duyệt"             as B
+control  "LeTanController"         as C
+entity   "AppointmentService"      as AS
+entity   "DoctorScheduleService"   as DS
+database "Bảng [Appointment]"        as TA
+database "Bảng [DoctorSchedule]"     as TS
+database "Bảng [AppointmentQuota]"   as TQ
+database "Bảng [AuditSystem]"        as TAU
 
 LT -> B: Vào /le-tan/lich-hen
 B -> C: GET /le-tan/lich-hen
-C -> DB: SELECT appointment WHERE status=Pending
-DB --> C: List lịch chờ duyệt
+C -> TA: SELECT WHERE Status = Pending
+TA --> C: Danh sách lịch chờ
 C --> B: Render danh sách
 
 LT -> B: Click chi tiết 1 lịch
 B -> C: GET /le-tan/detail/{id}
-C -> DB: SELECT appointment + customer
-DB --> C: Appointment detail
-C --> B: Render form\n(chọn phòng khám + BS)
+C -> TA: SELECT WHERE Id = ?
+TA --> C: Chi tiết lịch
+C --> B: Render form chọn phòng + BS
 
-LT -> B: Chọn phòng khám chuyên môn
-B -> C: AJAX /available-doctors?roomId=X
-C -> DS: GetAvailableDoctors(roomId, date, session)
-DS -> DB: SELECT doctor_schedule\nWHERE room=? AND date=?
-DB --> DS: List BS đang trực
-
-alt Không có BS nào trực phòng X
-    DS --> C: Empty list
-    C -> DS: GetAvailableDoctors(deptId, date, session) — fallback
-    DS -> DB: SELECT all BS thuộc khoa
-    DB --> DS: List BS toàn khoa
-    DS --> C: List BS (fallback)
-    C --> B: Banner vàng\n"phòng chưa có BS" + list toàn khoa
-else Có BS trực
-    DS --> C: List BS chuyên phòng
-    C --> B: Banner xanh\n"đang lọc theo phòng" + list BS phòng
-end
+LT -> B: Chọn phòng khám
+B -> C: AJAX /available-doctors?clinicRoomId=X
+C -> DS: GetAvailableDoctorsAsync(siteId, deptId,\ndate, session, clinicRoomId)
+DS -> TS: SELECT JOIN [Doctor], [Department]\nWHERE ClinicRoomId = ? AND Date = ?\nAND ScheduleType = 'clinic'
+TS --> DS: BS đang trực + dept
+DS --> C: Danh sách BS\n(empty nếu phòng chưa có BS)
+C --> B: Hiển thị danh sách BS chọn được
 
 LT -> B: Chọn BS + nhấn Xác nhận
-B -> C: POST /le-tan/duyet
-C -> AS: ConfirmAppointmentAsync(apptId, roomId,\ndoctorId, staffNote)
-AS -> AS: Kiểm tra state machine\nPending → Confirmed
-AS -> AS: Generate booking_code\nKMyymmdd-XXXXXX
-AS -> DB: UPDATE appointment SET\nstatus=Confirmed, booking_code, room, doctor
-AS -> DB: UPDATE quota +1\ncho khoa và BS
-AS -> DB: INSERT audit_system\n(action=APPOINTMENT_CONFIRMED)
-AS --> C: booking_code
-C --> B: Hiển thị mã booking thành công
+B -> C: POST /le-tan/lich-hen/{id}/status\n(newStatus = Confirmed, doctorId, staffNote)
+C -> AS: UpdateStatusAsync(apptId, "Confirmed",\nstaffNote, staffUserId)
+AS -> TA: SELECT WHERE Id = ?
+TA --> AS: Appointment hiện tại
+AS -> AS: Validate state transition\n(Pending → Confirmed)
+
+== Cập nhật quota (cap 2 tầng: khoa + bác sĩ) ==
+AS -> TQ: SELECT WHERE DepartmentId = ?\nAND Date = ? AND Session = ?\n(dept-level)
+TQ --> AS: deptQuota
+alt deptQuota tồn tại + vượt cap
+    AS --> C: Fail "Khoa đã hết suất"
+    C --> B: Hiển thị lỗi
+else Còn suất khoa
+    AS -> TQ: UPDATE BookedCount + 1\nhoặc INSERT mới
+    AS -> TS: SELECT WHERE DoctorId = ?\nAND Weekday = ? AND Session = ?\n(check BS có trực)
+    TS --> AS: schedule (hoặc null)
+    alt BS không trực hôm đó
+        AS --> C: Fail "BS không có lịch trực"
+        C --> B: Hiển thị lỗi
+    else BS có trực
+        AS -> TQ: UPDATE doctor-level BookedCount + 1
+        AS -> AS: Generate BookingCode\nKMyymmdd-S-XXXXXX
+        AS -> TA: UPDATE Status = Confirmed,\nBookingCode, DoctorId, StaffNote, LuUpdated
+        AS --> C: Success(BookingCode)
+        C -> TAU: LogAsync("Cập nhật lịch hẹn",\ndetail Pending→Confirmed)
+        C --> B: Hiển thị mã booking thành công
+    end
+end
 
 @enduml

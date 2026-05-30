@@ -2,13 +2,20 @@
 ' =========================================================================
 ' Hình 2.12 — Biểu đồ tuần tự nghiệp vụ Đăng nhập
 ' =========================================================================
+skinparam dpi 300
 skinparam shadowing false
 skinparam defaultFontName Arial
 skinparam defaultFontSize 12
 skinparam sequenceArrowThickness 1.5
 skinparam roundcorner 5
-skinparam ParticipantBackgroundColor #E3F2FD
-skinparam ParticipantBorderColor #1976D2
+skinparam BoundaryBackgroundColor #E3F2FD
+skinparam BoundaryBorderColor #1976D2
+skinparam ControlBackgroundColor #E3F2FD
+skinparam ControlBorderColor #1976D2
+skinparam EntityBackgroundColor #E3F2FD
+skinparam EntityBorderColor #1976D2
+skinparam DatabaseBackgroundColor #E3F2FD
+skinparam DatabaseBorderColor #1976D2
 skinparam ActorBackgroundColor #FFD27F
 skinparam ActorBorderColor #000000
 
@@ -16,11 +23,12 @@ title Biểu đồ tuần tự — Đăng nhập
 
 autonumber
 
-actor "Người dùng" as U
-participant "Trình duyệt" as B
-participant "AuthController" as C
-participant "UserService"   as S
-database "SQL Server"        as DB
+actor    "Người dùng"     as U
+boundary "Trình duyệt"    as B
+control  "AuthController" as C
+entity   "UserService"    as S
+database "Bảng [User]"        as TU
+database "Bảng [AuditSystem]" as TA
 
 U -> B: Truy cập /dang-nhap
 B -> C: GET /dang-nhap
@@ -34,20 +42,21 @@ alt CSRF không hợp lệ
     C --> B: HTTP 400 Bad Request
 else CSRF hợp lệ
     C -> S: ValidateCredentialsAsync(user, pass)
-    S -> DB: SELECT user WHERE username=?
-    DB --> S: User record\n(password_hash, salt, failed_count)
+    S -> TU: SELECT WHERE UserName = ?
+    TU --> S: PasswordHash, Salt, FailedCount
     S -> S: Verify PBKDF2-SHA256\n(600.000 vòng)
     alt Mật khẩu sai
-        S -> DB: UPDATE failed_count + 1
-        DB --> S: OK
-        alt failed_count ≥ 5
-            S -> DB: UPDATE locked_until = now + 15 phút
+        S -> TU: UPDATE FailedCount += 1
+        TU --> S: OK
+        alt FailedCount ≥ 5
+            S -> TU: UPDATE LockedUntil = now + 15'
         end
         S --> C: AuthResult.Failure
         C --> B: Hiển thị "Sai tài khoản/mật khẩu"
     else Mật khẩu đúng
-        S -> DB: UPDATE failed_count = 0, last_login = now
-        DB --> S: OK
+        S -> TU: UPDATE FailedCount = 0,\nLastLogin = now
+        TU --> S: OK
+        S -> TA: INSERT (Action = USER_LOGIN,\nUserId, Timestamp)
         S --> C: AuthResult.Success(user, role)
         C -> C: Tạo session cookie\n(HttpOnly, Secure)
         alt must_change_password = 1

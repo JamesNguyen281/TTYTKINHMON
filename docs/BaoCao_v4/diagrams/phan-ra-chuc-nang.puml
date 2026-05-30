@@ -1,9 +1,9 @@
 @startwbs
+skinparam dpi 300
 ' =========================================================================
 ' Sơ đồ phân rã chức năng (Functional Decomposition Diagram)
 ' Website TTYT phường Kinh Môn — Hình 1.1
-' Note: dùng @startwbs (Work Breakdown Structure) thay @startuml để cây
-'       hiển thị gọn theo phân cấp; plantuml.com hỗ trợ trực tiếp.
+' Mọi lá đều là ĐỘNG TỪ (theo chuẩn FDD)
 ' =========================================================================
 skinparam shadowing false
 skinparam defaultFontName Arial
@@ -28,52 +28,51 @@ wbsDiagram {
 </style>
 
 + Website TTYT Kinh Môn <<root>>
-++ Public Site <<m1>>
-+++ Trang chủ <<f1>>
-+++ Tin tức / Bài viết <<f1>>
-+++ Chuyên khoa <<f1>>
-+++ Phòng khám công khai <<f1>>
-+++ Lịch trực BS công khai <<f1>>
-+++ Q&A công khai <<f1>>
-+++ Đăng ký <<f1>>
-+++ Đăng nhập <<f1>>
-+++ FAQ + Giới thiệu <<f1>>
-++ Bệnh nhân <<m2>>
+++ Phân hệ công khai <<m1>>
++++ Xem trang chủ <<f1>>
++++ Đọc tin tức bài viết <<f1>>
++++ Tra cứu chuyên khoa <<f1>>
++++ Xem phòng khám <<f1>>
++++ Xem lịch trực bác sĩ <<f1>>
++++ Đọc hỏi đáp công khai <<f1>>
++++ Đăng ký tài khoản <<f1>>
++++ Đăng nhập hệ thống <<f1>>
++++ Xem giới thiệu và FAQ <<f1>>
+++ Phân hệ bệnh nhân <<m2>>
 +++ Đặt lịch khám <<f2>>
-+++ Lịch của tôi <<f2>>
-+++ Hồ sơ cá nhân <<f2>>
-+++ Lịch sử khám <<f2>>
-+++ Câu hỏi của tôi <<f2>>
++++ Xem lịch của tôi <<f2>>
++++ Cập nhật hồ sơ cá nhân <<f2>>
++++ Xem lịch sử khám <<f2>>
++++ Đặt câu hỏi cho bác sĩ <<f2>>
 +++ Đổi mật khẩu <<f2>>
-++ Lễ tân <<m3>>
-+++ DS lịch hẹn <<f3>>
-+++ Duyệt + xác nhận <<f3>>
-+++ Từ chối lịch <<f3>>
-+++ Check-in BN <<f3>>
+++ Phân hệ lễ tân <<m3>>
++++ Xem danh sách lịch hẹn <<f3>>
++++ Duyệt và xác nhận lịch <<f3>>
++++ Từ chối lịch hẹn <<f3>>
++++ Check-in bệnh nhân <<f3>>
 +++ Phân phòng khám <<f3>>
-+++ Phân bác sĩ <<f3>>
-+++ Quản lý quota <<f3>>
-+++ Lịch trực BS <<f3>>
-+++ Tra cứu theo SĐT <<f3>>
-++ Bác sĩ <<m4>>
-+++ BN hôm nay <<f4>>
-+++ Lịch trực của tôi <<f4>>
-+++ Tạo hồ sơ + chẩn đoán <<f4>>
++++ Phân bác sĩ phụ trách <<f3>>
++++ Quản lý quota khám <<f3>>
++++ Tra cứu lịch theo SĐT <<f3>>
+++ Phân hệ bác sĩ <<m4>>
++++ Xem bệnh nhân hôm nay <<f4>>
++++ Xem lịch trực của tôi <<f4>>
++++ Tạo hồ sơ và chẩn đoán <<f4>>
 +++ Kê đơn thuốc <<f4>>
-+++ Hoàn tất khám <<f4>>
-+++ Hẹn khám lại <<f4>>
-+++ Trả lời Q&A <<f4>>
-+++ Yêu cầu đổi lịch trực <<f4>>
-++ Quản trị <<m5>>
-+++ Dashboard <<f5>>
++++ Hoàn tất ca khám <<f4>>
++++ Hẹn khám lại cho bệnh nhân <<f4>>
++++ Trả lời câu hỏi <<f4>>
++++ Gửi yêu cầu đổi lịch trực <<f4>>
+++ Phân hệ quản trị <<m5>>
++++ Xem dashboard <<f5>>
 +++ Cấu hình site <<f5>>
-+++ Quản lý News + Khoa <<f5>>
-+++ Quản lý Doctor + User <<f5>>
++++ Quản lý tin tức và khoa <<f5>>
++++ Quản lý bác sĩ và người dùng <<f5>>
 +++ Quản lý phòng khám <<f5>>
-+++ Quản lý lịch trực BS <<f5>>
++++ Tạo lịch trực bác sĩ <<f5>>
 +++ Duyệt yêu cầu đổi lịch <<f5>>
 +++ Quản lý tài liệu <<f5>>
-+++ Audit log + export CSV <<f5>>
-+++ Reset mật khẩu <<f5>>
++++ Xem audit log và xuất CSV <<f5>>
++++ Đặt lại mật khẩu <<f5>>
 
 @endwbs

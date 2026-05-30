@@ -1,4 +1,5 @@
 @startuml usecase-zoom
+skinparam dpi 300
 ' =========================================================================
 ' Hình 2.2 — Trích phóng to quan hệ «include» và «extend»
 ' giữa các use case của hệ thống Website TTYT Kinh Môn

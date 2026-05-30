@@ -1,6 +1,8 @@
 @startuml activity-checkin
+skinparam dpi 300
 ' =========================================================================
-' Hình 2.10 — Biểu đồ hoạt động Check-in và Khám bệnh
+' Hình 2.10 — Biểu đồ hoạt động Check-in bệnh nhân
+' Ghi rõ bảng CSDL bị tác động ở mỗi bước
 ' =========================================================================
 skinparam shadowing false
 skinparam defaultFontName Arial
@@ -12,20 +14,23 @@ skinparam ActivityDiamondBorderColor #E65100
 skinparam ArrowColor #1976D2
 skinparam SwimlaneBorderColor #424242
 skinparam SwimlaneTitleFontStyle bold
+skinparam noteBackgroundColor #FFF9C4
+skinparam noteBorderColor #F57F17
 
 title Sơ đồ hoạt động: Check-in bệnh nhân
 
 |Bệnh nhân|
 start
 :Tới quầy lễ tân;
-:Xuất trình mã booking (KMyymmddS001);
+:Xuất trình mã booking\n(KMyymmddSxxxxx);
 
 |Lễ tân|
 :Nhập mã vào /le-tan/check-in;
-:Gửi yêu cầu check-in;
+:Submit POST /le-tan/check-in;
 
 |Hệ thống|
-:Tra cứu lịch theo booking_code;
+:SELECT từ bảng **[Appointment]**\nWHERE BookingCode = ?;
+note right: Tra cứu lịch theo mã
 
 if (Tìm thấy lịch?) then (Không)
   :Trả lỗi: mã không tồn tại;
@@ -45,7 +50,7 @@ else (Có)
 endif
 
 |Hệ thống|
-if (Ngày khám = hôm nay?) then (Không)
+if (AppointmentDate = today?) then (Không)
   :Trả lỗi: không đúng ngày khám;
   |Lễ tân|
   :Xem thông báo lỗi;
@@ -54,15 +59,15 @@ else (Có)
 endif
 
 |Hệ thống|
-if (Đã check-in trước đó?) then (Có)
-  :Idempotent — trả OK;
+if (Đã CheckedIn = true?) then (Có)
+  :Idempotent — trả OK\nkhông UPDATE lại;
 else (Không)
-  :Cập nhật CheckedIn = true,\nLastUpdated, LastUserId;
-  :Ghi audit log CHECK_IN;
+  :UPDATE bảng **[Appointment]**\nSET CheckedIn = true,\nLuUpdated = now,\nLuUserId = staff;
+  :INSERT vào bảng **[AuditSystem]**\n(Action = Check-in bệnh nhân);
 endif
 
 |Lễ tân|
-:Hướng dẫn bệnh nhân tới phòng khám;
+:Hướng dẫn BN tới phòng khám;
 
 |Bệnh nhân|
 :Chờ gọi tên vào phòng khám;

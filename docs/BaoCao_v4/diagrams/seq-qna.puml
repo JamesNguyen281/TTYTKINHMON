@@ -1,14 +1,21 @@
 @startuml seq-qna
 ' =========================================================================
-' Hình 2.16 — Biểu đồ tuần tự nghiệp vụ Hỏi đáp Q&A 
+' Hình 2.16 — Biểu đồ tuần tự nghiệp vụ Hỏi đáp Q&A
 ' =========================================================================
+skinparam dpi 300
 skinparam shadowing false
 skinparam defaultFontName Arial
 skinparam defaultFontSize 12
 skinparam sequenceArrowThickness 1.5
 skinparam roundcorner 5
-skinparam ParticipantBackgroundColor #FCE4EC
-skinparam ParticipantBorderColor #AD1457
+skinparam BoundaryBackgroundColor #FCE4EC
+skinparam BoundaryBorderColor #AD1457
+skinparam ControlBackgroundColor #FCE4EC
+skinparam ControlBorderColor #AD1457
+skinparam EntityBackgroundColor #FCE4EC
+skinparam EntityBorderColor #AD1457
+skinparam DatabaseBackgroundColor #FCE4EC
+skinparam DatabaseBorderColor #AD1457
 skinparam ActorBackgroundColor #FFD27F
 skinparam ActorBorderColor #000000
 
@@ -16,13 +23,15 @@ title Biểu đồ tuần tự — Hỏi đáp Q&A
 
 autonumber
 
-actor "Bệnh nhân" as BN
-actor "Quản trị"  as QT
-actor "Bác sĩ"    as BS
-participant "Trình duyệt"      as B
-participant "QnaController"    as C
-participant "QnaService"       as S
-database    "SQL Server"       as DB
+actor    "Bệnh nhân"       as BN
+actor    "Quản trị"        as QT
+actor    "Bác sĩ"          as BS
+boundary "Trình duyệt"     as B
+control  "QnaController"   as C
+entity   "QnaService"      as S
+database "Bảng [Question]"    as TQ
+database "Bảng [Answer]"      as TAN
+database "Bảng [AuditSystem]" as TAU
 
 BN -> B: Vào /hoi-dap → Đặt câu hỏi mới
 B -> C: GET /hoi-dap/dat-cau-hoi
@@ -35,9 +44,9 @@ else Đã đăng nhập
     B -> C: POST /hoi-dap/dat-cau-hoi
     C -> C: Validate CSRF + length cap\n(body ≤ 500)
     C -> S: SubmitQuestionAsync(userId, title, body, deptId)
-    S -> DB: INSERT qa_question\n(status=Pending, created_at)
-    DB --> S: question_id
-    S --> C: question_id
+    S -> TQ: INSERT (Status = Pending,\nCreatedAt = now)
+    TQ --> S: QuestionId
+    S --> C: QuestionId
     C --> B: Hiển thị "Đã gửi, chờ duyệt"
 end
 
@@ -45,8 +54,8 @@ end
 
 QT -> B: Vào /AdminCP/Qna
 B -> C: GET danh sách câu hỏi pending
-C -> DB: SELECT qa_question WHERE status=Pending
-DB --> C: List
+C -> TQ: SELECT WHERE Status = Pending
+TQ --> C: List
 C --> B: Render bảng duyệt
 
 QT -> B: Approve / Reject 1 câu hỏi
@@ -54,27 +63,28 @@ B -> C: POST /AdminCP/Qna/Approve hoặc Reject
 
 alt Approve
     C -> S: ApproveQuestionAsync(questionId)
-    S -> DB: UPDATE status = Visible
-    S -> DB: INSERT audit_system\n(action=QNA_APPROVED)
+    S -> TQ: UPDATE Status = Visible
+    S -> TAU: INSERT (Action = QNA_APPROVED)
 else Reject
     C -> S: RejectQuestionAsync(questionId, reason)
-    S -> DB: UPDATE status=Rejected, soft_delete=1
-    S -> DB: INSERT audit_system\n(action=QNA_REJECTED)
+    S -> TQ: UPDATE Status = Rejected,\nSoftDelete = 1
+    S -> TAU: INSERT (Action = QNA_REJECTED)
 end
 
 == Bác sĩ trả lời ==
 
 BS -> B: Vào /bac-si-portal/qna
-B -> C: GET câu hỏi thuộc chuyên khoa,\nstatus=Visible
-C -> DB: SELECT qa_question WHERE specialty=?\nAND status=Visible
-DB --> C: List
+B -> C: GET câu hỏi thuộc chuyên khoa,\nStatus = Visible
+C -> TQ: SELECT WHERE DepartmentId = ?\nAND Status = Visible
+TQ --> C: List
 C --> B: Render bảng câu hỏi
 
 BS -> B: Nhập câu trả lời + submit
 B -> C: POST /bac-si-portal/qna/answer
 C -> S: AnswerQuestionAsync(questionId, answerBody)
-S -> DB: UPDATE qa_question\nSET answer=?, answered_at=now
-S -> DB: INSERT audit_system\n(action=QNA_ANSWERED)
+S -> TAN: INSERT (QuestionId, Body,\nDoctorId, AnsweredAt = now)
+S -> TQ: UPDATE Approved = true
+S -> TAU: INSERT (Action = QNA_ANSWERED)
 S --> C: OK
 C --> B: Hiển thị "Đã trả lời"
 

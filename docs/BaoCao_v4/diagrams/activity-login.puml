@@ -1,6 +1,8 @@
 @startuml activity-login
+skinparam dpi 300
 ' =========================================================================
 ' Hình 2.8 — Biểu đồ hoạt động Đăng nhập
+' Ghi rõ bảng CSDL bị tác động ở mỗi bước
 ' =========================================================================
 skinparam shadowing false
 skinparam defaultFontName Arial
@@ -12,6 +14,8 @@ skinparam ActivityDiamondBorderColor #E65100
 skinparam ArrowColor #1976D2
 skinparam SwimlaneBorderColor #424242
 skinparam SwimlaneTitleFontStyle bold
+skinparam noteBackgroundColor #FFF9C4
+skinparam noteBorderColor #F57F17
 
 title Sơ đồ hoạt động: Đăng nhập hệ thống
 
@@ -22,7 +26,7 @@ start
 :Gửi yêu cầu đăng nhập;
 
 |Hệ thống|
-:Nhận thông tin đăng nhập;
+:Nhận POST /dang-nhap;
 
 if (Anti-forgery token hợp lệ?) then (Không)
   :Trả về HTTP 400;
@@ -33,6 +37,8 @@ else (Có)
 endif
 
 |Hệ thống|
+:SELECT từ bảng **[User]**\nWHERE UserName = ?\nAND ActiveFlag = 1;
+
 if (Tài khoản tồn tại?) then (Không)
   :Trả lỗi: thông tin sai;
   |Người dùng|
@@ -42,7 +48,7 @@ else (Có)
 endif
 
 |Hệ thống|
-if (Tài khoản bị khóa?) then (Có)
+if (LockoutUntil > now?) then (Có)
   :Trả lỗi: tài khoản bị khóa\n(sai 5 lần liên tiếp);
   |Người dùng|
   :Xem thông báo lỗi;
@@ -51,12 +57,12 @@ else (Không)
 endif
 
 |Hệ thống|
-:Xác minh mật khẩu (PBKDF2-SHA256);
+:Xác minh mật khẩu PBKDF2-SHA256\n(600.000 vòng);
 
 if (Mật khẩu đúng?) then (Không)
-  :Tăng login_failed_count;
-  if (login_failed_count ≥ 5?) then (Có)
-    :Khóa tài khoản 15 phút;
+  :UPDATE bảng **[User]**\nSET FailedAttempts += 1;
+  if (FailedAttempts ≥ 5?) then (Có)
+    :UPDATE bảng **[User]**\nSET LockoutUntil = now + 15',\nFailedAttempts = 0;
   else (Không)
   endif
   :Trả lỗi đăng nhập;
@@ -67,9 +73,10 @@ else (Có)
 endif
 
 |Hệ thống|
-:Reset login_failed_count = 0;
+:UPDATE bảng **[User]**\nSET FailedAttempts = 0,\nLockoutUntil = null,\nLastLogin = now;
+:INSERT vào bảng **[AuditSystem]**\n(Action = Đăng nhập, IP, UA);
 
-if (must_change_password?) then (Có)
+if (Mật khẩu mặc định "123456"?) then (Có)
   :Yêu cầu đổi mật khẩu;
   |Người dùng|
   :Vào /doi-mat-khau;
@@ -78,12 +85,12 @@ else (Không)
 endif
 
 |Hệ thống|
-:Tạo session\n+ thiết lập cookie;
+:Tạo session\n+ set cookie HttpOnly;
 
 if (Vai trò Admin?) then (Có)
-  :Điều hướng tới /AdminCP;
+  :Redirect /AdminCP/Default;
 else (Không)
-  :Điều hướng tới trang chủ/portal\ntheo vai trò;
+  :Redirect / hoặc /ho-so\ntheo vai trò;
 endif
 
 |Người dùng|

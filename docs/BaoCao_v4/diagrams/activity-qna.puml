@@ -1,6 +1,8 @@
 @startuml activity-qna
+skinparam dpi 300
 ' =========================================================================
 ' Hình 2.11 — Biểu đồ hoạt động Hỏi đáp Q&A
+' Ghi rõ bảng CSDL bị tác động ở mỗi bước
 ' =========================================================================
 skinparam shadowing false
 skinparam defaultFontName Arial
@@ -12,6 +14,8 @@ skinparam ActivityDiamondBorderColor #E65100
 skinparam ArrowColor #1976D2
 skinparam SwimlaneBorderColor #424242
 skinparam SwimlaneTitleFontStyle bold
+skinparam noteBackgroundColor #FFF9C4
+skinparam noteBorderColor #F57F17
 
 title Sơ đồ hoạt động: Hỏi đáp Q&A
 
@@ -19,39 +23,50 @@ title Sơ đồ hoạt động: Hỏi đáp Q&A
 start
 :Đăng nhập + vào /dat-cau-hoi;
 :Nhập tiêu đề, nội dung, chuyên khoa;
-:Gửi câu hỏi;
+:Submit POST /hoi-dap/dat-cau-hoi;
 
 |Hệ thống|
-:Lưu câu hỏi (status = Pending);
+:INSERT vào bảng **[Question]**\n(Status = Pending,\nCreatedAt = now);
 :Hiển thị flash "Đã gửi, chờ duyệt";
 
 |Quản trị viên|
 :Vào /AdminCP/Qna;
 :Mở danh sách câu hỏi chờ duyệt;
 
-if (Duyệt câu hỏi?) then (Approve)
+|Hệ thống|
+:SELECT từ bảng **[Question]**\nWHERE Status = Pending;
+note right: Lấy danh sách chờ duyệt
+
+|Quản trị viên|
+:Chọn Approve hoặc Reject;
+
+if (Quyết định?) then (Approve)
   |Hệ thống|
-  :Cập nhật status = Visible;
-  :Ghi audit log QNA_APPROVED;
+  :UPDATE bảng **[Question]**\nSET Status = Visible;
+  :INSERT vào bảng **[AuditSystem]**\n(Action = QNA_APPROVED);
 else (Reject)
   |Hệ thống|
-  :Cập nhật status = Rejected\nsoft_delete = 1;
-  :Ghi audit log QNA_REJECTED;
+  :UPDATE bảng **[Question]**\nSET Status = Rejected,\nSoftDelete = 1;
+  :INSERT vào bảng **[AuditSystem]**\n(Action = QNA_REJECTED);
   stop
 endif
 
 |Bác sĩ|
 :Vào /bac-si-portal/qna;
-:Xem câu hỏi thuộc chuyên khoa\n(status = Visible);
-:Nhập nội dung trả lời;
-:Gửi trả lời;
 
 |Hệ thống|
-:Lưu Answer;
-:Cập nhật Question.approved = true;
-:Ghi audit log QUESTION_ANSWERED;
+:SELECT từ bảng **[Question]**\nWHERE DepartmentId = ?\nAND Status = Visible;
+
+|Bác sĩ|
+:Chọn câu hỏi + nhập nội dung trả lời;
+:Submit POST /bac-si-portal/qna/answer;
+
+|Hệ thống|
+:INSERT vào bảng **[Answer]**\n(QuestionId, Body,\nDoctorId, AnsweredAt = now);
+:UPDATE bảng **[Question]**\nSET Approved = true;
+:INSERT vào bảng **[AuditSystem]**\n(Action = Trả lời câu hỏi);
 
 |Bệnh nhân|
-:Vào /cau-hoi-cua-toi xem trả lời;
+:Vào /cau-hoi-cua-toi\nxem câu trả lời;
 stop
 @enduml

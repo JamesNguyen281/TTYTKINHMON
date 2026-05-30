@@ -1,6 +1,8 @@
 @startuml activity-dat-lich
+skinparam dpi 300
 ' =========================================================================
 ' Hình 2.9 — Biểu đồ hoạt động Đặt lịch khám
+' Ghi rõ bảng CSDL bị tác động ở mỗi bước
 ' =========================================================================
 skinparam shadowing false
 skinparam defaultFontName Arial
@@ -12,6 +14,8 @@ skinparam ActivityDiamondBorderColor #E65100
 skinparam ArrowColor #1976D2
 skinparam SwimlaneBorderColor #424242
 skinparam SwimlaneTitleFontStyle bold
+skinparam noteBackgroundColor #FFF9C4
+skinparam noteBorderColor #F57F17
 
 title Sơ đồ hoạt động: Đặt lịch khám
 
@@ -32,7 +36,7 @@ endif
 :Gửi yêu cầu đặt lịch;
 
 |Hệ thống|
-:Nhận yêu cầu đặt lịch;
+:Nhận POST /dat-lich-kham;
 
 if (Anti-forgery token hợp lệ?) then (Không)
   :Trả về HTTP 400;
@@ -61,21 +65,25 @@ else (Có)
 endif
 
 |Hệ thống|
-if (Đã có lịch cùng ngày + ca?) then (Có)
-  :Trả lỗi: trùng buổi;
-  |Bệnh nhân|
-  :Xem thông báo + link Lịch của tôi;
-  stop
-else (Không)
+:SELECT từ bảng **[Department]**\nAlias = 'khoa-kham-benh';
+note right: Tra Khoa Khám bệnh\nđể auto-gán DepartmentId
+
+if (Bệnh nhân đã đăng nhập?) then (Có)
+  :SELECT từ bảng **[Appointment]**\nUserId + Date + Session;
+  note right: Kiểm tra trùng buổi
+  if (Đã có lịch cùng buổi?) then (Có)
+    :Trả lỗi: trùng buổi;
+    |Bệnh nhân|
+    :Xem thông báo + link Lịch của tôi;
+    stop
+  else (Không)
+  endif
 endif
 
 |Hệ thống|
-:Auto-gán DepartmentId\n= Khoa Khám bệnh;
-:Tạo Appointment\n(status = Pending);
-:Lưu DB;
-:Ghi audit log APPOINTMENT_CREATED;
+:INSERT vào bảng **[Appointment]**\n(Status = Pending,\nDepartmentId = Khoa Khám,\nClinicRoomId = null);
 
 |Bệnh nhân|
-:Vào trang xác nhận\nxem mã đặt lịch tạm;
+:Vào /xac-nhan-dat-lich\nxem mã đặt lịch tạm;
 stop
 @enduml
